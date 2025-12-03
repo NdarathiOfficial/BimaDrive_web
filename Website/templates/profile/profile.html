@@ -1,0 +1,406 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile | BimaDrive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; outline: none; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background-color: #f3f4f6;
+            /* Animated Mesh Gradient */
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,0.1) 0, transparent 50%),
+                radial-gradient(at 50% 100%, hsla(225,39%,30%,0.1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+            padding: 40px 20px;
+            color: var(--text-main);
+        }
+
+        /* Main Container - The "Glass" Slab */
+        .profile-card {
+            width: 100%; max-width: 1000px;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-radius: 32px;
+            border: var(--glass-border);
+            box-shadow:
+                0 20px 40px -10px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(255,255,255,0.3) inset;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- Left Sidebar: Identity --- */
+        .identity-sidebar {
+            background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+            border-right: var(--glass-border);
+            padding: 50px 30px;
+            text-align: center;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* Glowing Avatar */
+        .avatar-container {
+            position: relative; width: 140px; height: 140px; margin-bottom: 25px;
+            border-radius: 50%; padding: 4px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            box-shadow: 0 15px 35px -10px rgba(99, 102, 241, 0.4);
+        }
+        .avatar-img {
+            width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.9); background: #fff;
+        }
+
+        /* Camera Overlay */
+        .edit-avatar-btn {
+            position: absolute; bottom: 5px; right: 5px;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--dark); color: white; border: 3px solid white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .edit-avatar-btn:hover { transform: scale(1.1); background: var(--primary); }
+
+        .user-title h2 { font-size: 24px; font-weight: 700; color: var(--dark); letter-spacing: -0.5px; margin-bottom: 5px; }
+        .role-badge {
+            display: inline-block; padding: 6px 16px; background: rgba(99, 102, 241, 0.1);
+            color: var(--primary); border-radius: 20px; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .sys-id { font-size: 13px; color: var(--text-sub); margin-top: 15px; font-family: monospace; }
+
+        .nav-btn {
+            margin-top: auto; text-decoration: none; padding: 12px 24px; width: 100%;
+            border-radius: 14px; font-size: 14px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            color: var(--text-sub); background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.6); transition: 0.2s;
+        }
+        .nav-btn:hover { background: white; color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        /* --- Right Content: Form --- */
+        .content-area { padding: 50px; background: rgba(255,255,255,0.3); overflow-y: auto; max-height: 90vh; }
+
+        .form-header { margin-bottom: 40px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 20px; }
+        .form-header h3 { font-size: 20px; font-weight: 600; color: var(--dark); margin-bottom: 5px; }
+        .form-header p { font-size: 14px; color: var(--text-sub); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+
+        .input-wrapper { position: relative; }
+        .input-label {
+            font-size: 12px; font-weight: 600; text-transform: uppercase; color: #94a3b8;
+            margin-bottom: 8px; display: block; letter-spacing: 0.5px;
+        }
+
+        .input-field {
+            width: 100%; padding: 16px 20px; border-radius: 14px;
+            background: #fff; border: 1px solid #e2e8f0;
+            font-size: 15px; color: var(--dark); font-weight: 500; transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .input-field:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        .input-field[readonly] {
+            background: rgba(241, 245, 249, 0.6); color: #64748b; cursor: default; border-color: transparent;
+        }
+
+        .action-footer {
+            margin-top: 40px; display: flex; justify-content: flex-end; padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .btn-primary {
+            padding: 16px 40px; background: var(--dark); color: white; border: none;
+            border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: 0.3s; box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.4);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+        .btn-primary:disabled { opacity: 0.7; cursor: wait; transform: none; }
+
+        /* Responsive */
+        @media (max-width: 850px) {
+            .profile-card { grid-template-columns: 1fr; width: 95%; }
+            .identity-sidebar { border-right: none; border-bottom: var(--glass-border); padding: 40px; }
+            .content-area { padding: 30px; }
+            .grid-2 { grid-template-columns: 1fr; gap: 20px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="profile-card">
+        <!-- LEFT SIDE: Identity -->
+        <div class="identity-sidebar">
+            <div class="avatar-container" onclick="document.getElementById('pPic').click()">
+                <img id="avatarPreview" class="avatar-img" src="https://via.placeholder.com/150?text=IMG" alt="Profile">
+                <div class="edit-avatar-btn"><i class="bi bi-camera-fill"></i></div>
+                <input type="file" id="pPic" accept="image/*" hidden onchange="previewImage()">
+            </div>
+
+            <h2 class="user-name" id="dispName">Loading...</h2>
+            <span class="role-badge" id="dispRole">---</span>
+            <div class="sys-id" id="dispId">ID: ---</div>
+
+            <a href="#" id="dashboardLink" class="nav-btn">
+                <i class="bi bi-grid-fill"></i> Return to Dashboard
+            </a>
+        </div>
+
+        <!-- RIGHT SIDE: Data Form -->
+        <div class="content-area">
+            <form id="profileForm">
+
+                <div class="form-header">
+                    <h3>Personal Details</h3>
+                    <p>Manage your personal information and contact details.</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-wrapper">
+                        <label class="input-label">Full Name</label>
+                        <input type="text" id="fullName" class="input-field" readonly>
+                    </div>
+                    <div class="input-wrapper">
+                        <label class="input-label">Email Address</label>
+                        <input type="email" id="email" class="input-field" required>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-wrapper">
+                        <label class="input-label">Phone Number</label>
+                        <input type="tel" id="phone" class="input-field" placeholder="+254 7..." required>
+                    </div>
+                    <div class="input-wrapper">
+                        <label class="input-label">National ID / Passport</label>
+                        <input type="text" id="nationalId" class="input-field" placeholder="Enter ID">
+                    </div>
+                </div>
+
+                <div class="input-wrapper" style="margin-bottom: 40px;">
+                    <label class="input-label">KRA PIN</label>
+                    <input type="text" id="kraPin" class="input-field" placeholder="A00..." style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-header">
+                    <h3>Location</h3>
+                    <p>Your primary mailing and residential address.</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-wrapper">
+                        <label class="input-label">P.O. Box</label>
+                        <input type="text" id="box" class="input-field" placeholder="Box 12345">
+                    </div>
+                    <div class="input-wrapper">
+                        <label class="input-label">Postal Code</label>
+                        <input type="text" id="zip" class="input-field" placeholder="00100">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-wrapper">
+                        <label class="input-label">Region / County</label>
+                        <input type="text" id="region" class="input-field" placeholder="Nairobi">
+                    </div>
+                    <div class="input-wrapper">
+                        <label class="input-label">Country</label>
+                        <input type="text" id="country" class="input-field" value="Kenya">
+                    </div>
+                </div>
+
+                <div class="action-footer">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get, update, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let dbPath = '';
+        let redirectUrl = '';
+
+        // 1. AUTH & FETCH
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const dbRef = ref(db);
+
+                // Try Staff
+                let snap = await get(child(dbRef, `Staff/${user.uid}`));
+                if(snap.exists()) {
+                    dbPath = `Staff/${user.uid}`;
+                    const data = snap.val();
+                    redirectUrl = data.role === 'admin' ? "{% url 'admin_dashboard' %}" : "{% url 'insurer_dashboard' %}";
+                    populate(data, data.staffId);
+                    return;
+                }
+
+                // Try Client
+                snap = await get(child(dbRef, `Client/${user.uid}`));
+                if(snap.exists()) {
+                    dbPath = `Client/${user.uid}`;
+                    redirectUrl = "{% url 'client_dashboard' %}";
+                    populate(snap.val(), `UID: ${user.uid.substring(0,6).toUpperCase()}`);
+                    return;
+                }
+
+                alert("Profile not found.");
+            } else {
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+
+        document.getElementById('dashboardLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            if(redirectUrl) window.location.href = redirectUrl;
+        });
+
+        function populate(data, idDisplay) {
+            document.getElementById('dispName').innerText = data.name;
+            document.getElementById('dispRole').innerText = data.role || 'User';
+            document.getElementById('dispId').innerText = idDisplay;
+
+            document.getElementById('fullName').value = data.name || '';
+            document.getElementById('email').value = data.email || '';
+            document.getElementById('phone').value = data.phone || '';
+            document.getElementById('nationalId').value = data.nationalId || '';
+            document.getElementById('kraPin').value = data.kraPin || '';
+
+            if(data.address) {
+                document.getElementById('box').value = data.address.box || '';
+                document.getElementById('zip').value = data.address.zip || '';
+                document.getElementById('region').value = data.address.region || '';
+                document.getElementById('country').value = data.address.country || 'Kenya';
+            }
+
+            if(data.profilePic) {
+                document.getElementById('avatarPreview').src = data.profilePic;
+            }
+        }
+
+        // Image Utils
+        window.previewImage = () => {
+            const file = document.getElementById('pPic').files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => document.getElementById('avatarPreview').src = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // Cloudinary Upload Logic
+        async function uploadToCloudinary(file) {
+            const cloudName = "drx3tzhrk";
+            const uploadPreset = "app_images";
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', uploadPreset);
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Image upload failed");
+            const data = await res.json();
+            return data.secure_url;
+        }
+
+        // Save Changes
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!dbPath) return;
+
+            const btn = document.querySelector('.btn-save');
+            const originalText = btn.innerText;
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            try {
+                let picUrl = document.getElementById('avatarPreview').src;
+                const fileInput = document.getElementById('pPic');
+
+                // Upload new image if selected
+                if(fileInput.files.length > 0) {
+                    btn.innerText = "Uploading Image...";
+                    picUrl = await uploadToCloudinary(fileInput.files[0]);
+                }
+
+                const updates = {
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    nationalId: document.getElementById('nationalId').value,
+                    kraPin: document.getElementById('kraPin').value,
+                    profilePic: picUrl,
+                    address: {
+                        box: document.getElementById('box').value,
+                        zip: document.getElementById('zip').value,
+                        region: document.getElementById('region').value,
+                        country: document.getElementById('country').value
+                    }
+                };
+
+                await update(ref(db, dbPath), updates);
+                alert("Profile updated successfully!");
+                window.location.href = redirectUrl;
+
+            } catch (error) {
+                console.error(error);
+                alert("Error: " + error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

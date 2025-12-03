@@ -1,0 +1,227 @@
+p{
+    text-align: center;
+}
+
+        h1{
+            text-align: center;
+            text-decoration: underline;
+            color: aqua;
+        }
+        p{
+            color:chocolate;
+            font-size: larger;
+            font-family:"Arial Black";
+            font-style: normal;
+            font-weight: bold;
+            text-align: center;
+
+        }
+        a {
+            font-style: italic;
+            font-family: Algerian;
+        }
+        table{
+            width: 100%;
+            border-collapse: collapse;
+            background-color: wheat;
+        }
+        table,th,td{
+            border: 20px solid;
+            text-align: center;
+
+        }
+        td{
+            color: gray;
+
+        }
+        .contact-container{
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .map{
+            flex: 1;
+            min-width: 200px;
+        }
+        .videos{
+            flex: 1.5;
+            min-width: 300px;
+            /*flex-direction: column;*/
+            gap: 15px;
+            padding: 80px 50px ;
+            border: none;
+            border-radius: 80px;
+            margin-right: 50px;
+        }
+        iframe{
+            max-width: 100%;
+
+        }
+        /*signup styles*/
+form{
+    max-width: 600px;
+    margin: auto;
+    background-color: cadetblue;
+    padding: 30px;
+    border-radius: 20px 30px;
+}
+fieldset{
+    border: none;
+    /*padding: 0;*/
+
+}
+h2{
+    font-size: 35px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.form-group{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+    label{
+        font-weight: bold;
+        margin-bottom: 5px;
+
+    }
+input[type="text"], select{
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px 6px;
+    font-size: 1em;
+    width: 100%;
+
+}
+.form-inline{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+;
+}
+input[type="submit"]{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+    padding: 10px;
+    background-color: red;
+    font-weight:bold;
+    font-size: 20px;
+    border-radius: 10px;
+}
+input[type="submit"]:hover {
+    color: white;
+    background-color: black;
+    transition: background-color 0.1s ease;
+
+}
+/*gallery styles*/
+#images{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px;
+
+}
+#images img{
+    width: 250px;
+    height: 250px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+
+}
+#images img:hover{
+    transform: scale(1.05);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.3);
+}
+#uonimages img {
+    width: 100%;
+    height: 500px;
+    border-radius: 20px;
+    justify-content: center;
+    align-items: center;
+    margin: 20px;
+    display: flex;
+    flex-wrap: wrap;
+
+}
+nav {
+    background-color: #1cfc03;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    top: 0;
+
+}
+
+nav ul{
+    display: flex;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li{
+    margin: 0 20px;
+
+}
+nav ul li a{
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 20px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
+}
+nav ul li a:hover{
+    background-color: white;
+    color: black;
+
+}
+.hero-image{
+    background-image: url("https://cdn.pixabay.com/photo/2020/09/19/23/42/architecture-5585737_1280.jpg");
+    width: 1100px;
+    height: 500px;
+    border-radius: 12px;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    margin: auto;
+    background-position: center;
+    background-attachment: fixed;
+    background-size: cover;
+
+
+}
+
+.hero-text{
+    text-align: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 40px;
+    color: #cccccc;
+}
+.register{
+    max-width: 200px;
+    background-color: cadetblue;
+    padding: 30px;
+    border-radius: 20px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+
+
+}

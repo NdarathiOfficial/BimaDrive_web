@@ -1,0 +1,341 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Payment | M-Pesa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- jsPDF for Receipt Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root { --mpesa-green: #43a047; --dark: #0f172a; }
+        body { background: #f0fdf4; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+
+        .payment-card {
+            width: 450px; background: white; border-radius: 30px; padding: 40px;
+            box-shadow: 0 20px 50px rgba(22, 163, 74, 0.1); border: 1px solid #dcfce7;
+            position: relative; overflow: hidden; transition: 0.3s;
+        }
+
+        .mpesa-logo { font-size: 32px; font-weight: 900; color: var(--mpesa-green); text-align: center; letter-spacing: -1px; margin-bottom: 30px; }
+
+        .amount-display {
+            text-align: center; margin-bottom: 30px;
+            background: #f0fdf4; padding: 20px; border-radius: 20px; border: 1px solid #bbf7d0;
+        }
+        .amount-label { font-size: 12px; color: #166534; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .amount-val { font-size: 36px; color: var(--dark); font-weight: 800; margin-top: 5px; }
+
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 10px; }
+
+        .phone-input-wrapper, .code-input-wrapper {
+            display: flex; align-items: center; border: 2px solid #e2e8f0; border-radius: 14px;
+            padding: 0 15px; background: white; transition: 0.2s;
+        }
+        .phone-input-wrapper:focus-within, .code-input-wrapper:focus-within {
+            border-color: var(--mpesa-green); box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.2);
+        }
+
+        .prefix { font-weight: 700; color: #64748b; margin-right: 10px; font-size: 16px; }
+
+        .styled-input {
+            width: 100%; border: none; outline: none; font-size: 16px; font-weight: 600;
+            color: var(--dark); padding: 16px 0; background: transparent; text-transform: uppercase;
+        }
+
+        .btn-pay {
+            width: 100%; padding: 18px; border-radius: 16px; border: none; cursor: pointer;
+            background: var(--mpesa-green); color: white; font-size: 16px; font-weight: 700;
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.3); transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(22, 163, 74, 0.4); }
+        .btn-pay:disabled { background: #a5d6a7; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Sections */
+        .step-section { display: none; animation: fadeUp 0.3s ease; }
+        .step-section.active { display: block; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Success Message */
+        .success-view { text-align: center; display: none; }
+        .success-icon { font-size: 60px; color: #22c55e; margin-bottom: 20px; }
+
+        .btn-download {
+            width: 100%; padding: 15px; border-radius: 14px; border: 2px solid #22c55e; cursor: pointer;
+            background: white; color: #22c55e; font-weight: 700; margin-top: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-download:hover { background: #f0fdf4; }
+
+        .back-link { position: absolute; top: 20px; left: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; text-decoration: none; }
+        .back-link:hover { color: var(--dark); }
+
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid var(--mpesa-green);
+            border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="payment-card">
+        <a href="{% url 'cover' %}" class="back-link"><i class="bi bi-arrow-left-circle-fill"></i></a>
+        <div class="mpesa-logo">M-PESA</div>
+
+        <div class="amount-display">
+            <div class="amount-label">Amount Payable</div>
+            <div class="amount-val" id="payAmount">KES ---</div>
+        </div>
+
+        <!-- STEP 1: Enter Phone -->
+        <div id="step1" class="step-section active">
+            <div class="input-group">
+                <label>M-Pesa Phone Number</label>
+                <div class="phone-input-wrapper">
+                    <span class="prefix">+254</span>
+                    <input type="tel" id="phoneNumber" class="styled-input" placeholder="7XXXXXXXX">
+                </div>
+            </div>
+            <button class="btn-pay" id="btnInitPay">
+                Pay Now <i class="bi bi-arrow-right-circle-fill"></i>
+            </button>
+        </div>
+
+        <!-- STEP 2: Enter Code -->
+        <div id="step2" class="step-section">
+            <div style="text-align: center; margin-bottom: 20px; color: #334155;">
+                <i class="bi bi-phone-vibrate" style="font-size: 40px; color: var(--mpesa-green);"></i>
+                <p style="font-size: 14px; margin-top: 10px;">STK Push Sent! Check your phone and enter PIN.</p>
+            </div>
+            <div class="input-group">
+                <label>Enter M-Pesa Transaction Code</label>
+                <div class="code-input-wrapper">
+                    <input type="text" id="mpesaCode" class="styled-input" placeholder="e.g. RC12345678" maxlength="10">
+                </div>
+                <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Code received in SMS (e.g., QKH...)</p>
+            </div>
+            <button class="btn-pay" id="btnVerify">
+                Verify & Complete <i class="bi bi-check-lg"></i>
+            </button>
+        </div>
+
+        <!-- STEP 3: Success -->
+        <div id="step3" class="step-section success-view">
+            <i class="bi bi-check-circle-fill success-icon"></i>
+            <h2 style="margin: 0 0 10px; color: #0f172a;">Payment Confirmed!</h2>
+            <p style="color: #64748b; font-size: 14px;">Your policy has been activated.</p>
+
+            <button class="btn-download" onclick="generateReceipt()">
+                <i class="bi bi-file-earmark-pdf"></i> Download Receipt
+            </button>
+
+            <a href="{% url 'client_dashboard' %}" style="display: block; margin-top: 20px; text-decoration: none; color: #64748b; font-size: 13px;">Return to Dashboard</a>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get, push, set, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        const amount = localStorage.getItem('premiumAmount') || '0';
+        const planName = localStorage.getItem('selectedPlan') || 'Insurance';
+        let userData = { name: 'Client', email: '' };
+
+        document.getElementById('payAmount').innerText = `KES ${Number(amount).toLocaleString()}`;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const dbRef = ref(db);
+                try {
+                    const snapshot = await get(child(dbRef, `Client/${user.uid}`));
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        userData = data;
+                        let phone = data.phone || '';
+                        phone = phone.replace(/^\+254/, '').replace(/^254/, '').replace(/^0/, '');
+                        document.getElementById('phoneNumber').value = phone;
+                    }
+                } catch (e) { console.error(e); }
+            } else {
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+
+        // STEP 1: Initiate STK Push (Strict Backend Requirement)
+        document.getElementById('btnInitPay').addEventListener('click', async () => {
+            const phone = document.getElementById('phoneNumber').value;
+            if (phone.length < 9) { alert("Invalid Phone Number"); return; }
+
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const btn = document.getElementById('btnInitPay');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="loader"></div>';
+            btn.disabled = true;
+
+            const formattedPhone = `254${phone.replace(/^0/, '')}`;
+
+            try {
+                // Attempt Real Backend Call
+                // NOTE: This will FAIL if your Django server is not running at /stk_push/
+                const response = await fetch("/stk_push/", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: formattedPhone,
+                        amount: amount,
+                        userId: user.uid,
+                        plan: planName
+                    })
+                });
+
+                // Check content type to ensure we got JSON (and not an HTML 404 page)
+                const contentType = response.headers.get("content-type");
+                if (!response.ok || !contentType || !contentType.includes("application/json")) {
+                    throw new Error(`Backend Connection Failed (${response.status}). Ensure Django server is running and route is valid.`);
+                }
+
+                const result = await response.json();
+
+                if (result.ResponseCode === "0") {
+                    alert("STK Push Sent! Please check your phone.");
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step2').classList.add('active');
+
+                    // Real-time listener for backend callback updates
+                    const checkoutId = result.CheckoutRequestID;
+                    const statusRef = ref(db, `PendingTransactions/${checkoutId}`);
+
+                    onValue(statusRef, (snapshot) => {
+                         const data = snapshot.val();
+                         if (data) {
+                             if (data.status === 'Completed') {
+                                 // Auto-fill code if backend sends it
+                                 document.getElementById('mpesaCode').value = data.mpesaCode;
+                                 alert("Payment Confirmed by Network!");
+                             } else if (data.status === 'Failed') {
+                                 alert("Payment Failed: " + (data.reason || "Transaction cancelled"));
+                                 location.reload();
+                             }
+                         }
+                    });
+
+                } else {
+                    throw new Error(result.errorMessage || "STK Push Failed");
+                }
+
+            } catch (error) {
+                console.error("Payment Error:", error);
+                alert("System Error: " + error.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // STEP 2: Verify & Save
+        document.getElementById('btnVerify').addEventListener('click', async () => {
+            const code = document.getElementById('mpesaCode').value.trim().toUpperCase();
+
+            if (code.length < 10) {
+                alert("Please enter a valid M-Pesa Transaction Code");
+                return;
+            }
+
+            const btn = document.getElementById('btnVerify');
+            btn.innerHTML = '<div class="loader"></div> Verifying...';
+            btn.disabled = true;
+
+            try {
+                const user = auth.currentUser;
+
+                const paymentData = {
+                    userId: user.uid,
+                    userName: userData.name,
+                    amount: amount,
+                    phoneNumber: document.getElementById('phoneNumber').value,
+                    mpesaCode: code,
+                    status: "Completed",
+                    plan: planName,
+                    timestamp: new Date().toISOString()
+                };
+
+                await set(push(ref(db, 'Payments')), paymentData);
+                await set(push(ref(db, 'Receipts')), paymentData);
+
+                document.getElementById('step2').classList.remove('active');
+                document.getElementById('step3').classList.add('active');
+                document.getElementById('transCode').innerText = code;
+
+            } catch (error) {
+                console.error(error);
+                alert("System Error: " + error.message);
+                btn.innerHTML = 'Verify & Complete';
+                btn.disabled = false;
+            }
+        });
+
+        // STEP 3: Generate Receipt
+        window.generateReceipt = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const code = document.getElementById('mpesaCode').value.toUpperCase();
+            const date = new Date().toLocaleString();
+
+            doc.setFillColor(67, 160, 71);
+            doc.rect(0, 0, 210, 40, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text("BimaDrive Receipt", 105, 25, null, null, "center");
+
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.text("Payment Confirmation", 105, 55, null, null, "center");
+
+            doc.setFontSize(10);
+            doc.text(`Transaction Ref: ${code}`, 20, 70);
+            doc.text(`Date: ${date}`, 20, 80);
+            doc.text(`Payer: ${userData.name}`, 20, 90);
+            doc.text(`Phone: +254${document.getElementById('phoneNumber').value}`, 20, 100);
+
+            doc.setLineWidth(0.5);
+            doc.line(20, 110, 190, 110);
+
+            doc.setFontSize(14);
+            doc.text(`Policy: ${planName} Cover`, 20, 125);
+            doc.text(`Amount Paid: KES ${Number(amount).toLocaleString()}`, 20, 135);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text("Thank you for using BimaDrive.", 105, 160, null, null, "center");
+
+            doc.save(`Receipt_${code}.pdf`);
+        };
+
+    </script>
+</body>
+</html>

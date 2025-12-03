@@ -1,0 +1,426 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BimaDrive | Insurer Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #4e37b5;
+            --secondary: #46bbf4;
+            --sidebar-bg: #1a1a2e;
+            --bg-body: #f3f5f9;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body {
+            background: var(--bg-body); display: flex; min-height: 100vh;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0.05) 0, transparent 50%),
+                              radial-gradient(at 50% 0%, hsla(225,39%,30%,0.05) 0, transparent 50%),
+                              radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px; background: var(--sidebar-bg); padding: 40px 30px;
+            position: fixed; height: 100vh; color: white; display: flex; flex-direction: column; z-index: 100;
+            box-shadow: 5px 0 30px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 24px; font-weight: 700; color: white; margin-bottom: 50px; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .menu-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+            color: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 10px;
+            transition: 0.3s; font-weight: 500; cursor: pointer; font-size: 14px;
+        }
+        .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid #46bbf4; }
+
+        /* Main Content */
+        .main-content { margin-left: 280px; flex: 1; padding: 40px; width: calc(100% - 280px); }
+
+        /* Header */
+        .admin-header {
+            background: #1a1a2e; height: 200px; padding: 40px 50px; color: white;
+            position: relative; overflow: hidden; border-radius: 24px; margin-bottom: -80px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .admin-header::after {
+            content: ''; position: absolute; top: -50%; right: -10%; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(70, 187, 244, 0.2) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none;
+        }
+
+        /* Stats Cards */
+        .stats-strip {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;
+            padding: 0 20px; position: relative; z-index: 10; margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--glass-bg); padding: 25px; border-radius: 20px;
+            border: var(--glass-border); box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 20px; backdrop-filter: blur(10px);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .stat-icon {
+            width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px;
+        }
+        .stat-data h4 { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0; line-height: 1; }
+        .stat-data span { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Content Panels */
+        .content-area { display: flex; flex-direction: column; gap: 30px; }
+        .panel {
+            background: white; border-radius: 24px; padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .panel-header {
+            display: flex; justify-content: space-between; margin-bottom: 25px; align-items: center;
+            border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;
+        }
+        .panel h3 { font-size: 18px; color: #1e293b; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; }
+
+        /* Search */
+        .search-box {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 15px;
+            display: flex; align-items: center; width: 250px;
+        }
+        .search-box input { border: none; outline: none; width: 100%; margin-left: 10px; font-size: 13px; background: transparent; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        th { text-align: left; color: #94a3b8; font-size: 11px; text-transform: uppercase; padding: 10px 20px; font-weight: 700; }
+        td { background: #fff; padding: 16px 20px; font-size: 14px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; }
+        td:first-child { border-left: 1px solid #f1f5f9; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        td:last-child { border-right: 1px solid #f1f5f9; border-top-right-radius: 12px; border-bottom-right-radius: 12px; text-align: right; }
+        tr:hover td { background: #fcfcfc; border-color: #e2e8f0; }
+
+        .status-pill { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .status-pending { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; }
+        .status-approved { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+        .status-rejected { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+
+        .btn-action {
+            text-decoration: none; color: #4e37b5; background: #eef2ff; padding: 8px 18px;
+            border-radius: 8px; font-size: 12px; font-weight: 600; transition: 0.2s; border: 1px solid #e0e7ff; cursor: pointer;
+        }
+        .btn-action:hover { background: #4e37b5; color: white; border-color: #4e37b5; }
+
+        /* Queue List */
+        .queue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .queue-item {
+            display: flex; align-items: center; gap: 15px; padding: 20px; background: #fff;
+            border: 1px solid #f1f5f9; border-radius: 16px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .queue-item:hover { border-color: #46bbf4; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .v-icon {
+            width: 40px; height: 40px; background: #e0f2fe; color: #0ea5e9; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .v-info h4 { margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; }
+        .v-info p { margin: 2px 0 0; font-size: 11px; color: #64748b; }
+
+        /* View Management */
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <a href="#" class="logo"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
+        <div class="menu-item active" onclick="switchView('overview', this)"><i class="bi bi-speedometer2"></i> Overview</div>
+        <a href="{% url 'profile' %}" class="menu-item" style="text-decoration:none;"><i class="bi bi-person-circle"></i> My Profile</a>
+        <div class="menu-item" onclick="switchView('clients', this)"><i class="bi bi-people-fill"></i> Clients</div>
+        <div class="menu-item" onclick="switchView('valuations', this)"><i class="bi bi-camera-fill"></i> Asset Valuations</div>
+        <div class="menu-item" onclick="switchView('claims', this)"><i class="bi bi-file-earmark-medical-fill"></i> Claims Review</div>
+        <a href="#" id="logoutBtn" class="menu-item" style="margin-top: auto; color: #ff6b6b;"><i class="bi bi-box-arrow-left"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="admin-header">
+            <div>
+                <h1 style="font-size: 28px; margin: 0;" id="greetingText">Dashboard</h1>
+                <p style="opacity: 0.8; font-size: 14px; margin-top: 5px;" id="staffInfo">Loading...</p>
+            </div>
+        </div>
+
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#eef2ff; color:#4f46e5;"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-data"><h4 id="countClients">0</h4><span>Clients</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #ea580c; background: #fff7ed;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="stat-data"><h4 id="countClaims">0</h4><span>Pending Claims</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #db2777; background: #fce7f3;"><i class="bi bi-camera-fill"></i></div>
+                <div class="stat-data"><h4 id="countValuations">0</h4><span>Valuations</span></div>
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            <!-- 1. OVERVIEW SECTION -->
+            <div id="overview" class="view-section active">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="bi bi-activity"></i> Recent Activity</h3>
+                        <div style="font-size:12px; color:#94a3b8;">Real-time feed</div>
+                    </div>
+                    <div style="text-align:center; color:#64748b; padding:30px;">
+                        Select a category from the sidebar to view detailed records.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. CLIENTS SECTION -->
+            <div id="clients" class="view-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="bi bi-people"></i> Client Database</h3>
+                        <div class="search-box">
+                            <i class="bi bi-search" style="color:#94a3b8;"></i>
+                            <input type="text" placeholder="Search clients..." onkeyup="filterTable('clientsTable', this.value)">
+                        </div>
+                    </div>
+                    <table id="clientsTable">
+                        <thead><tr><th>Name</th><th>Email</th><th>Joined Date</th><th>Status</th></tr></thead>
+                        <tbody><tr><td colspan="4" align="center">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. VALUATIONS SECTION -->
+            <div id="valuations" class="view-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="bi bi-camera"></i> Valuation Requests</h3>
+                        <div class="search-box">
+                            <i class="bi bi-search" style="color:#94a3b8;"></i>
+                            <input type="text" placeholder="Search reg no..." onkeyup="filterQueue('valuationList', this.value)">
+                        </div>
+                    </div>
+                    <div class="queue-grid" id="valuationList">
+                        <!-- JS Injected -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CLAIMS SECTION -->
+            <div id="claims" class="view-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="bi bi-file-earmark-medical"></i> Accident Claims</h3>
+                        <div class="search-box">
+                            <i class="bi bi-search" style="color:#94a3b8;"></i>
+                            <input type="text" placeholder="Search location/cause..." onkeyup="filterTable('claimsTable', this.value)">
+                        </div>
+                    </div>
+                    <table id="claimsTable">
+                        <thead><tr><th>Date</th><th>Vehicle Details</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody><tr><td colspan="5" align="center">Loading claims...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, onValue, get, child, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Load Staff Info
+                const staffRef = ref(db, `Staff/${user.uid}`);
+                onValue(staffRef, (snap) => {
+                    const data = snap.val();
+                    if(data) {
+                        const hour = new Date().getHours();
+                        const greet = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+                        document.getElementById('greetingText').innerText = `${greet}, ${data.name.split(' ')[0]}`;
+                        document.getElementById('staffInfo').innerText = `Staff ID: ${data.staffId || '---'}`;
+                    }
+                });
+                loadAllData();
+            } else {
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+
+        function loadAllData() {
+            // 1. Clients
+            onValue(ref(db, 'Client'), (snap) => {
+                const list = [];
+                if (snap.exists()) {
+                     Object.values(snap.val()).forEach(c => list.push(c));
+                }
+                document.getElementById('countClients').innerText = list.length;
+                renderClients(list);
+            });
+
+            // 2. Valuations
+            onValue(ref(db, 'valuations'), (snap) => {
+                const list = [];
+                if (snap.exists()) {
+                    Object.entries(snap.val()).forEach(([k, v]) => list.push({id: k, ...v}));
+                }
+                list.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                document.getElementById('countValuations').innerText = list.length;
+                renderValuations(list);
+            });
+
+            // 3. Claims
+            onValue(ref(db, 'accidentReports'), (snap) => {
+                const list = [];
+                if (snap.exists()) {
+                    Object.entries(snap.val()).forEach(([k, v]) => list.push({id: k, ...v}));
+                }
+                list.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                document.getElementById('countClaims').innerText = list.length;
+                renderClaims(list);
+            });
+        }
+
+        function renderClients(list) {
+            const tbody = document.querySelector('#clientsTable tbody');
+            tbody.innerHTML = list.length ? list.map(c => `
+                <tr>
+                    <td style="font-weight:600; color:#1e293b;">${c.name}</td>
+                    <td>${c.email}</td>
+                    <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                    <td><span style="background:#dcfce7; color:#15803d; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Active</span></td>
+                </tr>
+            `).join('') : '<tr><td colspan="4" align="center">No clients found.</td></tr>';
+        }
+
+        function renderValuations(list) {
+            const container = document.getElementById('valuationList');
+            if (list.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px; color:#94a3b8;">No valuations found.</div>';
+                return;
+            }
+            container.innerHTML = list.map(v => {
+                let statusColor = v.status === 'Completed' ? '#16a34a' : '#ea580c';
+                let statusBg = v.status === 'Completed' ? '#dcfce7' : '#fff7ed';
+                return `
+                <div class="queue-item">
+                    <div class="v-icon"><i class="bi bi-car-front"></i></div>
+                    <div class="v-info" style="flex:1;">
+                        <h4>${v.reg_plate || 'Unknown'}</h4>
+                        <p>${v.owner || 'Client'}</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="background:${statusBg}; color:${statusColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">${v.status || 'Pending'}</span>
+                        <button class="btn-action" style="margin-top:5px; display:block; width:100%;" onclick="navTo('valuation', '${v.id}')">Assess</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function renderClaims(list) {
+            const tbody = document.querySelector('#claimsTable tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" align="center">No claims found.</td></tr>';
+                return;
+            }
+
+            // We need to generate rows first, then fetch vehicle data async
+            tbody.innerHTML = '';
+
+            for (const c of list) {
+                let statusClass = c.status === 'Approved' ? 'status-approved' : (c.status === 'Rejected' ? 'status-rejected' : 'status-pending');
+
+                // Create Row
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(c.timestamp).toLocaleDateString()}</td>
+                    <td class="vehicle-cell">Loading info...</td>
+                    <td>${c.location}</td>
+                    <td><span class="status-pill ${statusClass}">${c.status || 'Pending'}</span></td>
+                    <td><button class="btn-action" onclick="navTo('claim', '${c.id}')">Review</button></td>
+                `;
+                tbody.appendChild(tr);
+
+                // Fetch Vehicle Info
+                try {
+                    const vSnapshot = await get(query(ref(db, 'Vehicles'), orderByChild('ownerId'), equalTo(c.userId)));
+                    if (vSnapshot.exists()) {
+                        const vData = Object.values(vSnapshot.val())[0];
+                        tr.querySelector('.vehicle-cell').innerHTML = `
+                            <div style="font-weight:600; color:#1e293b;">${vData.model}</div>
+                            <div style="font-size:11px; color:#64748b;">${vData.regPlate} • ${vData.ownerName}</div>
+                        `;
+                    } else {
+                        tr.querySelector('.vehicle-cell').innerText = 'Vehicle not found';
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        // Navigation & Filters
+        window.switchView = (viewId, element) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        };
+
+        window.filterTable = (tableId, text) => {
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            text = text.toLowerCase();
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(text) ? '' : 'none';
+            });
+        };
+
+        window.filterQueue = (containerId, text) => {
+            const items = document.querySelectorAll(`#${containerId} .queue-item`);
+            text = text.toLowerCase();
+            items.forEach(item => {
+                item.style.display = item.innerText.toLowerCase().includes(text) ? 'flex' : 'none';
+            });
+        };
+
+        window.navTo = (type, id) => {
+            if (type === 'claim') {
+                localStorage.setItem('currentClaimId', id);
+                window.location.href = "{% url 'insurer_claims' %}";
+            } else {
+                localStorage.setItem('currentValId', id);
+                window.location.href = "{% url 'insurer_valuation' %}";
+            }
+        };
+
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut(auth).then(() => window.location.href = "{% url 'login' %}");
+        });
+    </script>
+
+</body>
+</html>

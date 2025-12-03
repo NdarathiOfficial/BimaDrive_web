@@ -1,0 +1,441 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vehicle Valuation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #4e37b5;
+            --secondary: #46bbf4;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+        }
+
+        body {
+            background: #f0f4f8; font-family: 'Poppins', sans-serif;
+            display: flex; justify-content: center; padding: 60px 20px; min-height: 100vh;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                              radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
+                              radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-size: cover; background-attachment: fixed;
+        }
+
+        .main-card {
+            width: 1000px; background: var(--glass-bg); backdrop-filter: blur(20px);
+            border-radius: 30px; border: var(--glass-border);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.2);
+            padding: 60px; position: relative; overflow: hidden;
+        }
+
+        /* Decorative Header */
+        .header-section {
+            text-align: center; margin-bottom: 40px; position: relative;
+        }
+        .badge {
+            background: rgba(78, 55, 181, 0.1); color: var(--primary);
+            padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px;
+        }
+        h1 { font-size: 32px; color: var(--text-dark); margin: 0 0 10px; font-weight: 800; }
+        p.sub-text { color: var(--text-light); font-size: 14px; max-width: 600px; margin: 0 auto; }
+
+        /* Form Layout */
+        .form-section-title {
+            font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8;
+            font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; margin-top: 10px;
+        }
+        .form-section-title::after { content: ''; height: 1px; background: #e2e8f0; flex: 1; }
+
+        /* Inputs - Fixed & Compact Layout */
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px 40px; /* Vertical gap 30px, Horizontal gap 40px */
+            margin-bottom: 40px;
+        }
+        .floating-group { position: relative; }
+
+        .floating-group input {
+            width: 100%; padding: 12px 15px; /* Smaller padding for compactness */
+            border: 1px solid #e2e8f0; border-radius: 10px;
+            background: white; font-size: 14px; font-weight: 500; color: var(--text-dark);
+            transition: 0.3s; outline: none; box-sizing: border-box; /* Prevent overflow */
+        }
+        .floating-group input:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(70, 187, 244, 0.1); }
+
+        /* Readonly State */
+        .floating-group input:read-only {
+            background: #f8fafc; color: #64748b; border-color: #e2e8f0; cursor: not-allowed;
+        }
+
+        .floating-group label {
+            position: absolute; top: -9px; left: 12px; background: white; padding: 0 6px;
+            font-size: 11px; font-weight: 600; color: var(--primary); border-radius: 4px;
+            z-index: 2;
+        }
+
+        /* Viewfinder Upload Grid */
+        .photo-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px;
+        }
+
+        .upload-slot {
+            height: 180px; border: 2px dashed #cbd5e1; border-radius: 16px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255,255,255,0.6); position: relative; overflow: hidden;
+        }
+        .upload-slot:hover {
+            border-color: var(--secondary); background: white;
+            transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        }
+
+        .slot-content { text-align: center; transition: 0.3s; z-index: 2; pointer-events: none; }
+        .icon-circle {
+            width: 45px; height: 45px; background: #e0f2fe; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--secondary); margin: 0 auto 10px; transition: 0.3s;
+        }
+        .upload-slot:hover .icon-circle { background: var(--secondary); color: white; transform: scale(1.1); }
+
+        .slot-title { font-size: 13px; font-weight: 600; color: var(--text-dark); display: block; }
+        .slot-desc { font-size: 10px; color: var(--text-light); }
+
+        /* Preview Image */
+        .preview-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+            opacity: 0; transition: 0.5s; z-index: 1;
+        }
+        .has-image .preview-img { opacity: 1; }
+        .has-image .slot-content { opacity: 0; }
+
+        /* Overlay on hover for filled slots */
+        .has-image::after {
+            content: 'Change Photo'; position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.7); color: white; font-size: 12px; padding: 8px;
+            text-align: center; transform: translateY(100%); transition: 0.3s; z-index: 3;
+        }
+        .has-image:hover::after { transform: translateY(0); }
+
+        /* Buttons */
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .back-link {
+            color: var(--text-light); text-decoration: none; font-weight: 600; font-size: 14px;
+            display: flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .back-link:hover { color: var(--text-dark); }
+
+        .btn-submit {
+            padding: 16px 40px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px;
+            cursor: pointer; box-shadow: 0 10px 25px rgba(78, 55, 181, 0.3); transition: 0.3s;
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(78, 55, 181, 0.4); }
+        .btn-submit:disabled { opacity: 0.7; cursor: wait; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-card">
+        <div class="header-section">
+            <span class="badge">AI-Assisted Valuation</span>
+            <h1>Vehicle Assessment</h1>
+            <p class="sub-text">We've pre-filled your vehicle details. Please verify and upload clear photos for inspection.</p>
+        </div>
+
+        <form id="valForm">
+            <div class="form-section-title">1. Vehicle Identification</div>
+
+            <div class="input-grid">
+                <div class="floating-group">
+                    <label>Registration Plate</label>
+                    <input type="text" id="reg_plate" placeholder="Fetching..." readonly>
+                </div>
+                <div class="floating-group">
+                    <label>Registered Owner</label>
+                    <input type="text" id="owner" placeholder="Fetching..." readonly>
+                </div>
+                <div class="floating-group">
+                    <label>Body Color</label>
+                    <input type="text" id="color" placeholder="Fetching..." readonly>
+                </div>
+                <div class="floating-group">
+                    <label>Logbook Number</label>
+                    <!-- Logbook is entered manually as it might not be in initial reg -->
+                    <input type="text" id="logbook_no" placeholder="Enter Serial No." required>
+                </div>
+            </div>
+
+            <div class="form-section-title">2. Visual Inspection (9 Photos Required)</div>
+
+            <div class="photo-grid" id="photoContainer">
+                <!-- Exterior -->
+                <label class="upload-slot" id="slot1">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-car-front-fill"></i></div>
+                        <span class="slot-title">Front View</span>
+                        <span class="slot-desc">License plate visible</span>
+                    </div>
+                    <img id="p1" class="preview-img">
+                    <input type="file" data-key="imgFront" onchange="preview(this, 'p1', 'slot1')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot2">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-car-front"></i></div>
+                        <span class="slot-title">Rear View</span>
+                        <span class="slot-desc">License plate visible</span>
+                    </div>
+                    <img id="p2" class="preview-img">
+                    <input type="file" data-key="imgRear" onchange="preview(this, 'p2', 'slot2')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot3">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-arrow-right-square"></i></div>
+                        <span class="slot-title">Driver Side</span>
+                        <span class="slot-desc">Full profile</span>
+                    </div>
+                    <img id="p3" class="preview-img">
+                    <input type="file" data-key="imgDriver" onchange="preview(this, 'p3', 'slot3')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot4">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-arrow-left-square"></i></div>
+                        <span class="slot-title">Passenger Side</span>
+                        <span class="slot-desc">Full profile</span>
+                    </div>
+                    <img id="p4" class="preview-img">
+                    <input type="file" data-key="imgPass" onchange="preview(this, 'p4', 'slot4')" hidden>
+                </label>
+
+                <!-- Interior & Details -->
+                <label class="upload-slot" id="slot5">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-grid-1x2"></i></div>
+                        <span class="slot-title">Dashboard</span>
+                        <span class="slot-desc">Wide angle interior</span>
+                    </div>
+                    <img id="p5" class="preview-img">
+                    <input type="file" data-key="imgInterior" onchange="preview(this, 'p5', 'slot5')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot6">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-speedometer2"></i></div>
+                        <span class="slot-title">Odometer</span>
+                        <span class="slot-desc">Current mileage reading</span>
+                    </div>
+                    <img id="p6" class="preview-img">
+                    <input type="file" data-key="imgOdo" onchange="preview(this, 'p6', 'slot6')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot7">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-layers-half"></i></div>
+                        <span class="slot-title">Engine Bay</span>
+                        <span class="slot-desc">Bonnet open</span>
+                    </div>
+                    <img id="p7" class="preview-img">
+                    <input type="file" data-key="imgBonnet" onchange="preview(this, 'p7', 'slot7')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot8">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-box-seam"></i></div>
+                        <span class="slot-title">Trunk</span>
+                        <span class="slot-desc">Empty trunk view</span>
+                    </div>
+                    <img id="p8" class="preview-img">
+                    <input type="file" data-key="imgTrunk" onchange="preview(this, 'p8', 'slot8')" hidden>
+                </label>
+
+                <label class="upload-slot" id="slot9">
+                    <div class="slot-content">
+                        <div class="icon-circle"><i class="bi bi-file-earmark-text"></i></div>
+                        <span class="slot-title">Logbook</span>
+                        <span class="slot-desc">Clear scan/photo</span>
+                    </div>
+                    <img id="p9" class="preview-img">
+                    <input type="file" data-key="imgLogbook" onchange="preview(this, 'p9', 'slot9')" hidden>
+                </label>
+            </div>
+
+            <div class="action-bar">
+                <a href="{% url 'client_dashboard' %}" class="back-link"><i class="bi bi-arrow-left"></i> Cancel</a>
+                <button type="submit" class="btn-submit">Submit Assessment <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function preview(input, imgId, slotId) {
+            if (input.files && input.files[0]) {
+                const img = document.getElementById(imgId);
+                const slot = document.getElementById(slotId);
+
+                img.src = URL.createObjectURL(input.files[0]);
+                slot.classList.add('has-image');
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, push, set, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // --- CLOUDINARY UPLOAD FUNCTION ---
+        async function uploadToCloudinary(file) {
+            const cloudName = "drx3tzhrk";
+            const uploadPreset = "app_images";
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', uploadPreset);
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Image upload failed");
+            const data = await res.json();
+            return data.secure_url;
+        }
+
+        // On Load: Fetch Vehicle Data
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Fetch vehicle linked to user
+                const vRef = ref(db, 'Vehicles');
+                const q = query(vRef, orderByChild('ownerId'), equalTo(user.uid));
+
+                try {
+                    const snapshot = await get(q);
+                    if (snapshot.exists()) {
+                        const vehicles = snapshot.val();
+                        // Get first vehicle
+                        const key = Object.keys(vehicles)[0];
+                        const car = vehicles[key];
+
+                        // Populate and Lock fields
+                        document.getElementById('reg_plate').value = car.regPlate || '';
+                        document.getElementById('owner').value = car.ownerName || '';
+                        document.getElementById('color').value = car.color || '';
+                    } else {
+                        alert("You must register a vehicle before starting valuation.");
+                        window.location.href = "{% url 'add_vehicle' %}";
+                    }
+                } catch (error) {
+                    console.error(error);
+                    // Fallback client-side filtering if indexing fails
+                    const snap = await get(ref(db, 'Vehicles'));
+                    if (snap.exists()) {
+                        const all = snap.val();
+                        let found = false;
+                        for(let k in all) {
+                            if(all[k].ownerId === user.uid) {
+                                document.getElementById('reg_plate').value = all[k].regPlate;
+                                document.getElementById('owner').value = all[k].ownerName;
+                                document.getElementById('color').value = all[k].color;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found) {
+                            alert("Please register a vehicle first.");
+                            window.location.href = "{% url 'add_vehicle' %}";
+                        }
+                    }
+                }
+            } else {
+                alert('Please login first');
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+
+        // Form Submit
+        document.getElementById('valForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+
+            const btn = document.querySelector('.btn-submit');
+            btn.innerHTML = 'Uploading <span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+
+            try {
+                const inputs = document.querySelectorAll('input[type="file"]');
+                let images = {};
+                let count = 0;
+                const uploadPromises = [];
+
+                for (let input of inputs) {
+                    if (input.files[0]) {
+                        count++;
+                        // Parallel uploads using uploadToCloudinary (FIXED)
+                        uploadPromises.push(
+                            uploadToCloudinary(input.files[0])
+                                .then(url => { images[input.dataset.key] = url; })
+                        );
+                    }
+                }
+
+                if (count < 9) {
+                    alert("Please upload all 9 required photos.");
+                    btn.innerHTML = 'Submit Assessment <i class="bi bi-arrow-right"></i>';
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Wait for all uploads
+                await Promise.all(uploadPromises);
+
+                const data = {
+                    reg_plate: document.getElementById('reg_plate').value,
+                    logbook_no: document.getElementById('logbook_no').value,
+                    owner: document.getElementById('owner').value,
+                    color: document.getElementById('color').value,
+                    userId: user.uid,
+                    status: 'Pending',
+                    timestamp: new Date().toISOString(),
+                    ...images
+                };
+
+                const newRef = push(ref(db, 'valuations'));
+                await set(newRef, data);
+
+                alert('Valuation Request Sent Successfully!');
+                window.location.href = "{% url 'client_dashboard' %}";
+            } catch (error) {
+                console.error(error);
+                alert('Error: ' + error.message);
+                btn.innerHTML = 'Submit Assessment <i class="bi bi-arrow-right"></i>';
+                btn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+</html>

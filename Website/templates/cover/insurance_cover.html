@@ -1,0 +1,244 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Insurance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #0ea5e9;
+            --dark: #0f172a;
+            --surface: #ffffff;
+        }
+
+        body {
+            background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif;
+            display: flex; flex-direction: column; align-items: center; padding: 60px 20px;
+            min-height: 100vh;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px); background-size: 24px 24px;
+        }
+
+        .back-link {
+            position: absolute; top: 30px; left: 30px; text-decoration: none;
+            color: #64748b; font-weight: 600; font-size: 14px;
+            background: white; padding: 8px 16px; border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
+        }
+        .back-link:hover { color: var(--primary); transform: translateX(-3px); }
+
+        .header { text-align: center; margin-bottom: 60px; max-width: 600px; }
+        .header h1 { font-size: 32px; font-weight: 800; color: var(--dark); margin: 0 0 15px 0; letter-spacing: -0.5px; }
+        .header p { color: #64748b; font-size: 15px; line-height: 1.6; }
+
+        .val-badge {
+            background: #e0e7ff; color: var(--primary); padding: 8px 20px;
+            border-radius: 30px; font-weight: 700; font-size: 18px; display: inline-block;
+            margin-top: 10px; border: 1px solid #c7d2fe;
+        }
+
+        /* Cards */
+        .pricing-wrapper {
+            display: flex; justify-content: center; gap: 30px; align-items: center; flex-wrap: wrap;
+        }
+
+        .plan-card {
+            background: var(--surface); width: 360px; border-radius: 24px; padding: 40px;
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); transition: 0.3s;
+            position: relative; border: 1px solid #e2e8f0;
+        }
+        .plan-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); }
+
+        /* Premium Highlight */
+        .plan-card.premium {
+            border: 2px solid var(--primary); transform: scale(1.05);
+            box-shadow: 0 25px 50px -10px rgba(79, 70, 229, 0.15); z-index: 2;
+        }
+        .plan-card.premium:hover { transform: scale(1.05) translateY(-10px); }
+
+        .rec-badge {
+            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 6px 16px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .plan-title { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+        .plan-price { font-size: 42px; color: var(--dark); font-weight: 800; margin-bottom: 30px; letter-spacing: -1px; }
+        .plan-price span { font-size: 16px; color: #94a3b8; font-weight: 500; }
+
+        ul { list-style: none; padding: 0; margin-bottom: 40px; text-align: left; }
+        li { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 14px; color: #475569; font-weight: 500; }
+        .icon-check { color: #10b981; font-size: 18px; flex-shrink: 0; }
+        .icon-x { color: #cbd5e1; font-size: 18px; flex-shrink: 0; }
+        .text-mute { color: #cbd5e1; text-decoration: line-through; }
+
+        /* Buttons */
+        .btn {
+            width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer;
+            border: none; font-size: 14px; transition: 0.2s;
+        }
+        .btn-basic { background: #f1f5f9; color: #475569; }
+        .btn-basic:hover { background: #e2e8f0; color: var(--dark); }
+
+        .btn-pro { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
+        .btn-pro:hover { box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; background: #eee; color: #aaa; box-shadow: none; transform: none; }
+
+        .debug-info {
+            margin-top: 50px; font-size: 12px; color: #94a3b8; font-family: monospace;
+            background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee;
+        }
+
+    </style>
+</head>
+<body>
+
+    <a href="{% url 'client_dashboard' %}" class="back-link"><i class="bi bi-arrow-left"></i> Dashboard</a>
+
+    <div class="header">
+        <h1>Choose Your Protection</h1>
+        <p>Based on your vehicle's approved market valuation.</p>
+        <div id="valuationDisplay" class="val-tag">Scanning Database...</div>
+    </div>
+
+    <div class="pricing-wrapper">
+        <!-- Standard Plan -->
+        <div class="plan-card">
+            <div class="plan-title">Third Party Only</div>
+            <div class="plan-price" id="tpPrice">--- <span>/yr</span></div>
+
+            <ul>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Legal Liability Coverage</li>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Property Damage</li>
+                <li class="text-mute"><i class="bi bi-x-circle-fill icon-x"></i> Theft Protection</li>
+                <li class="text-mute"><i class="bi bi-x-circle-fill icon-x"></i> Fire & Vandalism</li>
+                <li class="text-mute"><i class="bi bi-x-circle-fill icon-x"></i> Roadside Assistance</li>
+            </ul>
+            <button id="btnTP" class="btn btn-basic" onclick="selectPlan('Third Party')" disabled>Select Basic</button>
+        </div>
+
+        <!-- Comprehensive Plan -->
+        <div class="plan-card premium">
+            <div class="rec-badge">Recommended</div>
+            <div class="plan-title">Comprehensive</div>
+            <div class="plan-price" id="compPrice">--- <span>/yr</span></div>
+
+            <ul>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Legal Liability Coverage</li>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Property Damage</li>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Theft Protection</li>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Fire & Vandalism</li>
+                <li><i class="bi bi-check-circle-fill icon-check"></i> Free Roadside Assistance</li>
+            </ul>
+            <button id="btnComp" class="btn btn-pro" onclick="selectPlan('Comprehensive')" disabled>Select Premium</button>
+        </div>
+    </div>
+
+    <div class="debug-info" id="debugText">Initializing Firebase...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const debugEl = document.getElementById('debugText');
+                debugEl.innerText = `Auth OK: ${user.uid}`;
+
+                // Listen to ALL valuations
+                onValue(ref(db, 'valuations'), (snapshot) => {
+                    if (snapshot.exists()) {
+                        const allVals = snapshot.val();
+                        debugEl.innerText += ` | DB Total: ${Object.keys(allVals).length}`;
+
+                        const userVals = [];
+
+                        // Filter for current user (Handle both userId and ownerId naming conventions)
+                        Object.values(allVals).forEach(v => {
+                            if (v.userId === user.uid || v.ownerId === user.uid) {
+                                userVals.push(v);
+                            }
+                        });
+
+                        debugEl.innerText += ` | My Records: ${userVals.length}`;
+
+                        if (userVals.length > 0) {
+                            // Sort by timestamp descending (newest first)
+                            userVals.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                            const latestVal = userVals[0];
+
+                            // Case-insensitive check for completed status
+                            const status = (latestVal.status || '').toLowerCase();
+
+                            if (status === 'completed') {
+                                // SUCCESS
+                                const formatMoney = (amount) => "KES " + Number(amount).toLocaleString();
+
+                                document.getElementById('valuationDisplay').innerText = `Valuation: ${formatMoney(latestVal.marketValue)}`;
+                                document.getElementById('tpPrice').innerHTML = `${formatMoney(latestVal.thirdPartyPremium)} <span>/yr</span>`;
+                                document.getElementById('compPrice').innerHTML = `${formatMoney(latestVal.comprehensivePremium)} <span>/yr</span>`;
+
+                                document.getElementById('btnTP').disabled = false;
+                                document.getElementById('btnComp').disabled = false;
+                            } else {
+                                // PENDING
+                                document.getElementById('valuationDisplay').innerText = "Assessment In Progress";
+                                document.getElementById('valuationDisplay').style.background = "#fff7ed";
+                                document.getElementById('valuationDisplay').style.color = "#c2410c";
+                            }
+                        } else {
+                            document.getElementById('valuationDisplay').innerText = "No Valuation Requests Found";
+                        }
+                    } else {
+                        document.getElementById('valuationDisplay').innerText = "Database Empty";
+                    }
+                }, (error) => {
+                    debugEl.innerText += ` | Error: ${error.message}`;
+                });
+            } else {
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+
+        window.selectPlan = (planName) => {
+            let amountText = "";
+
+            if (planName === 'Third Party') {
+                amountText = document.getElementById('tpPrice').innerText;
+            } else {
+                amountText = document.getElementById('compPrice').innerText;
+            }
+
+            const amount = amountText.replace(/[^0-9]/g, '');
+
+            if (!amount || amount === '0') {
+                alert("Pricing error. Please refresh.");
+                return;
+            }
+
+            localStorage.setItem('selectedPlan', planName);
+            localStorage.setItem('premiumAmount', amount);
+
+            window.location.href = "{% url 'payment' %}";
+        };
+    </script>
+
+</body>
+</html>

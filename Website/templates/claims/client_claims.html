@@ -1,0 +1,381 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Track Claim</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #f0f4f8; font-family: 'Poppins', sans-serif;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                              radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
+                              radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-size: cover;
+        }
+
+        .main-container {
+            width: 1000px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(24px);
+            border-radius: 30px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Left Side: Timeline --- */
+        .timeline-panel {
+            padding: 60px;
+            border-right: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .header { margin-bottom: 50px; }
+        .claim-id {
+            font-size: 14px; font-weight: 700; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase;
+            margin-bottom: 5px; display: block;
+        }
+        h1 { margin: 0; font-size: 32px; color: #1e293b; font-weight: 800; letter-spacing: -1px; }
+        .status-pill {
+            display: inline-block; margin-top: 15px; padding: 8px 20px; border-radius: 50px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            background: #e0e7ff; color: #4e37b5;
+        }
+
+        /* Timeline Logic */
+        .timeline { position: relative; padding-left: 50px; }
+        .track {
+            position: absolute; left: 19px; top: 10px; bottom: 30px; width: 4px;
+            background: #e2e8f0; border-radius: 2px;
+        }
+        .track-fill {
+            position: absolute; top: 0; left: 0; width: 100%; height: 0%;
+            background: linear-gradient(to bottom, #4e37b5, #46bbf4);
+            border-radius: 2px; transition: height 1s ease;
+        }
+
+        .event { margin-bottom: 50px; position: relative; opacity: 0.4; transition: 0.3s; }
+        .event.active { opacity: 1; }
+
+        .dot {
+            position: absolute; left: -49px; top: 0; width: 34px; height: 34px;
+            background: white; border: 3px solid #cbd5e1; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: transparent; transition: 0.3s; z-index: 2;
+        }
+
+        .event.active .dot {
+            border-color: #4e37b5; color: #4e37b5; background: #eef2ff;
+            box-shadow: 0 0 0 6px rgba(78, 55, 181, 0.1);
+        }
+
+        h4 { margin: 0 0 5px; font-size: 18px; font-weight: 600; color: #1e293b; }
+        .desc { font-size: 14px; color: #64748b; margin: 0; line-height: 1.6; }
+        .time-stamp { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 5px; display: block; }
+
+        /* --- Right Side: Details Cards --- */
+        .details-panel {
+            background: #f8fafc; padding: 60px 40px;
+            display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .info-card {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
+            transition: 0.3s;
+        }
+        .info-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+
+        .card-label {
+            font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+
+        .vehicle-info h3 { margin: 0; font-size: 20px; color: #1e293b; }
+        .vehicle-info p { margin: 2px 0 0; color: #4e37b5; font-weight: 600; font-size: 14px; }
+
+        .incident-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box small { font-size: 11px; color: #64748b; display: block; }
+        .stat-box strong { font-size: 14px; color: #334155; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            margin-top: auto; color: #64748b; text-decoration: none;
+            font-weight: 600; font-size: 14px; transition: 0.2s;
+        }
+        .back-btn:hover { color: #4e37b5; }
+
+        /* Empty State */
+        .empty-state {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 10; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+        }
+        .empty-icon { font-size: 60px; color: #cbd5e1; margin-bottom: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <!-- LEFT: Status Timeline -->
+        <div class="timeline-panel">
+            <div id="claimContent">
+                <div class="header">
+                    <span class="claim-id" id="cRef">CLM-####</span>
+                    <h1 id="cType">Loading...</h1>
+                    <div id="statusBadge" class="status-pill">Checking Status...</div>
+                </div>
+
+                <div class="timeline">
+                    <div class="track"><div class="track-fill" id="trackFill"></div></div>
+
+                    <!-- Step 1 -->
+                    <div class="event active" id="step1">
+                        <div class="dot"><i class="bi bi-cloud-upload"></i></div>
+                        <h4>Report Submitted</h4>
+                        <p class="desc">We received your incident report and photo evidence.</p>
+                        <span class="time-stamp" id="time1">---</span>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="event" id="step2">
+                        <div class="dot" id="dot2"><i class="bi bi-hourglass-split"></i></div>
+                        <h4>Insurer Assessment</h4>
+                        <p class="desc">Our team is reviewing the damages against your policy cover.</p>
+                        <span class="time-stamp" id="time2">Pending</span>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="event" id="step3">
+                        <div class="dot" id="dot3"><i class="bi bi-file-earmark-check"></i></div>
+                        <h4>Final Decision</h4>
+                        <p class="desc" id="decisionText">Awaiting final approval or rejection.</p>
+                        <span class="time-stamp" id="time3">Pending</span>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{% url 'client_dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <!-- RIGHT: Context Cards -->
+        <div class="details-panel" id="detailsContent">
+
+            <!-- Vehicle Card -->
+            <div class="info-card">
+                <div class="card-label"><i class="bi bi-car-front-fill"></i> Vehicle Details</div>
+                <div class="vehicle-info">
+                    <h3 id="vModel">Loading Vehicle...</h3>
+                    <p id="vPlate">---</p>
+                    <div style="margin-top: 10px; font-size: 13px; color: #64748b;">
+                        Color: <span id="vColor">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incident Card -->
+            <div class="info-card">
+                <div class="card-label"><i class="bi bi-exclamation-triangle-fill"></i> Incident Info</div>
+                <div class="incident-grid">
+                    <div class="stat-box">
+                        <small>Date</small>
+                        <strong id="cDateOnly">---</strong>
+                    </div>
+                    <div class="stat-box">
+                        <small>Time</small>
+                        <strong id="cTimeOnly">---</strong>
+                    </div>
+                    <div class="stat-box" style="grid-column: span 2;">
+                        <small>Location</small>
+                        <strong id="cLoc">---</strong>
+                    </div>
+                    <div class="stat-box" style="grid-column: span 2;">
+                        <small>Police Abstract (OB)</small>
+                        <strong id="cOB" style="color: #4e37b5;">---</strong>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Empty State Overlay -->
+        <div class="empty-state" id="emptyState">
+            <i class="bi bi-folder2-open empty-icon"></i>
+            <h2 style="color: #334155;">No claim submitted</h2>
+            <p style="color: #64748b; margin-bottom: 30px;">You have no active claims to track at the moment.</p>
+            <a href="{% url 'report_accident' %}" style="padding: 12px 30px; background: #4e37b5; color: white; border-radius: 12px; text-decoration: none; font-weight: 600;">File a Report</a>
+            <br><br>
+            <a href="{% url 'client_dashboard' %}" style="color: #94a3b8; font-size: 14px; text-decoration: none;">Go Back</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Fetch ALL accident reports
+                const claimsRef = ref(db, 'accidentReports');
+                try {
+                    const snapshot = await get(claimsRef);
+                    if (snapshot.exists()) {
+                        const allClaims = snapshot.val();
+                        let myClaims = [];
+
+                        // Filter client-side
+                        for (const key in allClaims) {
+                            if (allClaims[key].userId === user.uid) {
+                                myClaims.push({ id: key, ...allClaims[key] });
+                            }
+                        }
+
+                        if (myClaims.length > 0) {
+                            // Sort descending (latest first)
+                            myClaims.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                            const latestClaim = myClaims[0];
+
+                            renderClaim(latestClaim, latestClaim.id);
+                            fetchVehicleInfo(user.uid);
+                        } else {
+                            showEmptyState();
+                        }
+                    } else {
+                        showEmptyState();
+                    }
+                } catch (error) {
+                    console.error("Error fetching claims:", error);
+                    document.getElementById('cType').innerText = "Error loading data.";
+                }
+            } else {
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+
+        async function fetchVehicleInfo(uid) {
+            const vRef = ref(db, 'Vehicles');
+            try {
+                const snapshot = await get(vRef);
+                if (snapshot.exists()) {
+                    const allVehicles = snapshot.val();
+                    let myCar = null;
+
+                    for (const key in allVehicles) {
+                        if (allVehicles[key].ownerId === uid) {
+                            myCar = allVehicles[key];
+                            break;
+                        }
+                    }
+
+                    if (myCar) {
+                        document.getElementById('vModel').innerText = myCar.model || "Unknown Model";
+                        document.getElementById('vPlate').innerText = myCar.regPlate || "---";
+                        document.getElementById('vColor').innerText = myCar.color || "---";
+                    } else {
+                        document.getElementById('vModel').innerText = "No Vehicle Found";
+                    }
+                }
+            } catch (e) {
+                console.error("Vehicle fetch error", e);
+            }
+        }
+
+        function showEmptyState() {
+            document.getElementById('emptyState').style.display = 'flex';
+            document.querySelector('.timeline-panel').style.opacity = '0';
+            document.querySelector('.details-panel').style.opacity = '0';
+        }
+
+        function renderClaim(claim, id) {
+            document.getElementById('cRef').innerText = `REF: ${id.substring(1, 8).toUpperCase()}`;
+            document.getElementById('cType').innerText = `${claim.cause || 'Incident'} Claim`;
+
+            const dateObj = new Date(claim.timestamp);
+            document.getElementById('time1').innerText = dateObj.toLocaleString();
+
+            document.getElementById('cDateOnly').innerText = claim.date || "---";
+            document.getElementById('cTimeOnly').innerText = claim.time || "---";
+            document.getElementById('cLoc').innerText = claim.location || "---";
+            document.getElementById('cOB').innerText = claim.obNumber || "---";
+
+            const status = claim.status || 'Pending';
+            const badge = document.getElementById('statusBadge');
+            const track = document.getElementById('trackFill');
+
+            badge.innerText = status;
+            badge.className = 'status-pill';
+
+            document.querySelectorAll('.event').forEach(el => el.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+
+            if (status === 'In Review') {
+                badge.style.background = "#eff6ff"; badge.style.color = "#2563eb";
+                activateStep(2);
+                track.style.height = "50%";
+            }
+            else if (status === 'Approved') {
+                badge.style.background = "#f0fdf4"; badge.style.color = "#16a34a";
+                activateStep(3);
+                track.style.height = "100%";
+
+                document.getElementById('dot2').innerHTML = '<i class="bi bi-check-lg"></i>';
+                setFinalDecision("Claim Approved", "Assessment complete. Compensation approved.", "#16a34a", "bi-check-circle-fill");
+            }
+            else if (status === 'Rejected') {
+                badge.style.background = "#fef2f2"; badge.style.color = "#dc2626";
+                activateStep(3);
+                track.style.height = "100%";
+
+                document.getElementById('dot2').innerHTML = '<i class="bi bi-check-lg"></i>';
+                setFinalDecision("Claim Rejected", "Assessment complete. Claim declined.", "#dc2626", "bi-x-circle-fill");
+            } else {
+                badge.style.background = "#fff7ed"; badge.style.color = "#ea580c";
+                track.style.height = "10%";
+            }
+        }
+
+        function activateStep(stepNum) {
+            for (let i = 1; i <= stepNum; i++) {
+                document.getElementById(`step${i}`).classList.add('active');
+            }
+        }
+
+        function setFinalDecision(title, desc, color, icon) {
+            const step3 = document.getElementById('step3');
+            step3.querySelector('h4').innerText = title;
+            step3.querySelector('h4').style.color = color;
+            document.getElementById('decisionText').innerText = desc;
+
+            const dot = step3.querySelector('#dot3');
+            dot.style.borderColor = color;
+            dot.style.color = color;
+            dot.innerHTML = `<i class="bi ${icon}"></i>`;
+
+            document.getElementById('time3').innerText = "Completed";
+        }
+    </script>
+
+</body>
+</html>

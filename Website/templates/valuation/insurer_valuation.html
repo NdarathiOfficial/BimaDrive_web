@@ -1,0 +1,317 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Valuation Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #0ea5e9;
+            --success: #10b981;
+            --dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            background: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0;
+            display: flex; min-height: 100vh; overflow-x: hidden;
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,0.03) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.03) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.03) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* --- Sidebar (Collapsed style) --- */
+        .sidebar {
+            width: 80px; background: #ffffff; border-right: 1px solid #e2e8f0;
+            padding: 30px 0; position: fixed; height: 100vh; display: flex; flex-direction: column;
+            align-items: center; z-index: 100;
+        }
+        .logo i { font-size: 28px; color: var(--primary); margin-bottom: 40px; }
+        .menu-icon {
+            font-size: 20px; color: #94a3b8; padding: 15px; border-radius: 12px;
+            margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+        }
+        .menu-icon:hover { background: #f1f5f9; color: var(--dark); }
+        .menu-icon.active { background: var(--primary); color: white; }
+
+        .back-home { margin-top: auto; color: #64748b; font-size: 24px; cursor: pointer; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 80px; flex: 1; padding: 40px 60px; max-width: 1600px; margin-right: auto;
+        }
+
+        .top-bar { margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; }
+        .breadcrumb { font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .breadcrumb a { text-decoration: none; color: #64748b; font-weight: 600; }
+        .breadcrumb i { font-size: 10px; }
+
+        h1 { font-size: 28px; font-weight: 800; color: var(--dark); margin: 0; letter-spacing: -0.5px; }
+
+        .status-badge {
+            padding: 8px 20px; border-radius: 30px; font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5;
+        }
+
+        /* Grid Layout */
+        .case-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
+
+        .panel {
+            background: var(--glass-bg); border-radius: 24px; padding: 35px;
+            border: var(--glass-border); box-shadow: var(--shadow-sm);
+        }
+
+        h3 { font-size: 16px; font-weight: 700; color: var(--dark); margin: 0 0 25px 0; display: flex; align-items: center; gap: 10px; }
+        h3 i { color: var(--primary); font-size: 18px; }
+
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+        }
+        .photo-card {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px;
+            text-align: center; transition: 0.2s;
+        }
+        .photo-card:hover { border-color: var(--secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .img-box {
+            aspect-ratio: 4/3; background: #eef2ff; border-radius: 12px; margin-bottom: 10px;
+            overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 24px;
+            position: relative;
+        }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+        .caption { font-size: 12px; font-weight: 600; color: #475569; }
+
+        /* Pricing Panel */
+        .pricing-panel { position: sticky; top: 40px; height: fit-content; }
+
+        .info-block { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .info-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-val { font-size: 14px; font-weight: 600; color: #1e293b; text-align: right; }
+
+        .input-group { margin-bottom: 20px; }
+        .group-label { display: block; font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; }
+        .input-box {
+            display: flex; align-items: center; border: 2px solid #f1f5f9; border-radius: 12px;
+            padding: 0 18px; background: #ffffff; transition: 0.2s;
+        }
+        .input-box:focus-within { border-color: var(--secondary); box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+        .input-box span { color: #94a3b8; font-size: 13px; margin-right: 12px; font-weight: 600; }
+        .input-box input {
+            border: none; background: transparent; padding: 14px 0; width: 100%;
+            outline: none; font-weight: 600; font-size: 15px; color: #1e293b;
+        }
+
+        .btn-save {
+            width: 100%; padding: 16px; background: var(--primary);
+            color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px;
+            cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-save:hover { background: #4338ca; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <a href="#" class="logo"><i class="bi bi-shield-check-fill"></i></a>
+        <div class="menu-icon" onclick="goBack()"><i class="bi bi-grid-fill"></i></div>
+        <div class="menu-icon active"><i class="bi bi-camera-fill"></i></div>
+        <div class="menu-icon"><i class="bi bi-gear"></i></div>
+        <i class="bi bi-box-arrow-left back-home" onclick="goBack()"></i>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div>
+                <div class="breadcrumb">
+                    <a href="#" onclick="goBack()">Dashboard</a> <i class="bi bi-chevron-right"></i> <span>Asset Valuation</span>
+                </div>
+                <h1 id="pageTitle">Vehicle Assessment</h1>
+            </div>
+            <div class="status-badge" id="vStatus">Pending Review</div>
+        </div>
+
+        <div class="case-grid">
+            <!-- Left: Visual Evidence -->
+            <div class="panel">
+                <h3><i class="bi bi-images"></i> Inspection Photos</h3>
+
+                <div class="gallery-grid">
+                    <!-- Exterior -->
+                    <div class="photo-card"><div class="img-box"><img id="iFront" alt=""><i class="bi bi-car-front-fill"></i></div><div class="caption">Front View</div></div>
+                    <div class="photo-card"><div class="img-box"><img id="iRear" alt=""><i class="bi bi-car-front"></i></div><div class="caption">Rear View</div></div>
+                    <div class="photo-card"><div class="img-box"><img id="iDriver" alt=""><i class="bi bi-arrow-right-square"></i></div><div class="caption">Driver Side</div></div>
+                    <div class="photo-card"><div class="img-box"><img id="iPass" alt=""><i class="bi bi-arrow-left-square"></i></div><div class="caption">Passenger Side</div></div>
+
+                    <!-- Mechanics -->
+                    <div class="photo-card"><div class="img-box"><img id="iBonnet" alt=""><i class="bi bi-layers-half"></i></div><div class="caption">Bonnet Open</div></div>
+                    <div class="photo-card"><div class="img-box"><img id="iTrunk" alt=""><i class="bi bi-box-seam"></i></div><div class="caption">Trunk Open</div></div>
+
+                    <!-- Interior -->
+                    <div class="photo-card"><div class="img-box"><img id="iOdo" alt=""><i class="bi bi-speedometer2"></i></div><div class="caption">Odometer</div></div>
+                    <div class="photo-card"><div class="img-box"><img id="iInt" alt=""><i class="bi bi-grid-1x2"></i></div><div class="caption">Interior</div></div>
+
+                    <!-- Docs -->
+                    <div class="photo-card"><div class="img-box"><img id="iLog" alt=""><i class="bi bi-file-earmark-text"></i></div><div class="caption">Logbook</div></div>
+                </div>
+            </div>
+
+            <!-- Right: Pricing Engine -->
+            <div class="panel pricing-panel">
+                <h3><i class="bi bi-calculator"></i> Set Premiums</h3>
+
+                <div class="info-block">
+                    <div class="info-row"><span class="info-label">Owner</span><span class="info-val" id="ownerName">Loading...</span></div>
+                    <div class="info-row"><span class="info-label">Registration</span><span class="info-val" id="regPlate">---</span></div>
+                    <div class="info-row"><span class="info-label">Color</span><span class="info-val" id="vehColor">---</span></div>
+                    <div class="info-row"><span class="info-label">Logbook No.</span><span class="info-val" id="logbookNo">---</span></div>
+                </div>
+
+                <div class="input-group">
+                    <span class="group-label">Assessed Market Value</span>
+                    <div class="input-box"><span>KES</span><input type="number" id="marketVal" placeholder="0.00"></div>
+                </div>
+
+                <div class="input-group">
+                    <span class="group-label">Comprehensive Premium</span>
+                    <div class="input-box"><span>KES</span><input type="number" id="compPrem" placeholder="0.00"></div>
+                </div>
+
+                <div class="input-group">
+                    <span class="group-label">Third Party Premium</span>
+                    <div class="input-box"><span>KES</span><input type="number" id="tpPrem" placeholder="0.00"></div>
+                </div>
+
+                <button class="btn-save" onclick="submitValuation()">
+                    <i class="bi bi-check2-circle"></i> Finalize & Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Get specific ID from localStorage set by Dashboard
+        const currentValId = localStorage.getItem('currentValId');
+
+        async function loadValuation() {
+            if (!currentValId) {
+                alert("No valuation selected. Redirecting to dashboard.");
+                window.location.href = "{% url 'insurer_dashboard' %}";
+                return;
+            }
+
+            try {
+                const snapshot = await get(ref(db, `valuations/${currentValId}`));
+                if (snapshot.exists()) {
+                    const val = snapshot.val();
+
+                    // Populate UI
+                    document.getElementById('ownerName').innerText = val.owner || 'Unknown';
+                    document.getElementById('regPlate').innerText = val.reg_plate || '---';
+                    document.getElementById('vehColor').innerText = val.color || '---';
+                    document.getElementById('logbookNo').innerText = val.logbook_no || '---';
+
+                    const statusEl = document.getElementById('vStatus');
+                    statusEl.innerText = val.status || 'Pending Review';
+                    if (val.status === 'Completed') {
+                        statusEl.style.background = "#ecfdf5";
+                        statusEl.style.color = "#059669";
+                        statusEl.style.borderColor = "#d1fae5";
+                    }
+
+                    // If values already exist (edit mode), fill them
+                    if(val.marketValue) document.getElementById('marketVal').value = val.marketValue;
+                    if(val.comprehensivePremium) document.getElementById('compPrem').value = val.comprehensivePremium;
+                    if(val.thirdPartyPremium) document.getElementById('tpPrem').value = val.thirdPartyPremium;
+
+                    // Set images safely
+                    const setImage = (id, src) => {
+                        if (src) document.getElementById(id).src = src;
+                    };
+
+                    setImage('iFront', val.imgFront);
+                    setImage('iRear', val.imgRear);
+                    setImage('iDriver', val.imgDriver);
+                    setImage('iPass', val.imgPass);
+                    setImage('iInt', val.imgInterior);
+                    setImage('iOdo', val.imgOdo);
+                    setImage('iBonnet', val.imgBonnet);
+                    setImage('iTrunk', val.imgTrunk);
+                    setImage('iLog', val.imgLogbook);
+
+                } else {
+                    alert("Valuation request not found.");
+                    window.location.href = "{% url 'insurer_dashboard' %}";
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error loading data.");
+            }
+        }
+
+        window.submitValuation = async () => {
+            if (!currentValId) return;
+
+            const marketVal = document.getElementById('marketVal').value;
+            const compPrem = document.getElementById('compPrem').value;
+            const tpPrem = document.getElementById('tpPrem').value;
+
+            if(!marketVal || !compPrem || !tpPrem) {
+                alert("Please fill in all pricing fields.");
+                return;
+            }
+
+            try {
+                const updates = {
+                    marketValue: marketVal,
+                    comprehensivePremium: compPrem,
+                    thirdPartyPremium: tpPrem,
+                    status: 'Completed',
+                    assessedAt: new Date().toISOString()
+                };
+
+                await update(ref(db, `valuations/${currentValId}`), updates);
+                alert('Valuation Finalized! Client can now see premiums.');
+                window.location.href = "{% url 'insurer_dashboard' %}";
+            } catch (error) {
+                console.error(error);
+                alert("Error saving: " + error.message);
+            }
+        };
+
+        window.goBack = () => {
+            window.location.href = "{% url 'insurer_dashboard' %}";
+        }
+
+        loadValuation();
+    </script>
+</body>
+</html>
