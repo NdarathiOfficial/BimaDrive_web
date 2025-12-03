@@ -15,7 +15,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ===============================
 SECRET_KEY = 'django-insecure-2!tsk1f4##n&w0av38)qumhb*)&2@ls_*(z*x_wu1*we&8_)in'
 DEBUG = True
-ALLOWED_HOSTS = []  # Add production hostnames here
+
+ALLOWED_HOSTS = ['isaacngure.onrender.com', 'localhost', '127.0.0.1']
+# Add production hostnames here
 
 
 # ===============================
@@ -48,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
 
 
 # ===============================
