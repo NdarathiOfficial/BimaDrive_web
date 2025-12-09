@@ -55,6 +55,7 @@ MIDDLEWARE = [
 
 
 
+
 # ===============================
 # URL CONFIGURATION
 # ===============================
@@ -155,9 +156,9 @@ AUTH_USER_MODEL = 'Website.User'  # Your custom user model
 # ===============================
 # LOGIN SETTINGS
 # ===============================
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/client/'
-LOGOUT_REDIRECT_URL = '/login/'
+
+
+
 
 
 MPESA_ENVIRONMENT='sandbox'
@@ -169,3 +170,19 @@ MPESA_SHORTCODE_TYPE='paybill'
 MPESA_PASSKEY='bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
 MPESA_INITIATOR_USERNAME='testapi'
 MPESA_INITIATOR_SECURITY_CREDENTIALS='Safaricom123!!'
+
+
+
+import os
+
+# ---------------- SENDGRID CONFIG ---------------- #
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+SENDGRID_SENDER = os.environ.get("SENDGRID_SENDER")
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST_USER = "apikey"        # This is the literal string "apikey"
+EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = SENDGRID_SENDER

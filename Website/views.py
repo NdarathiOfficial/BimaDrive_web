@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -37,19 +38,39 @@ if not firebase_admin._apps:
 
 
 # ----------------- AUTHENTICATION & REGISTRATION ----------------- #
+
+
+
 def login_view(request):
+    next_url = request.GET.get("next") or request.POST.get("next")
+
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
+
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            # Redirect based on role
+
+            # If Django sent a ?next= redirect, honor it.
+            if next_url:
+                return redirect(next_url)
+
+            # Otherwise use role-based redirect
             if user.role == "insurer":
                 return redirect("insurer_dashboard")
-            return redirect("client_dashboard")
+            elif user.role == "system_admin":
+                return redirect("system_admin")
+            else:
+                return redirect("client_dashboard")
+
     else:
         form = AuthenticationForm()
-    return render(request, "accounts/login.html", {"form": form})
+
+    return render(request, "accounts/login.html", {
+        "form": form,
+        "next": next_url,
+    })
+
 
 
 def register_client(request):
@@ -69,6 +90,7 @@ def register_insurer(request):
 
 
 # ----------------- DASHBOARDS ----------------- #
+
 def client_dashboard(request):
     return render(request, "dashboards/client_dashboard.html")
 
@@ -101,7 +123,6 @@ def about(request):
 def add_vehicle(request):
     return render(request, "add_vehicle/add_vehicle.html")
 
-
 def vehicle_details(request):
     return render(request, "view_vehicle/vehicle_details.html")
 
@@ -121,7 +142,6 @@ def client_claims(request):
 def insurer_claims(request):
     return render(request, "claims/insurer_claims.html")
 
-
 def client_valuation(request):
     return render(request, "valuation/client_valuation.html")
 
@@ -137,18 +157,14 @@ def towing(request):
 def update_vehicle_details(request):
     return render(request, "view_vehicle/update_vehicle_details.html")
 
-
 def admin_login(request):
     return render(request, "system_admin/admin_login.html")
-
 
 def admin_register(request):
     return render(request, "system_admin/admin_register.html")
 
-
 def profile(request):
     return render(request, "profile/profile.html")
-
 
 def payment(request):
     return render(request, "payment/payment.html")

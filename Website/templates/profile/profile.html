@@ -278,7 +278,7 @@
                 if(snap.exists()) {
                     dbPath = `Staff/${user.uid}`;
                     const data = snap.val();
-                    redirectUrl = data.role === 'admin' ? "{% url 'admin_dashboard' %}" : "{% url 'insurer_dashboard' %}";
+                    redirectUrl = data.role === 'admin' ? "{% url 'system_admin' %}" : "{% url 'insurer_dashboard' %}";
                     populate(data, data.staffId);
                     return;
                 }
