@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Valuation Review</title>
+    <title>Valuation Review | BimaDrive</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -29,7 +29,7 @@
             background-attachment: fixed;
         }
 
-        /* --- Sidebar (Collapsed style) --- */
+        /* --- Sidebar --- */
         .sidebar {
             width: 80px; background: #ffffff; border-right: 1px solid #e2e8f0;
             padding: 30px 0; position: fixed; height: 100vh; display: flex; flex-direction: column;
@@ -43,7 +43,8 @@
         .menu-icon:hover { background: #f1f5f9; color: var(--dark); }
         .menu-icon.active { background: var(--primary); color: white; }
 
-        .back-home { margin-top: auto; color: #64748b; font-size: 24px; cursor: pointer; }
+        .back-home { margin-top: auto; color: #64748b; font-size: 24px; cursor: pointer; transition: 0.2s; }
+        .back-home:hover { color: var(--dark); transform: scale(1.1); }
 
         /* --- Main Content --- */
         .main-content {
@@ -61,9 +62,10 @@
             padding: 8px 20px; border-radius: 30px; font-size: 12px; font-weight: 700;
             text-transform: uppercase; letter-spacing: 1px; background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5;
         }
+        .st-completed { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
 
         /* Grid Layout */
-        .case-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
+        .case-grid { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
 
         .panel {
             background: var(--glass-bg); border-radius: 24px; padding: 35px;
@@ -81,18 +83,18 @@
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px;
             text-align: center; transition: 0.2s;
         }
-        .photo-card:hover { border-color: var(--secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .photo-card:hover { border-color: var(--secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
 
         .img-box {
             aspect-ratio: 4/3; background: #eef2ff; border-radius: 12px; margin-bottom: 10px;
             overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 24px;
             position: relative;
         }
-        .img-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; display: none; }
         .caption { font-size: 12px; font-weight: 600; color: #475569; }
 
         /* Pricing Panel */
-        .pricing-panel { position: sticky; top: 40px; height: fit-content; }
+        .pricing-panel { position: sticky; top: 40px; height: fit-content; border-top: 4px solid var(--primary); }
 
         .info-block { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; }
         .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
@@ -100,17 +102,21 @@
         .info-val { font-size: 14px; font-weight: 600; color: #1e293b; text-align: right; }
 
         .input-group { margin-bottom: 20px; }
-        .group-label { display: block; font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; }
+        .group-label { display: flex; align-items: center; font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; }
+        .rate-badge { background: #eef2ff; color: var(--primary); padding: 2px 8px; border-radius: 10px; font-size: 9px; margin-left: auto; border: 1px solid #c7d2fe; }
+
         .input-box {
             display: flex; align-items: center; border: 2px solid #f1f5f9; border-radius: 12px;
             padding: 0 18px; background: #ffffff; transition: 0.2s;
         }
-        .input-box:focus-within { border-color: var(--secondary); box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+        .input-box.readonly { background: #f8fafc; border-color: #e2e8f0; }
+        .input-box:not(.readonly):focus-within { border-color: var(--secondary); box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
         .input-box span { color: #94a3b8; font-size: 13px; margin-right: 12px; font-weight: 600; }
-        .input-box input {
+        .input-box input, select {
             border: none; background: transparent; padding: 14px 0; width: 100%;
-            outline: none; font-weight: 600; font-size: 15px; color: #1e293b;
+            outline: none; font-weight: 600; font-size: 15px; color: #1e293b; font-family: inherit;
         }
+        .input-box input:read-only { color: #64748b; cursor: not-allowed; }
 
         .btn-save {
             width: 100%; padding: 16px; background: var(--primary);
@@ -125,10 +131,10 @@
 
     <div class="sidebar">
         <a href="#" class="logo"><i class="bi bi-shield-check-fill"></i></a>
-        <div class="menu-icon" onclick="goBack()"><i class="bi bi-grid-fill"></i></div>
-        <div class="menu-icon active"><i class="bi bi-camera-fill"></i></div>
-        <div class="menu-icon"><i class="bi bi-gear"></i></div>
-        <i class="bi bi-box-arrow-left back-home" onclick="goBack()"></i>
+        <div class="menu-icon" onclick="goBack()" title="Dashboard"><i class="bi bi-grid-fill"></i></div>
+        <div class="menu-icon active" title="Valuations"><i class="bi bi-camera-fill"></i></div>
+        <div class="menu-icon" title="Settings"><i class="bi bi-gear"></i></div>
+        <i class="bi bi-box-arrow-left back-home" onclick="goBack()" title="Cancel"></i>
     </div>
 
     <div class="main-content">
@@ -148,28 +154,23 @@
                 <h3><i class="bi bi-images"></i> Inspection Photos</h3>
 
                 <div class="gallery-grid">
-                    <!-- Exterior -->
                     <div class="photo-card"><div class="img-box"><img id="iFront" alt=""><i class="bi bi-car-front-fill"></i></div><div class="caption">Front View</div></div>
                     <div class="photo-card"><div class="img-box"><img id="iRear" alt=""><i class="bi bi-car-front"></i></div><div class="caption">Rear View</div></div>
                     <div class="photo-card"><div class="img-box"><img id="iDriver" alt=""><i class="bi bi-arrow-right-square"></i></div><div class="caption">Driver Side</div></div>
                     <div class="photo-card"><div class="img-box"><img id="iPass" alt=""><i class="bi bi-arrow-left-square"></i></div><div class="caption">Passenger Side</div></div>
 
-                    <!-- Mechanics -->
                     <div class="photo-card"><div class="img-box"><img id="iBonnet" alt=""><i class="bi bi-layers-half"></i></div><div class="caption">Bonnet Open</div></div>
                     <div class="photo-card"><div class="img-box"><img id="iTrunk" alt=""><i class="bi bi-box-seam"></i></div><div class="caption">Trunk Open</div></div>
 
-                    <!-- Interior -->
                     <div class="photo-card"><div class="img-box"><img id="iOdo" alt=""><i class="bi bi-speedometer2"></i></div><div class="caption">Odometer</div></div>
                     <div class="photo-card"><div class="img-box"><img id="iInt" alt=""><i class="bi bi-grid-1x2"></i></div><div class="caption">Interior</div></div>
-
-                    <!-- Docs -->
                     <div class="photo-card"><div class="img-box"><img id="iLog" alt=""><i class="bi bi-file-earmark-text"></i></div><div class="caption">Logbook</div></div>
                 </div>
             </div>
 
             <!-- Right: Pricing Engine -->
             <div class="panel pricing-panel">
-                <h3><i class="bi bi-calculator"></i> Set Premiums</h3>
+                <h3><i class="bi bi-calculator"></i> Auto-Pricing Engine</h3>
 
                 <div class="info-block">
                     <div class="info-row"><span class="info-label">Owner</span><span class="info-val" id="ownerName">Loading...</span></div>
@@ -178,32 +179,93 @@
                     <div class="info-row"><span class="info-label">Logbook No.</span><span class="info-val" id="logbookNo">---</span></div>
                 </div>
 
+                <!-- ALGORITHM INPUTS -->
+                <div class="input-group">
+                    <span class="group-label">Vehicle Category</span>
+                    <div class="input-box">
+                        <i class="bi bi-car-front" style="color:#94a3b8; margin-right:12px;"></i>
+                        <select id="vehicleType" onchange="calculatePremiums()">
+                            <option value="private">Private Car</option>
+                            <option value="commercial">Commercial (Own Goods)</option>
+                            <option value="psv">PSV (Chauffeur / Ride-Hailing)</option>
+                            <option value="motorcycle">Motorcycle</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="input-group">
                     <span class="group-label">Assessed Market Value</span>
-                    <div class="input-box"><span>KES</span><input type="number" id="marketVal" placeholder="0.00"></div>
+                    <div class="input-box">
+                        <span>KES</span>
+                        <input type="number" id="marketVal" placeholder="0.00" oninput="calculatePremiums()">
+                    </div>
                 </div>
 
                 <div class="input-group">
-                    <span class="group-label">Comprehensive Premium</span>
-                    <div class="input-box"><span>KES</span><input type="number" id="compPrem" placeholder="0.00"></div>
+                    <span class="group-label">Comprehensive Premium <span id="rateBadge" class="rate-badge">4%</span></span>
+                    <div class="input-box readonly">
+                        <span>KES</span>
+                        <input type="number" id="compPrem" placeholder="Auto Calculated" readonly>
+                    </div>
                 </div>
 
                 <div class="input-group">
-                    <span class="group-label">Third Party Premium</span>
-                    <div class="input-box"><span>KES</span><input type="number" id="tpPrem" placeholder="0.00"></div>
+                    <span class="group-label">Third Party Premium <span class="rate-badge">Fixed Rate</span></span>
+                    <div class="input-box readonly">
+                        <span>KES</span>
+                        <input type="number" id="tpPrem" placeholder="Auto Calculated" readonly>
+                    </div>
                 </div>
 
                 <button class="btn-save" onclick="submitValuation()">
-                    <i class="bi bi-check2-circle"></i> Finalize & Submit
+                    <i class="bi bi-check2-circle"></i> Finalize & Approve
                 </button>
             </div>
         </div>
     </div>
 
+    <script>
+        // --- KENYAN INSURANCE CALCULATION ALGORITHM ---
+        function calculatePremiums() {
+            const type = document.getElementById('vehicleType').value;
+            const marketValInput = document.getElementById('marketVal').value;
+            const marketVal = parseFloat(marketValInput) || 0;
+
+            let comp = 0;
+            let tp = 0;
+            let rateText = "";
+
+            if (marketVal > 0) {
+                if (type === 'private') {
+                    comp = Math.max(marketVal * 0.04, 25000);
+                    tp = 7500;
+                    rateText = "4% (Min 25K)";
+                } else if (type === 'commercial') {
+                    comp = Math.max(marketVal * 0.05, 35000);
+                    tp = 10000;
+                    rateText = "5% (Min 35K)";
+                } else if (type === 'psv') {
+                    comp = Math.max(marketVal * 0.06, 45000);
+                    tp = 12000;
+                    rateText = "6% (Min 45K)";
+                } else if (type === 'motorcycle') {
+                    comp = Math.max(marketVal * 0.05, 10000);
+                    tp = 3500;
+                    rateText = "5% (Min 10K)";
+                }
+            }
+
+            // Update UI
+            document.getElementById('compPrem').value = marketVal > 0 ? comp : '';
+            document.getElementById('tpPrem').value = marketVal > 0 ? tp : '';
+            document.getElementById('rateBadge').innerText = rateText || "---";
+        }
+    </script>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -218,7 +280,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Get specific ID from localStorage set by Dashboard
         const currentValId = localStorage.getItem('currentValId');
 
         async function loadValuation() {
@@ -233,39 +294,45 @@
                 if (snapshot.exists()) {
                     const val = snapshot.val();
 
-                    // Populate UI
+                    // Info Block
                     document.getElementById('ownerName').innerText = val.owner || 'Unknown';
                     document.getElementById('regPlate').innerText = val.reg_plate || '---';
                     document.getElementById('vehColor').innerText = val.color || '---';
                     document.getElementById('logbookNo').innerText = val.logbook_no || '---';
 
+                    // Status
                     const statusEl = document.getElementById('vStatus');
                     statusEl.innerText = val.status || 'Pending Review';
                     if (val.status === 'Completed') {
-                        statusEl.style.background = "#ecfdf5";
-                        statusEl.style.color = "#059669";
-                        statusEl.style.borderColor = "#d1fae5";
+                        statusEl.className = 'status-badge st-completed';
                     }
 
-                    // If values already exist (edit mode), fill them
-                    if(val.marketValue) document.getElementById('marketVal').value = val.marketValue;
-                    if(val.comprehensivePremium) document.getElementById('compPrem').value = val.comprehensivePremium;
-                    if(val.thirdPartyPremium) document.getElementById('tpPrem').value = val.thirdPartyPremium;
+                    // Pre-fill if already assessed
+                    if(val.vehicleType) document.getElementById('vehicleType').value = val.vehicleType;
+                    if(val.marketValue) {
+                        document.getElementById('marketVal').value = val.marketValue;
+                        calculatePremiums(); // Trigger calculation to fill readonly fields
+                    }
 
-                    // Set images safely
+                    // Display Images safely
                     const setImage = (id, src) => {
-                        if (src) document.getElementById(id).src = src;
+                        const imgEl = document.getElementById(id);
+                        if (src && imgEl) {
+                            imgEl.src = src;
+                            imgEl.style.display = 'block';
+                            imgEl.nextElementSibling.style.display = 'none'; // Hide the icon
+                        }
                     };
 
-                    setImage('iFront', val.imgFront);
-                    setImage('iRear', val.imgRear);
-                    setImage('iDriver', val.imgDriver);
-                    setImage('iPass', val.imgPass);
-                    setImage('iInt', val.imgInterior);
-                    setImage('iOdo', val.imgOdo);
-                    setImage('iBonnet', val.imgBonnet);
-                    setImage('iTrunk', val.imgTrunk);
-                    setImage('iLog', val.imgLogbook);
+                    setImage('iFront', val.imgFront || val.img_front);
+                    setImage('iRear', val.imgRear || val.img_rear);
+                    setImage('iDriver', val.imgDriver || val.img_driver);
+                    setImage('iPass', val.imgPass || val.img_pass);
+                    setImage('iInt', val.imgInterior || val.img_interior);
+                    setImage('iOdo', val.imgOdo || val.img_odo);
+                    setImage('iBonnet', val.imgBonnet || val.img_bonnet);
+                    setImage('iTrunk', val.imgTrunk || val.img_trunk);
+                    setImage('iLog', val.imgLogbook || val.img_logbook);
 
                 } else {
                     alert("Valuation request not found.");
@@ -280,17 +347,19 @@
         window.submitValuation = async () => {
             if (!currentValId) return;
 
+            const vType = document.getElementById('vehicleType').value;
             const marketVal = document.getElementById('marketVal').value;
             const compPrem = document.getElementById('compPrem').value;
             const tpPrem = document.getElementById('tpPrem').value;
 
             if(!marketVal || !compPrem || !tpPrem) {
-                alert("Please fill in all pricing fields.");
+                alert("Please enter the Assessed Market Value to calculate premiums.");
                 return;
             }
 
             try {
                 const updates = {
+                    vehicleType: vType,
                     marketValue: marketVal,
                     comprehensivePremium: compPrem,
                     thirdPartyPremium: tpPrem,
@@ -299,7 +368,7 @@
                 };
 
                 await update(ref(db, `valuations/${currentValId}`), updates);
-                alert('Valuation Finalized! Client can now see premiums.');
+                alert('Valuation Finalized! Premiums successfully calculated and saved.');
                 window.location.href = "{% url 'insurer_dashboard' %}";
             } catch (error) {
                 console.error(error);
@@ -311,6 +380,8 @@
             window.location.href = "{% url 'insurer_dashboard' %}";
         }
 
+        // Initialize calculation on load to set defaults
+        calculatePremiums();
         loadValuation();
     </script>
 </body>
