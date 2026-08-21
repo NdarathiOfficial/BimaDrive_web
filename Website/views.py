@@ -517,28 +517,28 @@ RP_ID = "localhost"
 RP_ORIGIN = "http://localhost:8000"
 
 
-
 @csrf_exempt
 def passkey_challenge_view(request):
-    """Step 1: Generate challenge options for the browser's hardware prompt."""
+    """Step 1: Generate challenge options dynamically based on the current domain."""
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
     try:
-        # Fetch all registered passkeys to allow the browser to match device biometrics
+        # Dynamically grab the host domain from the incoming request (e.g., localhost:8000 or bimadrive-web.onrender.com)
+        current_host = request.get_host().split(':')[0]
+
         all_passkeys = UserPasskey.objects.all()
         allow_credentials = [
             {"id": base64.b64decode(pk.credential_id), "type": "public-key"}
             for pk in all_passkeys
-        ]
+        ] if all_passkeys.exists() else None  # Passes None safely if no passkeys are registered yet
 
         options = generate_authentication_options(
-            rp_id=RP_ID,
-            allow_credentials=allow_credentials if allow_credentials else None,
+            rp_id=current_host,
+            allow_credentials=allow_credentials,
             user_verification="required",
         )
 
-        # Save challenge temporarily in session for verification check
         request.session['passkey_challenge'] = options.challenge.hex()
 
         return HttpResponse(options_to_json(options), content_type="application/json")
