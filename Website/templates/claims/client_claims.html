@@ -3,134 +3,167 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Track Claim</title>
+    <title>Track Claims | BimaDrive</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --primary: #4e37b5;
+            --secondary: #46bbf4;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --pending-color: #ea580c;
+        }
+
         body {
             background: #f0f4f8; font-family: 'Poppins', sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
             background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
                               radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
                               radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-            background-size: cover;
+            background-size: cover; padding: 30px;
         }
 
         .main-container {
-            width: 1000px;
-            background: rgba(255, 255, 255, 0.9);
+            width: 1200px;
+            background: rgba(255, 255, 255, 0.94);
             backdrop-filter: blur(24px);
             border-radius: 30px;
             box-shadow: 0 40px 80px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
+            grid-template-columns: 320px 1fr 420px;
             overflow: hidden;
             position: relative;
+            min-height: 650px;
         }
 
-        /* --- Left Side: Timeline --- */
-        .timeline-panel {
-            padding: 60px;
-            border-right: 1px solid rgba(0,0,0,0.05);
-        }
+        /* --- Column 1: Garage & Claim History Drawer --- */
+        .history-panel { background: #1e1b4b; padding: 40px 25px; color: white; display: flex; flex-direction: column; }
+        .history-panel h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #cbd5e1; }
 
-        .header { margin-bottom: 50px; }
-        .claim-id {
-            font-size: 14px; font-weight: 700; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase;
-            margin-bottom: 5px; display: block;
-        }
-        h1 { margin: 0; font-size: 32px; color: #1e293b; font-weight: 800; letter-spacing: -1px; }
-        .status-pill {
-            display: inline-block; margin-top: 15px; padding: 8px 20px; border-radius: 50px;
-            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-            background: #e0e7ff; color: #4e37b5;
-        }
+        .garage-filter { margin-bottom: 25px; }
+        .garage-filter label { display: block; font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 8px; }
+        .vehicle-select { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; font-family: 'Poppins', sans-serif; }
+        .vehicle-select option { background: #1e1b4b; color: white; }
+
+        .claims-history-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1; max-height: 400px; padding-right: 5px; }
+        .history-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 14px; cursor: pointer; transition: 0.2s; }
+        .history-item:hover, .history-item.active { background: rgba(255,255,255,0.15); border-color: var(--secondary); }
+        .history-item .h-ref { font-size: 11px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 4px; }
+        .history-item .h-title { font-size: 14px; font-weight: 600; color: white; margin-bottom: 6px; }
+        .history-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; display: inline-block; }
+
+        /* --- Column 2: Timeline Panel --- */
+        .timeline-panel { padding: 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid rgba(0,0,0,0.05); }
+        .header { margin-bottom: 25px; }
+        .claim-id { font-size: 12px; font-weight: 700; color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        h1 { margin: 0; font-size: 24px; color: #1e293b; font-weight: 800; }
+
+        .status-pill { display: inline-block; margin-top: 10px; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-pending { background: #fff7ed; color: var(--pending-color); border: 1px solid #ffedd5; }
+        .status-approved { background: #f0fdf4; color: var(--success-color); border: 1px solid #dcfce7; }
+        .status-rejected { background: #fef2f2; color: var(--danger-color); border: 1px solid #fee2e2; }
 
         /* Timeline Logic */
-        .timeline { position: relative; padding-left: 50px; }
-        .track {
-            position: absolute; left: 19px; top: 10px; bottom: 30px; width: 4px;
-            background: #e2e8f0; border-radius: 2px;
-        }
-        .track-fill {
-            position: absolute; top: 0; left: 0; width: 100%; height: 0%;
-            background: linear-gradient(to bottom, #4e37b5, #46bbf4);
-            border-radius: 2px; transition: height 1s ease;
-        }
+        .timeline { position: relative; padding-left: 35px; margin: 15px 0; }
+        .track { position: absolute; left: 13px; top: 8px; bottom: 15px; width: 3px; background: #e2e8f0; border-radius: 2px; }
+        .track-fill { position: absolute; top: 0; left: 0; width: 100%; height: 0%; background: var(--primary); border-radius: 2px; transition: height 0.8s ease; }
 
-        .event { margin-bottom: 50px; position: relative; opacity: 0.4; transition: 0.3s; }
+        .event { margin-bottom: 30px; position: relative; opacity: 0.4; transition: 0.3s; }
         .event.active { opacity: 1; }
 
-        .dot {
-            position: absolute; left: -49px; top: 0; width: 34px; height: 34px;
-            background: white; border: 3px solid #cbd5e1; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; color: transparent; transition: 0.3s; z-index: 2;
-        }
+        .dot { position: absolute; left: -35px; top: 0; width: 26px; height: 26px; background: white; border: 3px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent; z-index: 2; }
+        .event.active .dot { border-color: var(--primary); color: var(--primary); background: #eef2ff; box-shadow: 0 0 0 4px rgba(78, 55, 181, 0.1); }
 
-        .event.active .dot {
-            border-color: #4e37b5; color: #4e37b5; background: #eef2ff;
-            box-shadow: 0 0 0 6px rgba(78, 55, 181, 0.1);
-        }
+        h4 { margin: 0 0 3px; font-size: 15px; font-weight: 600; color: #1e293b; }
+        .desc { font-size: 12.5px; color: #64748b; margin: 0; line-height: 1.4; }
+        .time-stamp { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 3px; display: block; }
 
-        h4 { margin: 0 0 5px; font-size: 18px; font-weight: 600; color: #1e293b; }
-        .desc { font-size: 14px; color: #64748b; margin: 0; line-height: 1.6; }
-        .time-stamp { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 5px; display: block; }
+        /* --- Column 3: Details & Evidence --- */
+        .details-panel { background: #f8fafc; padding: 40px 30px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; max-height: 80vh; }
+        .info-card { background: white; border-radius: 16px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
+        .card-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 
-        /* --- Right Side: Details Cards --- */
-        .details-panel {
-            background: #f8fafc; padding: 60px 40px;
-            display: flex; flex-direction: column; gap: 30px;
-        }
+        .vehicle-info h3 { margin: 0; font-size: 16px; color: #1e293b; }
+        .vehicle-info p { margin: 2px 0 0; color: var(--primary); font-weight: 600; font-size: 12px; }
 
-        .info-card {
-            background: white; border-radius: 20px; padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
-            transition: 0.3s;
-        }
-        .info-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+        .incident-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box small { font-size: 10px; color: #64748b; display: block; text-transform: uppercase; }
+        .stat-box strong { font-size: 12.5px; color: #334155; }
 
-        .card-label {
-            font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
-            letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
-        }
+        .evidence-preview { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+        .evidence-img { aspect-ratio: 16/10; background: #e2e8f0; border-radius: 8px; object-fit: cover; width: 100%; cursor: pointer; transition: 0.2s; }
+        .evidence-img:hover { opacity: 0.8; }
 
-        .vehicle-info h3 { margin: 0; font-size: 20px; color: #1e293b; }
-        .vehicle-info p { margin: 2px 0 0; color: #4e37b5; font-weight: 600; font-size: 14px; }
-
-        .incident-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-box small { font-size: 11px; color: #64748b; display: block; }
-        .stat-box strong { font-size: 14px; color: #334155; }
-
-        .back-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            margin-top: auto; color: #64748b; text-decoration: none;
-            font-weight: 600; font-size: 14px; transition: 0.2s;
-        }
-        .back-btn:hover { color: #4e37b5; }
+        .back-btn { display: inline-flex; align-items: center; gap: 6px; color: #64748b; text-decoration: none; font-weight: 600; font-size: 13px; transition: 0.2s; }
+        .back-btn:hover { color: var(--primary); }
 
         /* Empty State */
-        .empty-state {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 10; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            text-align: center;
-        }
-        .empty-icon { font-size: 60px; color: #cbd5e1; margin-bottom: 20px; }
+        .empty-state { position: absolute; inset: 0; background: white; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 
+        /* --- INACTIVITY TIMEOUT MODAL --- */
+        #inactivityModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
+        .inactivity-card i { font-size: 48px; color: #f59e0b; display: block; margin-bottom: 15px; }
+        .inactivity-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .inactivity-card p { font-size: 13.5px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+        .inactivity-timer { font-size: 32px; font-weight: 800; color: #ef4444; margin-bottom: 25px; font-family: monospace; }
+        .btn-stay { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
+        .btn-stay:hover { background: #3c2a91; }
+
+        @media (max-width: 1100px) {
+            .main-container { grid-template-columns: 1fr; width: 100%; height: auto; }
+            .history-panel { max-height: none; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- INACTIVITY WARNING MODAL -->
+    <div id="inactivityModal">
+        <div class="inactivity-card">
+            <i class="bi bi-clock-history"></i>
+            <h2>Inactivity Warning</h2>
+            <p>You have been inactive for a while. For your security, your session will automatically expire in:</p>
+            <div class="inactivity-timer" id="inactivityCountdown">30</div>
+            <button type="button" class="btn-stay" onclick="resetInactivityTimer()">Stay Logged In</button>
+        </div>
+    </div>
+
     <div class="main-container">
-        <!-- LEFT: Status Timeline -->
+
+        <!-- COLUMN 1: GARAGE FILTER & CLAIMS HISTORY -->
+        <div class="history-panel">
+            <a href="{% url 'client_dashboard' %}" class="back-btn" style="color: #cbd5e1; margin-bottom: 25px;"><i class="bi bi-arrow-left"></i> Dashboard</a>
+
+            <div class="garage-filter">
+                <label><i class="bi bi-car-front-fill" style="color: #46bbf4;"></i> Filter by Vehicle</label>
+                <select id="garageFilterSelect" class="vehicle-select" onchange="filterClaimsByVehicle(this.value)">
+                    <option value="ALL">All Vehicles Garage</option>
+                </select>
+            </div>
+
+            <h3><i class="bi bi-clock-history"></i> Claim History</h3>
+            <div class="claims-history-list" id="claimsHistoryList">
+                <div style="font-size: 12px; color: #94a3b8; text-align: center; padding: 20px;">Loading claims...</div>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <a href="{% url 'report_accident' %}" style="display: block; text-align: center; padding: 12px; background: var(--secondary); color: #0f172a; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px;">File New Claim</a>
+            </div>
+        </div>
+
+        <!-- COLUMN 2: ACTIVE CLAIM TIMELINE -->
         <div class="timeline-panel">
-            <div id="claimContent">
+            <div>
                 <div class="header">
-                    <span class="claim-id" id="cRef">CLM-####</span>
-                    <h1 id="cType">Loading...</h1>
-                    <div id="statusBadge" class="status-pill">Checking Status...</div>
+                    <span class="claim-id" id="cRef">REF: CLM-####</span>
+                    <h1 id="cType">Select a Claim</h1>
+                    <div id="statusBadge" class="status-pill status-pending">Status: Pending</div>
                 </div>
 
                 <div class="timeline">
@@ -140,7 +173,7 @@
                     <div class="event active" id="step1">
                         <div class="dot"><i class="bi bi-cloud-upload"></i></div>
                         <h4>Report Submitted</h4>
-                        <p class="desc">We received your incident report and photo evidence.</p>
+                        <p class="desc">Incident description and photographic evidence logged.</p>
                         <span class="time-stamp" id="time1">---</span>
                     </div>
 
@@ -148,77 +181,115 @@
                     <div class="event" id="step2">
                         <div class="dot" id="dot2"><i class="bi bi-hourglass-split"></i></div>
                         <h4>Insurer Assessment</h4>
-                        <p class="desc">Our team is reviewing the damages against your policy cover.</p>
+                        <p class="desc">Forensic adjusters reviewing evidence & policy coverage.</p>
                         <span class="time-stamp" id="time2">Pending</span>
                     </div>
 
                     <!-- Step 3 -->
                     <div class="event" id="step3">
                         <div class="dot" id="dot3"><i class="bi bi-file-earmark-check"></i></div>
-                        <h4>Final Decision</h4>
-                        <p class="desc" id="decisionText">Awaiting final approval or rejection.</p>
+                        <h4>Final Resolution</h4>
+                        <p class="desc" id="decisionText">Awaiting final approval or rejection decision.</p>
                         <span class="time-stamp" id="time3">Pending</span>
                     </div>
                 </div>
             </div>
 
-            <a href="{% url 'client_dashboard' %}" class="back-btn"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            <div style="font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                BimaDrive Secure Claims Audit Trail © 2026
+            </div>
         </div>
 
-        <!-- RIGHT: Context Cards -->
+        <!-- COLUMN 3: DETAILS & INCIDENT PROOF -->
         <div class="details-panel" id="detailsContent">
-
-            <!-- Vehicle Card -->
             <div class="info-card">
-                <div class="card-label"><i class="bi bi-car-front-fill"></i> Vehicle Details</div>
+                <div class="card-label"><i class="bi bi-car-front-fill"></i> Involved Vehicle</div>
                 <div class="vehicle-info">
-                    <h3 id="vModel">Loading Vehicle...</h3>
+                    <h3 id="vModel">Select a claim</h3>
                     <p id="vPlate">---</p>
-                    <div style="margin-top: 10px; font-size: 13px; color: #64748b;">
-                        Color: <span id="vColor">---</span>
-                    </div>
                 </div>
             </div>
 
-            <!-- Incident Card -->
             <div class="info-card">
-                <div class="card-label"><i class="bi bi-exclamation-triangle-fill"></i> Incident Info</div>
+                <div class="card-label"><i class="bi bi-exclamation-triangle-fill"></i> Incident Details</div>
                 <div class="incident-grid">
-                    <div class="stat-box">
-                        <small>Date</small>
-                        <strong id="cDateOnly">---</strong>
-                    </div>
-                    <div class="stat-box">
-                        <small>Time</small>
-                        <strong id="cTimeOnly">---</strong>
-                    </div>
-                    <div class="stat-box" style="grid-column: span 2;">
-                        <small>Location</small>
-                        <strong id="cLoc">---</strong>
-                    </div>
-                    <div class="stat-box" style="grid-column: span 2;">
-                        <small>Police Abstract (OB)</small>
-                        <strong id="cOB" style="color: #4e37b5;">---</strong>
-                    </div>
+                    <div class="stat-box"><small>Date</small><strong id="cDateOnly">---</strong></div>
+                    <div class="stat-box"><small>Time</small><strong id="cTimeOnly">---</strong></div>
+                    <div class="stat-box" style="grid-column: span 2;"><small>Location</small><strong id="cLoc">---</strong></div>
+                    <div class="stat-box" style="grid-column: span 2;"><small>Police OB Number</small><strong id="cOB" style="color: var(--primary);">---</strong></div>
                 </div>
             </div>
 
+            <div class="info-card" id="proofCard" style="display: none;">
+                <div class="card-label"><i class="bi bi-images"></i> Evidence Photos</div>
+                <div class="evidence-preview" id="evidenceGrid"></div>
+            </div>
         </div>
 
-        <!-- Empty State Overlay -->
+        <!-- Empty State -->
         <div class="empty-state" id="emptyState">
-            <i class="bi bi-folder2-open empty-icon"></i>
-            <h2 style="color: #334155;">No claim submitted</h2>
-            <p style="color: #64748b; margin-bottom: 30px;">You have no active claims to track at the moment.</p>
-            <a href="{% url 'report_accident' %}" style="padding: 12px 30px; background: #4e37b5; color: white; border-radius: 12px; text-decoration: none; font-weight: 600;">File a Report</a>
-            <br><br>
-            <a href="{% url 'client_dashboard' %}" style="color: #94a3b8; font-size: 14px; text-decoration: none;">Go Back</a>
+            <i class="bi bi-folder2-open" style="font-size: 55px; color: #cbd5e1; margin-bottom: 15px;"></i>
+            <h2 style="color: #334155; font-size: 22px; margin-bottom: 8px;">No claims recorded</h2>
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 25px;">You have not filed any accident or incident reports yet.</p>
+            <a href="{% url 'report_accident' %}" style="padding: 12px 25px; background: var(--primary); color: white; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 14px;">File an Incident Report</a>
         </div>
     </div>
 
+    <script>
+        // --- INACTIVITY TIMER LOGIC ---
+        let inactivityTimer = null;
+        let warningTimer = null;
+        let secondsLeft = 30;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_LIMIT);
+        }
+
+        function showInactivityWarning() {
+            document.getElementById('inactivityModal').style.display = 'flex';
+            secondsLeft = 30;
+            document.getElementById('inactivityCountdown').innerText = secondsLeft;
+
+            clearInterval(warningTimer);
+            warningTimer = setInterval(() => {
+                secondsLeft--;
+                document.getElementById('inactivityCountdown').innerText = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(warningTimer);
+                    const authInstance = window.firebaseAuthInstance;
+                    if(authInstance) {
+                        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ signOut }) => {
+                            signOut(authInstance).then(() => window.location.href = "{% url 'login' %}");
+                        });
+                    } else {
+                        window.location.href = "{% url 'login' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        window.resetInactivityTimer = function() {
+            document.getElementById('inactivityModal').style.display = 'none';
+            clearInterval(warningTimer);
+            startInactivityTimer();
+        };
+
+        ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            window.addEventListener(event, () => {
+                if (document.getElementById('inactivityModal').style.display !== 'flex') {
+                    startInactivityTimer();
+                }
+            }, { passive: true });
+        });
+
+        startInactivityTimer();
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -233,32 +304,51 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        window.firebaseAuthInstance = auth;
         const db = getDatabase(app);
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Fetch ALL accident reports
-                const claimsRef = ref(db, 'accidentReports');
-                try {
-                    const snapshot = await get(claimsRef);
-                    if (snapshot.exists()) {
-                        const allClaims = snapshot.val();
-                        let myClaims = [];
+        let allClientClaims = [];
+        let clientVehicles = {};
 
-                        // Filter client-side
-                        for (const key in allClaims) {
-                            if (allClaims[key].userId === user.uid) {
-                                myClaims.push({ id: key, ...allClaims[key] });
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const [claimsSnap, vehSnap] = await Promise.all([
+                        get(ref(db, 'accidentReports')),
+                        get(ref(db, 'Vehicles'))
+                    ]);
+
+                    // 1. Load Client Vehicles for Garage Filter
+                    if (vehSnap.exists()) {
+                        const rawVehicles = vehSnap.val();
+                        const garageSelect = document.getElementById('garageFilterSelect');
+
+                        for (const key in rawVehicles) {
+                            if (rawVehicles[key].ownerId === user.uid) {
+                                clientVehicles[key] = rawVehicles[key];
+                                const opt = document.createElement('option');
+                                opt.value = key;
+                                opt.textContent = `${rawVehicles[key].regPlate || 'Vehicle'} (${rawVehicles[key].model || 'N/A'})`;
+                                garageSelect.appendChild(opt);
+                            }
+                        }
+                    }
+
+                    // 2. Load Claims
+                    if (claimsSnap.exists()) {
+                        const rawClaims = claimsSnap.val();
+                        allClientClaims = [];
+
+                        for (const key in rawClaims) {
+                            if (rawClaims[key].userId === user.uid) {
+                                allClientClaims.push({ id: key, ...rawClaims[key] });
                             }
                         }
 
-                        if (myClaims.length > 0) {
-                            // Sort descending (latest first)
-                            myClaims.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                            const latestClaim = myClaims[0];
-
-                            renderClaim(latestClaim, latestClaim.id);
-                            fetchVehicleInfo(user.uid);
+                        if (allClientClaims.length > 0) {
+                            allClientClaims.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                            renderClaimsList(allClientClaims);
+                            renderClaimData(allClientClaims[0]);
                         } else {
                             showEmptyState();
                         }
@@ -266,50 +356,69 @@
                         showEmptyState();
                     }
                 } catch (error) {
-                    console.error("Error fetching claims:", error);
-                    document.getElementById('cType').innerText = "Error loading data.";
+                    console.error("Initialization Error:", error);
                 }
             } else {
                 window.location.href = "{% url 'login' %}";
             }
         });
 
-        async function fetchVehicleInfo(uid) {
-            const vRef = ref(db, 'Vehicles');
-            try {
-                const snapshot = await get(vRef);
-                if (snapshot.exists()) {
-                    const allVehicles = snapshot.val();
-                    let myCar = null;
-
-                    for (const key in allVehicles) {
-                        if (allVehicles[key].ownerId === uid) {
-                            myCar = allVehicles[key];
-                            break;
-                        }
-                    }
-
-                    if (myCar) {
-                        document.getElementById('vModel').innerText = myCar.model || "Unknown Model";
-                        document.getElementById('vPlate').innerText = myCar.regPlate || "---";
-                        document.getElementById('vColor').innerText = myCar.color || "---";
-                    } else {
-                        document.getElementById('vModel').innerText = "No Vehicle Found";
-                    }
+        window.filterClaimsByVehicle = (vehKey) => {
+            if (vehKey === 'ALL') {
+                renderClaimsList(allClientClaims);
+                if (allClientClaims.length > 0) renderClaimData(allClientClaims[0]);
+            } else {
+                const filtered = allClientClaims.filter(c => c.vehicleId === vehKey);
+                renderClaimsList(filtered);
+                if (filtered.length > 0) {
+                    renderClaimData(filtered[0]);
+                } else {
+                    document.getElementById('cType').innerText = "No claims for vehicle";
+                    document.getElementById('vModel').innerText = "No claims recorded";
+                    document.getElementById('evidenceGrid').innerHTML = '';
+                    document.getElementById('proofCard').style.display = 'none';
                 }
-            } catch (e) {
-                console.error("Vehicle fetch error", e);
             }
+        };
+
+        function renderClaimsList(claims) {
+            const listContainer = document.getElementById('claimsHistoryList');
+            listContainer.innerHTML = '';
+
+            if (claims.length === 0) {
+                listContainer.innerHTML = '<div style="font-size: 12px; color: #94a3b8; text-align: center; padding: 20px;">No claims found.</div>';
+                return;
+            }
+
+            claims.forEach((c, idx) => {
+                const item = document.createElement('div');
+                item.className = `history-item ${idx === 0 ? 'active' : ''}`;
+                item.onclick = () => {
+                    document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    renderClaimData(c);
+                };
+
+                const status = c.status || 'Pending';
+                let badgeClass = 'status-pending';
+                if (status === 'Approved') badgeClass = 'status-approved';
+                if (status === 'Rejected') badgeClass = 'status-rejected';
+
+                item.innerHTML = `
+                    <span class="h-ref">REF: #${c.id.substring(1, 7).toUpperCase()}</span>
+                    <div class="h-title">${c.cause || 'Incident'} Report</div>
+                    <span class="history-badge ${badgeClass}">${status}</span>
+                `;
+                listContainer.appendChild(item);
+            });
         }
 
         function showEmptyState() {
             document.getElementById('emptyState').style.display = 'flex';
-            document.querySelector('.timeline-panel').style.opacity = '0';
-            document.querySelector('.details-panel').style.opacity = '0';
         }
 
-        function renderClaim(claim, id) {
-            document.getElementById('cRef').innerText = `REF: ${id.substring(1, 8).toUpperCase()}`;
+        function renderClaimData(claim) {
+            document.getElementById('cRef').innerText = `REF: ${claim.id.substring(1, 8).toUpperCase()}`;
             document.getElementById('cType').innerText = `${claim.cause || 'Incident'} Claim`;
 
             const dateObj = new Date(claim.timestamp);
@@ -320,39 +429,64 @@
             document.getElementById('cLoc').innerText = claim.location || "---";
             document.getElementById('cOB').innerText = claim.obNumber || "---";
 
+            // Vehicle Details
+            if (claim.vehicleId && clientVehicles[claim.vehicleId]) {
+                const v = clientVehicles[claim.vehicleId];
+                document.getElementById('vModel').innerText = v.model || "Unknown Model";
+                document.getElementById('vPlate').innerText = v.regPlate || "---";
+            } else {
+                document.getElementById('vModel').innerText = claim.vehicleModel || "Vehicle Record";
+                document.getElementById('vPlate').innerText = claim.regPlate || "---";
+            }
+
+            // Evidence Photos
+            const proofCard = document.getElementById('proofCard');
+            const evidenceGrid = document.getElementById('evidenceGrid');
+            evidenceGrid.innerHTML = '';
+
+            let hasPhotos = false;
+            ['myCarImg', 'otherCarImg', 'photoUrl', 'evidence'].forEach(field => {
+                if (claim[field]) {
+                    hasPhotos = true;
+                    const img = document.createElement('img');
+                    img.src = claim[field];
+                    img.className = 'evidence-img';
+                    img.onclick = () => window.open(claim[field], '_blank');
+                    evidenceGrid.appendChild(img);
+                }
+            });
+
+            proofCard.style.display = hasPhotos ? 'block' : 'none';
+
+            // Status Badge & Timeline Color Code
             const status = claim.status || 'Pending';
             const badge = document.getElementById('statusBadge');
             const track = document.getElementById('trackFill');
 
-            badge.innerText = status;
-            badge.className = 'status-pill';
+            badge.innerText = `Status: ${status}`;
 
             document.querySelectorAll('.event').forEach(el => el.classList.remove('active'));
             document.getElementById('step1').classList.add('active');
 
             if (status === 'In Review') {
-                badge.style.background = "#eff6ff"; badge.style.color = "#2563eb";
+                badge.className = 'status-pill status-pending';
                 activateStep(2);
                 track.style.height = "50%";
-            }
-            else if (status === 'Approved') {
-                badge.style.background = "#f0fdf4"; badge.style.color = "#16a34a";
+            } else if (status === 'Approved') {
+                badge.className = 'status-pill status-approved';
                 activateStep(3);
                 track.style.height = "100%";
-
                 document.getElementById('dot2').innerHTML = '<i class="bi bi-check-lg"></i>';
-                setFinalDecision("Claim Approved", "Assessment complete. Compensation approved.", "#16a34a", "bi-check-circle-fill");
-            }
-            else if (status === 'Rejected') {
-                badge.style.background = "#fef2f2"; badge.style.color = "#dc2626";
+                setFinalDecision("Claim Approved", "Assessment complete. Compensation approved.", "var(--success-color)", "bi-check-circle-fill");
+            } else if (status === 'Rejected') {
+                badge.className = 'status-pill status-rejected';
                 activateStep(3);
                 track.style.height = "100%";
-
                 document.getElementById('dot2').innerHTML = '<i class="bi bi-check-lg"></i>';
-                setFinalDecision("Claim Rejected", "Assessment complete. Claim declined.", "#dc2626", "bi-x-circle-fill");
+                setFinalDecision("Claim Rejected", "Assessment complete. Claim declined.", "var(--danger-color)", "bi-x-circle-fill");
             } else {
-                badge.style.background = "#fff7ed"; badge.style.color = "#ea580c";
-                track.style.height = "10%";
+                badge.className = 'status-pill status-pending';
+                track.style.height = "15%";
             }
         }
 
@@ -372,8 +506,7 @@
             dot.style.borderColor = color;
             dot.style.color = color;
             dot.innerHTML = `<i class="bi ${icon}"></i>`;
-
-            document.getElementById('time3').innerText = "Completed";
+            document.getElementById('time3').innerText = "Resolved";
         }
     </script>
 

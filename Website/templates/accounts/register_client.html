@@ -3,186 +3,369 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BimaDrive | Client Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BimaDrive | Secure Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --app-gradient: linear-gradient(135deg, #4e37b5 0%, #46bbf4 100%);
-            --primary-color: #4e37b5;
+            --primary: #4f46e5;
+            --secondary: #0ea5e9;
+            --dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        * { box-sizing: border-box; outline: none; }
+
         body {
-            height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: var(--app-gradient);
+            margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,0.05) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.05) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
+            background-size: cover;
+            padding: 20px;
         }
 
-        .container-wrapper {
-            width: 950px; height: 600px; background: #fff; border-radius: 24px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.25); display: flex; overflow: hidden;
+        .login-wrapper {
+            width: 1000px; height: 620px;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px);
+            border-radius: 32px; border: var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            display: grid; grid-template-columns: 1fr 1fr; overflow: hidden;
+            position: relative;
         }
 
-        .visual-side {
-            width: 40%; background: var(--app-gradient);
-            position: relative; display: flex; flex-direction: column;
-            justify-content: center; padding: 40px; color: white;
-            clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);
+        .form-section {
+            padding: 35px 60px; display: flex; flex-direction: column; justify-content: center;
+            position: relative; z-index: 2; overflow-y: auto;
         }
-        .visual-side h2 { font-size: 32px; margin-bottom: 20px; font-weight: 700; }
-        .visual-side p { font-size: 14px; opacity: 0.9; line-height: 1.6; }
-        .visual-icon { font-size: 80px; margin-bottom: 20px; opacity: 0.2; position: absolute; top: 20px; left: 20px; }
 
-        .form-side {
-            width: 60%; padding: 50px; display: flex; flex-direction: column;
-            overflow-y: auto;
+        .brand {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+            font-size: 20px; font-weight: 800; color: var(--dark); text-decoration: none;
         }
-        .form-side::-webkit-scrollbar { width: 6px; }
-        .form-side::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+        .brand i { color: var(--primary); font-size: 24px; }
 
-        .form-header { margin-bottom: 30px; text-align: center; }
-        .form-header h3 { color: var(--primary-color); font-weight: 700; }
+        h1 { font-size: 32px; font-weight: 800; color: var(--dark); margin: 0 0 8px 0; letter-spacing: -0.5px; }
+        p.subtitle { color: #64748b; font-size: 14px; margin: 0 0 20px 0; }
 
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: #777; margin-bottom: 5px; font-weight: 500; }
-        .form-group input {
-            width: 100%; padding: 12px; border: 1px solid #e1e1e1; border-radius: 8px;
-            font-size: 14px; transition: 0.3s;
+        .input-group { margin-bottom: 14px; position: relative; }
+        .input-group > i.left-icon {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; transition: 0.3s; z-index: 3;
         }
-        .form-group input:focus { border-color: #46bbf4; outline: none; background: #f9fcff; }
-
-        .btn-register {
-            width: 100%; padding: 14px; background: var(--app-gradient);
-            border: none; border-radius: 10px; color: white; font-weight: 600;
-            margin-top: 10px; cursor: pointer; transition: 0.3s;
+        .input-group input {
+            width: 100%; padding: 13px 45px 13px 45px; border: 1px solid #e2e8f0;
+            border-radius: 14px; font-size: 14px; transition: 0.3s;
+            background: rgba(255, 255, 255, 0.6); color: var(--dark); font-weight: 500;
         }
-        .btn-register:hover { box-shadow: 0 5px 15px rgba(78, 55, 181, 0.3); transform: translateY(-2px); }
-        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; }
+        .input-group input:focus {
+            background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+        .input-group input:focus ~ i.left-icon { color: var(--primary); }
 
-        .login-link { text-align: center; margin-top: 20px; font-size: 13px; color: #888; }
-        .login-link a { color: var(--primary-color); font-weight: 600; text-decoration: none; }
+        .toggle-eye {
+            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; cursor: pointer; font-size: 18px; z-index: 3; transition: 0.2s;
+        }
+        .toggle-eye:hover { color: var(--dark); }
 
-        .animate-fade { animation: fadeIn 0.8s ease forwards; opacity: 0; }
-        @keyframes fadeIn { to { opacity: 1; } }
+        .forgot-row { text-align: right; margin-bottom: 15px; margin-top: -5px; }
+        .forgot-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .forgot-link:hover { color: var(--primary); text-decoration: underline; }
 
-        #error-msg { color: red; font-size: 12px; margin-bottom: 10px; display: none; text-align: center; }
+        .btn-login {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.4); }
+        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
 
+        .divider { display: flex; align-items: center; text-align: center; margin: 14px 0; color: #94a3b8; font-size: 12px; font-weight: 600; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
+        .divider::before { margin-right: .75em; }
+        .divider::after { margin-left: .75em; }
+
+        .btn-google {
+            width: 100%; padding: 12px; background: white; color: #334155; border: 1px solid #cbd5e1;
+            border-radius: 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .btn-google:hover { background: #f8fafc; border-color: #94a3b8; }
+        .btn-google img { width: 18px; height: 18px; }
+
+        .links { margin-top: 18px; text-align: center; font-size: 13px; color: #64748b; }
+        .links a { color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 5px; }
+        .links a:hover { text-decoration: underline; }
+
+        .visual-section {
+            position: relative; background: #0f172a; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            color: white; padding: 40px;
+        }
+        .visual-section::before {
+            content: ''; position: absolute; width: 150%; height: 150%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 60%);
+            top: -20%; right: -20%; animation: pulse 8s infinite ease-in-out;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
+
+        .glass-overlay {
+            position: relative; z-index: 2; background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px); padding: 40px; border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2); max-width: 320px;
+        }
+        .glass-overlay h3 { font-size: 24px; margin: 0 0 10px; font-weight: 700; }
+        .glass-overlay p { font-size: 13px; opacity: 0.8; line-height: 1.6; margin: 0; }
+
+        .error-banner {
+            background: #fef2f2; color: #dc2626; padding: 12px; border-radius: 10px;
+            font-size: 12px; margin-bottom: 15px; display: none; border: 1px solid #fee2e2; text-align: center; font-weight: 600;
+        }
+
+        /* --- FORGOT PASSWORD MODAL --- */
+        #forgotModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-card { background: white; width: 100%; max-width: 480px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+        .modal-header { text-align: center; margin-bottom: 25px; }
+        .modal-header i { font-size: 38px; color: var(--primary); display: block; margin-bottom: 10px; }
+        .modal-header h2 { font-size: 20px; font-weight: 800; color: #1e293b; }
+        .modal-input-group { margin-bottom: 16px; position: relative; }
+        .modal-input-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+        .modal-input-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; outline: none; background: #f8fafc; font-weight: 500; }
+        .modal-input-group input:focus { border-color: var(--primary); background: white; }
+        .modal-buttons { display: flex; gap: 12px; margin-top: 25px; }
+        .btn-modal-close { flex: 1; padding: 14px; background: #f1f5f9; color: #475569; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .btn-modal-close:hover { background: #e2e8f0; }
+        .btn-modal-submit { flex: 1; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 5px 15px rgba(79,70,229,0.3); }
+        .btn-modal-submit:hover { background: #4338ca; }
+
+        @media (max-width: 900px) {
+            .login-wrapper { grid-template-columns: 1fr; width: 95%; height: auto; }
+            .visual-section { display: none; }
+            .form-section { padding: 40px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container-wrapper">
-    <div class="visual-side">
-        <i class="bi bi-shield-check visual-icon"></i>
-        <h2 class="animate-fade" style="animation-delay: 0.1s;">Join BimaDrive</h2>
-        <p class="animate-fade" style="animation-delay: 0.2s;">Create a client account to instantly access towing services and manage your insurance portfolio.</p>
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <i class="bi bi-question-circle-fill"></i>
+                <h2>Password Recovery</h2>
+            </div>
+            <div>
+                <p style="font-size: 13.5px; color: #334155; margin-bottom: 15px; text-align: center;">Enter your registered account email and we will send you a secure password reset link.</p>
+                <div class="modal-input-group">
+                    <label>Account Email</label>
+                    <input type="email" id="recoveryEmail" placeholder="e.g. client@example.com">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal-close" onclick="closeForgotModal()">Cancel</button>
+                    <button type="button" class="btn-modal-submit" onclick="sendPasswordReset()">Send Reset Link</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="form-side">
-        <div class="form-header animate-fade" style="animation-delay: 0.3s;">
-            <h3>Client Registration</h3>
+    <div class="login-wrapper">
+        <div class="form-section">
+            <a href="#" class="brand"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
+
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Enter your credentials or sign in with Google.</p>
+
+            <div id="errorMsg" class="error-banner"></div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="email" id="email" placeholder="Email Address" required>
+                    <i class="bi bi-envelope left-icon"></i>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                    <i class="bi bi-key left-icon"></i>
+                    <i class="bi bi-eye-slash toggle-eye" id="eyePassword" onclick="togglePasswordVisibility('password', 'eyePassword')"></i>
+                </div>
+
+                <div class="forgot-row">
+                    <a class="forgot-link" onclick="openForgotModal()">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login">Sign In to Dashboard</button>
+            </form>
+
+            <div class="divider">OR</div>
+
+            <button type="button" class="btn-google" id="googleLoginBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                Sign In with Google
+            </button>
+
+            <div class="links">
+                New here? <a href="{% url 'register_client' %}">Create Client Account</a>
+            </div>
         </div>
 
-        <div id="error-msg"></div>
-
-        <form id="regForm" class="animate-fade" style="animation-delay: 0.4s;">
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="fullname" required>
+        <div class="visual-section">
+            <div class="glass-overlay">
+                <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
+                <h3>Secure Access</h3>
+                <p>Manage insurance policies, valuations, and claims in one unified, secure environment.</p>
             </div>
-
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" required>
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" required>
-            </div>
-
-            <div class="form-group">
-                <label>Confirm Password</label>
-                <input type="password" id="confirm_password" required>
-            </div>
-
-            <button type="submit" class="btn-register">Create Account</button>
-            <div class="login-link">
-                <!-- Fixed: Used absolute path -->
-                Already have an account? <a href="/login/">Login here</a>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    // Configuration from your JSON file
-    const firebaseConfig = {
-        apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
-        authDomain: "bimadrive-46fd0.firebaseapp.com",
-        databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
-        projectId: "bimadrive-46fd0",
-        storageBucket: "bimadrive-46fd0.firebasestorage.app",
-        messagingSenderId: "672547346096",
-        appId: "1:672547346096:android:116a85b7da6254b5b88d75"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const regForm = document.getElementById('regForm');
-    const errorMsg = document.getElementById('error-msg');
-    const btn = document.querySelector('.btn-register');
-
-    regForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('fullname').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const confirm = document.getElementById('confirm_password').value;
-
-        errorMsg.style.display = 'none';
-
-        if (password !== confirm) {
-            errorMsg.textContent = "Passwords do not match.";
-            errorMsg.style.display = 'block';
-            return;
+    <script>
+        function togglePasswordVisibility(fieldId, iconId) {
+            const inputField = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            if (inputField.type === 'password') {
+                inputField.type = 'text';
+                icon.className = 'bi bi-eye toggle-eye';
+            } else {
+                inputField.type = 'password';
+                icon.className = 'bi bi-eye-slash toggle-eye';
+            }
         }
 
-        btn.disabled = true;
-        btn.textContent = "Creating Account...";
-
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            // Writes to 'Client' node
-            await set(ref(db, 'Client/' + user.uid), {
-                name: name,
-                email: email,
-                role: 'client',
-                createdAt: new Date().toISOString()
-            });
-
-            alert("Registration successful! Please sign in.");
-            // Fixed: Used absolute path for redirect
-            window.location.href = "/login/";
-
-        } catch (error) {
-            console.error(error);
-            errorMsg.textContent = error.message;
-            errorMsg.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Create Account";
+        function openForgotModal() {
+            document.getElementById('forgotModal').style.display = 'flex';
+            document.getElementById('recoveryEmail').value = '';
         }
-    });
-</script>
 
+        function closeForgotModal() {
+            document.getElementById('forgotModal').style.display = 'none';
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        async function routeUserByRole(user) {
+            const dbRef = ref(db);
+
+            // 1. Check Staff
+            let snapshot = await get(child(dbRef, `Staff/${user.uid}`));
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                if (data.suspended) {
+                    await signOut(auth);
+                    alert("Your account has been suspended. Contact Administrator.");
+                    return;
+                }
+                window.location.href = data.role === 'admin' ? "{% url 'system_admin' %}" : "{% url 'insurer_dashboard' %}";
+                return;
+            }
+
+            // 2. Check Client (or create if logging in via Google for the first time)
+            snapshot = await get(child(dbRef, `Client/${user.uid}`));
+            if (!snapshot.exists()) {
+                await set(ref(db, `Client/${user.uid}`), {
+                    name: user.displayName || "Google User",
+                    email: user.email,
+                    role: 'client',
+                    createdAt: new Date().toISOString(),
+                    suspended: false
+                });
+            } else if (snapshot.val().suspended) {
+                await signOut(auth);
+                alert("Your account has been suspended. Contact Administrator.");
+                return;
+            }
+
+            window.location.href = "{% url 'client_dashboard' %}";
+        }
+
+        // Handle redirect result immediately upon page load
+        getRedirectResult(auth).then(async (result) => {
+            if (result && result.user) {
+                await routeUserByRole(result.user);
+            }
+        }).catch((err) => {
+            console.error("Google Redirect Error:", err);
+        });
+
+        document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+            try {
+                await signInWithRedirect(auth, googleProvider);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('errorMsg').innerText = "Google Sign-In failed: " + err.message;
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        });
+
+        window.sendPasswordReset = async () => {
+            const email = document.getElementById('recoveryEmail').value.trim();
+            if (!email) { alert("Please enter your account email address."); return; }
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Password reset link has been sent to your email address. Please check your inbox.");
+                closeForgotModal();
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+            }
+        };
+
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const btn = document.querySelector('.btn-login');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            errorMsg.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Authenticating...';
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                await routeUserByRole(userCredential.user);
+            } catch (error) {
+                console.error(error);
+                let msg = "Login failed. Please check your credentials.";
+                if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+                if(error.code === 'auth/user-not-found') msg = "No account found with this email.";
+                if(error.message) msg = error.message;
+
+                errorMsg.innerText = msg;
+                errorMsg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Sign In to Dashboard';
+            }
+        });
+    </script>
 </body>
 </html>

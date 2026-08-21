@@ -49,5 +49,11 @@ urlpatterns = [
     path("payment/", views.payment, name='payment'),
     path('stk_push/', views.initiate_stk_push, name='stk_push'),
     path('mpesa/callback', views.mpesa_callback, name='mpesa_callback'),
+    path('payment_status', views.query_payment_status, name='payment_status'),
+    path('payment_processing', views.payment_processing, name='payment_processing'),
+    path('payment_processing/', views.payment_processing, name='payment_processing'),
+    path('initiate_stk_push/', views.initiate_stk_push, name='initiate_stk_push'),
+    path('query_payment_status/', views.query_payment_status, name='query_payment_status'),
+    path('mpesa_callback/', views.mpesa_callback, name='mpesa_callback'),
 
 ]

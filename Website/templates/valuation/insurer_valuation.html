@@ -386,3 +386,428 @@
     </script>
 </body>
 </html>
+
+
+
+<!--======NOTE THAT FROM THIS POINT BEYOND, I MADE A SYSTEM THAT BYPASSES THE AUTOMATIC CALCULATION FOR TESTING PURPOSES!!!=====-->
+
+<!--{% load static %}-->
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Valuation Review | BimaDrive</title>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">-->
+<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">-->
+<!--    <style>-->
+<!--        :root {-->
+<!--            &#45;&#45;primary: #4f46e5;-->
+<!--            &#45;&#45;dark: #0f172a;-->
+<!--            &#45;&#45;bg: #f8fafc;-->
+<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.95);-->
+<!--            &#45;&#45;glass-border: 1px solid rgba(255, 255, 255, 0.6);-->
+<!--        }-->
+
+<!--        * { box-sizing: border-box; outline: none; margin: 0; padding: 0; }-->
+
+<!--        body {-->
+<!--            background: var(&#45;&#45;bg); font-family: 'Plus Jakarta Sans', sans-serif;-->
+<!--            display: flex; min-height: 100vh; overflow-x: hidden;-->
+<!--            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);-->
+<!--            background-size: 24px 24px; color: var(&#45;&#45;dark);-->
+<!--        }-->
+
+<!--        /* -&#45;&#45; AUTH GUARD -&#45;&#45; */-->
+<!--        #auth-guard {-->
+<!--            position: fixed; inset: 0; background: var(&#45;&#45;bg); z-index: 9999;-->
+<!--            display: flex; flex-direction: column; align-items: center; justify-content: center;-->
+<!--        }-->
+<!--        .spinner {-->
+<!--            width: 45px; height: 45px; border: 4px solid #cbd5e1;-->
+<!--            border-top: 4px solid var(&#45;&#45;primary); border-radius: 50%;-->
+<!--            animation: spin 1s linear infinite;-->
+<!--        }-->
+<!--        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }-->
+
+<!--        /* -&#45;&#45; LAYOUT -&#45;&#45; */-->
+<!--        .workspace { display: none; width: 100%; padding: 40px; max-width: 1600px; margin: 0 auto; }-->
+
+<!--        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }-->
+<!--        .back-btn {-->
+<!--            display: flex; align-items: center; gap: 8px; color: #64748b; font-weight: 600;-->
+<!--            text-decoration: none; transition: 0.2s; cursor: pointer; padding: 8px 16px;-->
+<!--            background: white; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e2e8f0;-->
+<!--        }-->
+<!--        .back-btn:hover { color: var(&#45;&#45;dark); background: #f1f5f9; }-->
+
+<!--        .page-title h1 { font-size: 28px; font-weight: 800; margin: 0 0 5px; letter-spacing: -0.5px; }-->
+<!--        .page-title p { margin: 0; color: #64748b; font-size: 14px; }-->
+
+<!--        .grid-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 30px; align-items: start; }-->
+
+<!--        /* -&#45;&#45; LEFT PANEL: MEDIA & DOCS -&#45;&#45; */-->
+<!--        .panel {-->
+<!--            background: var(&#45;&#45;glass-bg); backdrop-filter: blur(20px); border: var(&#45;&#45;glass-border);-->
+<!--            border-radius: 24px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.03);-->
+<!--        }-->
+
+<!--        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }-->
+<!--        .section-title i { color: var(&#45;&#45;primary); }-->
+
+<!--        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }-->
+<!--        .photo-box {-->
+<!--            aspect-ratio: 4/3; background: #f1f5f9; border-radius: 16px; overflow: hidden;-->
+<!--            position: relative; border: 1px solid #e2e8f0; cursor: pointer;-->
+<!--        }-->
+<!--        .photo-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }-->
+<!--        .photo-box:hover img { transform: scale(1.05); }-->
+<!--        .photo-label {-->
+<!--            position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6);-->
+<!--            color: white; font-size: 11px; padding: 6px; font-weight: 600; text-align: center; backdrop-filter: blur(4px);-->
+<!--        }-->
+
+<!--        .doc-section { background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }-->
+<!--        .doc-info { display: flex; align-items: center; gap: 15px; }-->
+<!--        .doc-icon { width: 40px; height: 40px; background: #eef2ff; color: var(&#45;&#45;primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }-->
+<!--        .doc-text h4 { margin: 0; font-size: 14px; font-weight: 600; }-->
+<!--        .doc-text p { margin: 0; font-size: 12px; color: #64748b; }-->
+<!--        .btn-view-doc { padding: 8px 16px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(&#45;&#45;dark); transition: 0.2s; text-decoration: none; display: inline-block; }-->
+<!--        .btn-view-doc:hover { border-color: var(&#45;&#45;primary); color: var(&#45;&#45;primary); }-->
+
+<!--        /* -&#45;&#45; RIGHT PANEL: ASSESSMENT FORM -&#45;&#45; */-->
+<!--        .info-block { background: #f8fafc; border-radius: 16px; padding: 20px; margin-bottom: 30px; border: 1px solid #e2e8f0; }-->
+<!--        .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }-->
+<!--        .info-row:last-child { margin-bottom: 0; }-->
+<!--        .info-label { color: #64748b; font-weight: 500; }-->
+<!--        .info-val { font-weight: 700; color: var(&#45;&#45;dark); text-align: right; }-->
+
+<!--        .input-group { margin-bottom: 20px; }-->
+<!--        .group-label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }-->
+
+<!--        .input-box {-->
+<!--            display: flex; align-items: center; background: white; border: 2px solid #e2e8f0;-->
+<!--            border-radius: 12px; padding: 0 15px; transition: 0.2s;-->
+<!--        }-->
+<!--        .input-box:focus-within { border-color: var(&#45;&#45;primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }-->
+<!--        .input-box span { font-weight: 700; color: #94a3b8; font-size: 14px; margin-right: 10px; }-->
+<!--        .input-box input, .input-box select {-->
+<!--            flex: 1; border: none; padding: 15px 0; font-size: 16px; font-weight: 600; color: var(&#45;&#45;dark);-->
+<!--            background: transparent; outline: none; width: 100%;-->
+<!--        }-->
+
+<!--        .btn-save {-->
+<!--            width: 100%; padding: 18px; background: var(&#45;&#45;primary); color: white;-->
+<!--            border: none; border-radius: 14px; font-size: 15px; font-weight: 700;-->
+<!--            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;-->
+<!--            margin-top: 10px;-->
+<!--        }-->
+<!--        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3); }-->
+
+<!--        /* Fullscreen Image Modal */-->
+<!--        #imgModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; }-->
+<!--        #imgModal img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }-->
+<!--        .close-modal { position: absolute; top: 30px; right: 40px; color: white; font-size: 40px; cursor: pointer; transition: 0.2s; }-->
+<!--        .close-modal:hover { color: #fca5a5; }-->
+
+<!--        @media (max-width: 1200px) { .grid-layout { grid-template-columns: 1fr; } }-->
+<!--        @media (max-width: 768px) { .photo-grid { grid-template-columns: 1fr 1fr; } .workspace { padding: 20px; } }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--    <div id="auth-guard">-->
+<!--        <div class="spinner"></div>-->
+<!--        <p style="margin-top:20px; color:#64748b; font-weight:600; font-size:14px;">Loading Valuation Data...</p>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Image Modal &ndash;&gt;-->
+<!--    <div id="imgModal" onclick="this.style.display='none'">-->
+<!--        <i class="bi bi-x close-modal"></i>-->
+<!--        <img id="modalImg" src="" onclick="event.stopPropagation()">-->
+<!--    </div>-->
+
+<!--    <div class="workspace" id="app">-->
+<!--        <div class="header-bar">-->
+<!--            <div class="page-title">-->
+<!--                <h1>Valuation Assessment</h1>-->
+<!--                <p id="subTitle">Reviewing request for Loading...</p>-->
+<!--            </div>-->
+<!--            <button class="back-btn" onclick="goBack()"><i class="bi bi-arrow-left"></i> Back to Dashboard</button>-->
+<!--        </div>-->
+
+<!--        <div class="grid-layout">-->
+
+<!--            &lt;!&ndash; LEFT PANEL: MEDIA &ndash;&gt;-->
+<!--            <div class="panel">-->
+<!--                <div class="section-title"><i class="bi bi-camera-fill"></i> Vehicle Visuals</div>-->
+
+<!--                <div class="photo-grid" id="photoContainer">-->
+<!--                    &lt;!&ndash; Injected via JS &ndash;&gt;-->
+<!--                    <div class="photo-box"><div style="padding:40px; text-align:center; color:#94a3b8;">Loading...</div></div>-->
+<!--                </div>-->
+
+<!--                <div class="section-title" style="margin-top: 40px;"><i class="bi bi-file-earmark-text-fill"></i> Documentation</div>-->
+<!--                <div class="doc-section" id="logbookSection">-->
+<!--                    <div class="doc-info">-->
+<!--                        <div class="doc-icon"><i class="bi bi-journal-text"></i></div>-->
+<!--                        <div class="doc-text">-->
+<!--                            <h4>Logbook Copy</h4>-->
+<!--                            <p>Official ownership document</p>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <a href="#" target="_blank" class="btn-view-doc" id="btnLogbook" style="display:none;">View PDF / Image</a>-->
+<!--                    <span id="noLogbookText" style="font-size:13px; color:#94a3b8;">Not Provided</span>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; RIGHT PANEL: ASSESSMENT FORM &ndash;&gt;-->
+<!--            <div class="panel">-->
+<!--                <div class="section-title"><i class="bi bi-clipboard-data-fill"></i> Insurer Assessment</div>-->
+
+<!--                <div class="info-block">-->
+<!--                    <div class="info-row"><span class="info-label">Owner</span><span class="info-val" id="ownerName">Loading...</span></div>-->
+<!--                    <div class="info-row"><span class="info-label">Registration</span><span class="info-val" id="regPlate">-&#45;&#45;</span></div>-->
+<!--                    <div class="info-row"><span class="info-label">Make/Model</span><span class="info-val" id="vehModel">-&#45;&#45;</span></div>-->
+<!--                    <div class="info-row"><span class="info-label">Color</span><span class="info-val" id="vehColor">-&#45;&#45;</span></div>-->
+<!--                    <div class="info-row"><span class="info-label">Status</span><span class="info-val" id="valStatus" style="color:#ea580c;">Pending</span></div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; ASSESSOR INPUTS &ndash;&gt;-->
+<!--                <div class="input-group">-->
+<!--                    <span class="group-label">Vehicle Category</span>-->
+<!--                    <div class="input-box">-->
+<!--                        <i class="bi bi-car-front" style="color:#94a3b8; margin-right:12px;"></i>-->
+<!--                        <select id="vehicleType">-->
+<!--                            <option value="private">Private Car</option>-->
+<!--                            <option value="commercial">Commercial (Own Goods)</option>-->
+<!--                            <option value="psv">PSV (Chauffeur / Ride-Hailing)</option>-->
+<!--                            <option value="motorcycle">Motorcycle</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                <div class="input-group">-->
+<!--                    <span class="group-label">Assessed Market Value</span>-->
+<!--                    <div class="input-box">-->
+<!--                        <span>KES</span>-->
+<!--                        <input type="number" id="marketVal" placeholder="0.00">-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                <div class="input-group">-->
+<!--                    <span class="group-label">Comprehensive Premium (Yearly)</span>-->
+<!--                    <div class="input-box">-->
+<!--                        <span>KES</span>-->
+<!--                        <input type="number" id="compPrem" placeholder="Enter Amount">-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                <div class="input-group">-->
+<!--                    <span class="group-label">Third Party Premium (Yearly)</span>-->
+<!--                    <div class="input-box">-->
+<!--                        <span>KES</span>-->
+<!--                        <input type="number" id="tpPrem" placeholder="Enter Amount">-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                <button class="btn-save" onclick="submitValuation()" id="saveBtn">-->
+<!--                    <i class="bi bi-check2-circle"></i> Finalize & Approve-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <script type="module">-->
+<!--        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";-->
+<!--        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";-->
+<!--        import { getDatabase, ref, get, child, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";-->
+
+<!--        const firebaseConfig = {-->
+<!--            apiKey: "AIzaSyCfZ4L9Qf&#45;&#45;qXVt6fSTovL6NufC-UEUHv8",-->
+<!--            authDomain: "bimadrive-46fd0.firebaseapp.com",-->
+<!--            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",-->
+<!--            projectId: "bimadrive-46fd0",-->
+<!--            storageBucket: "bimadrive-46fd0.firebasestorage.app",-->
+<!--            messagingSenderId: "672547346096",-->
+<!--            appId: "1:672547346096:android:116a85b7da6254b5b88d75"-->
+<!--        };-->
+
+<!--        const app = initializeApp(firebaseConfig);-->
+<!--        const auth = getAuth(app);-->
+<!--        const db = getDatabase(app);-->
+
+<!--        const valId = localStorage.getItem('currentValId');-->
+<!--        let currentVehicleId = null;-->
+<!--        let insurerName = "Insurer";-->
+
+<!--        onAuthStateChanged(auth, async (user) => {-->
+<!--            if (user) {-->
+<!--                // Ensure user is staff-->
+<!--                const staffSnap = await get(child(ref(db), `Staff/${user.uid}`));-->
+<!--                if (staffSnap.exists() && (staffSnap.val().role === 'insurer' || staffSnap.val().role === 'admin')) {-->
+<!--                    insurerName = staffSnap.val().name || "Insurer";-->
+<!--                    if (!valId) {-->
+<!--                        alert("No valuation ID found.");-->
+<!--                        goBack();-->
+<!--                        return;-->
+<!--                    }-->
+<!--                    loadValuationData();-->
+<!--                } else {-->
+<!--                    alert("Unauthorized access.");-->
+<!--                    window.location.href = "{% url 'login' %}";-->
+<!--                }-->
+<!--            } else {-->
+<!--                window.location.href = "{% url 'login' %}";-->
+<!--            }-->
+<!--        });-->
+
+<!--        async function loadValuationData() {-->
+<!--            try {-->
+<!--                const valSnap = await get(child(ref(db), `valuations/${valId}`));-->
+<!--                if (valSnap.exists()) {-->
+<!--                    const valData = valSnap.val();-->
+<!--                    currentVehicleId = valData.vehicleId;-->
+
+<!--                    // Update Top Text-->
+<!--                    document.getElementById('subTitle').innerText = `Reviewing request for ${valData.reg_plate || valData.regPlate || 'Unknown Vehicle'}`;-->
+
+<!--                    // Update Info Block-->
+<!--                    document.getElementById('ownerName').innerText = valData.owner || 'N/A';-->
+<!--                    document.getElementById('regPlate').innerText = valData.reg_plate || valData.regPlate || 'N/A';-->
+<!--                    document.getElementById('vehModel').innerText = valData.model || 'N/A';-->
+<!--                    document.getElementById('vehColor').innerText = valData.color || 'N/A';-->
+
+<!--                    if(valData.status) {-->
+<!--                        const statusEl = document.getElementById('valStatus');-->
+<!--                        statusEl.innerText = valData.status;-->
+<!--                        if(valData.status === 'Completed') {-->
+<!--                            statusEl.style.color = '#16a34a'; // green-->
+<!--                            document.getElementById('saveBtn').innerHTML = '<i class="bi bi-arrow-clockwise"></i> Update Assessment';-->
+<!--                        }-->
+<!--                    }-->
+
+<!--                    // Pre-fill Inputs if already assessed-->
+<!--                    if(valData.vehicleType) document.getElementById('vehicleType').value = valData.vehicleType;-->
+<!--                    if(valData.marketValue) document.getElementById('marketVal').value = valData.marketValue;-->
+<!--                    if(valData.comprehensivePremium) document.getElementById('compPrem').value = valData.comprehensivePremium;-->
+<!--                    if(valData.thirdPartyPremium) document.getElementById('tpPrem').value = valData.thirdPartyPremium;-->
+
+<!--                    // Load Photos-->
+<!--                    const photoContainer = document.getElementById('photoContainer');-->
+<!--                    photoContainer.innerHTML = '';-->
+
+<!--                    const requiredAngles = ['Front', 'Rear', 'Left Side', 'Right Side', 'Dashboard', 'Engine'];-->
+<!--                    let photosAdded = 0;-->
+
+<!--                    // Support multiple photo structures based on how they were uploaded-->
+<!--                    if (valData.photos) {-->
+<!--                        Object.keys(valData.photos).forEach((angle) => {-->
+<!--                            if(valData.photos[angle]) {-->
+<!--                                const box = document.createElement('div');-->
+<!--                                box.className = 'photo-box';-->
+<!--                                box.onclick = () => openModal(valData.photos[angle]);-->
+<!--                                box.innerHTML = `-->
+<!--                                    <img src="${valData.photos[angle]}" alt="${angle}">-->
+<!--                                    <div class="photo-label">${angle}</div>-->
+<!--                                `;-->
+<!--                                photoContainer.appendChild(box);-->
+<!--                                photosAdded++;-->
+<!--                            }-->
+<!--                        });-->
+<!--                    }-->
+
+<!--                    if(photosAdded === 0) {-->
+<!--                        photoContainer.innerHTML = '<div style="grid-column: span 3; text-align:center; padding: 40px; color: #94a3b8; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">No photos submitted for this valuation.</div>';-->
+<!--                    }-->
+
+<!--                    // Logbook Doc-->
+<!--                    if(valData.logbookFileUrl) {-->
+<!--                        const btn = document.getElementById('btnLogbook');-->
+<!--                        btn.href = valData.logbookFileUrl;-->
+<!--                        btn.style.display = 'inline-block';-->
+<!--                        document.getElementById('noLogbookText').style.display = 'none';-->
+<!--                    }-->
+
+<!--                    document.getElementById('auth-guard').style.display = 'none';-->
+<!--                    document.getElementById('app').style.display = 'block';-->
+
+<!--                } else {-->
+<!--                    alert("Valuation record not found.");-->
+<!--                    goBack();-->
+<!--                }-->
+<!--            } catch (error) {-->
+<!--                console.error("Error loading data:", error);-->
+<!--                alert("Failed to load valuation data.");-->
+<!--                goBack();-->
+<!--            }-->
+<!--        }-->
+
+<!--        window.submitValuation = async () => {-->
+<!--            const marketVal = document.getElementById('marketVal').value;-->
+<!--            const compPrem = document.getElementById('compPrem').value;-->
+<!--            const tpPrem = document.getElementById('tpPrem').value;-->
+<!--            const vType = document.getElementById('vehicleType').value;-->
+
+<!--            if(!marketVal || !compPrem || !tpPrem) {-->
+<!--                alert("Please fill in all assessment values before approving.");-->
+<!--                return;-->
+<!--            }-->
+
+<!--            const btn = document.getElementById('saveBtn');-->
+<!--            const originalText = btn.innerHTML;-->
+<!--            btn.innerHTML = 'Saving...';-->
+<!--            btn.disabled = true;-->
+
+<!--            try {-->
+<!--                const updates = {-->
+<!--                    status: "Completed",-->
+<!--                    assessedAt: new Date().toISOString(),-->
+<!--                    assessedBy: insurerName,-->
+<!--                    marketValue: Number(marketVal),-->
+<!--                    comprehensivePremium: Number(compPrem),-->
+<!--                    thirdPartyPremium: Number(tpPrem),-->
+<!--                    vehicleType: vType-->
+<!--                };-->
+
+<!--                // Update the Valuation Record-->
+<!--                await update(ref(db, `valuations/${valId}`), updates);-->
+
+<!--                // Try to update the master Vehicle record so the client sees it immediately-->
+<!--                if (currentVehicleId) {-->
+<!--                    await update(ref(db, `Vehicles/${currentVehicleId}`), {-->
+<!--                        marketValue: Number(marketVal),-->
+<!--                        comprehensivePremium: Number(compPrem),-->
+<!--                        thirdPartyPremium: Number(tpPrem),-->
+<!--                        valuationStatus: "Completed",-->
+<!--                        lastValuedAt: new Date().toISOString()-->
+<!--                    });-->
+<!--                } else {-->
+<!--                    console.warn("No Vehicle ID attached to this valuation. Client might not see updates on their vehicle profile directly.");-->
+<!--                }-->
+
+<!--                alert("Valuation finalized successfully!");-->
+<!--                goBack();-->
+<!--            } catch (error) {-->
+<!--                console.error(error);-->
+<!--                alert("Error saving valuation: " + error.message);-->
+<!--                btn.innerHTML = originalText;-->
+<!--                btn.disabled = false;-->
+<!--            }-->
+<!--        };-->
+
+<!--        window.openModal = (src) => {-->
+<!--            document.getElementById('modalImg').src = src;-->
+<!--            document.getElementById('imgModal').style.display = 'flex';-->
+<!--        };-->
+
+<!--        window.goBack = () => {-->
+<!--            window.location.href = "{% url 'insurer_dashboard' %}";-->
+<!--        }-->
+
+<!--        // Initialize calculation on load to set defaults-->
+<!--        calculatePremiums();-->
+<!--        loadValuation();-->
+<!--    </script>-->
+<!--</body>-->
+<!--</html>-->

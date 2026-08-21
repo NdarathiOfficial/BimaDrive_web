@@ -4,13 +4,38 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django_daraja.mpesa.core import MpesaClient
-
+import firebase_admin
+from firebase_admin import credentials, db
+import logging
+import os
 mpesa_api = MpesaClient()   # <-- FIX
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django_daraja.mpesa.core import MpesaClient
+logger = logging.getLogger(__name__)
+if not firebase_admin._apps:
+    try:
+        # Construct the path to the service account JSON file securely.
+        # This assumes the JSON file is in the same folder as this views.py file.
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        key_path = os.path.join(current_dir, 'firebase-service-account.json')
+
+        cred = credentials.Certificate(key_path)
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+        })
+        logger.info("Firebase Admin initialized successfully.")
+    except Exception as e:
+        logger.error(f"Failed to initialize Firebase Admin: {e}")
+        # Fallback to default behavior if file is missing (will fail if credentials aren't in env variables)
+        try:
+            firebase_admin.initialize_app(options={
+                'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+            })
+        except Exception as fallback_e:
+            logger.error(f"Fallback initialization also failed: {fallback_e}")
 
 import json
 import requests
@@ -22,16 +47,35 @@ from firebase_admin import credentials, db
 
 from .forms import ClientRegisterForm, InsurerRegisterForm
 
-# ---------------- FIREBASE INITIALIZATION ---------------- #
-if not firebase_admin._apps:
-    cred_path = 'serviceAccountKey.json'
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com'
-        })
-    else:
-        print(f"Firebase key not found: {cred_path}")
+logger = logging.getLogger(__name__)
+
+# ----------------- STRICT FIREBASE INITIALIZATION ----------------- #
+current_dir = os.path.dirname(os.path.abspath(__file__))
+key_path = os.path.join(current_dir, 'firebase-service-account.json')
+
+if not os.path.exists(key_path):
+    raise FileNotFoundError(
+        f"\n\n🚨 FIREBASE ERROR 🚨\n"
+        f"I am looking for the credentials file exactly here:\n"
+        f">>> {key_path} <<<\n"
+        f"But the file does not exist.\n\n"
+    )
+
+try:
+    # 1. FORCE RESET: Delete any broken Firebase setups from other files
+    if firebase_admin._apps:
+        for app_name in list(firebase_admin._apps.keys()):
+            firebase_admin.delete_app(firebase_admin.get_app(app_name))
+
+    # 2. STRICT INIT: Force it to use the exact JSON key file
+    cred = credentials.Certificate(key_path)
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+    })
+    logger.info("Firebase Admin initialized successfully with JSON Key.")
+except Exception as e:
+    logger.error(f"Failed to load credentials from {key_path}: {e}")
+    raise e
 
 
 
@@ -72,6 +116,9 @@ def login_view(request):
     })
 
 
+
+def payment_processing(request):
+    return render(request, "payment/payment_processing.html")
 
 def register_client(request):
     form = ClientRegisterForm(request.POST or None)
@@ -245,62 +292,185 @@ def initiate_stk_push(request):
 
     return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
+
 @csrf_exempt
 def mpesa_callback(request):
-    """
-    Receives M-Pesa result from Safaricom and updates Firebase.
-    """
+    """Safaricom hits this endpoint automatically when the user puts in their PIN"""
     if request.method == 'POST':
         try:
-            body = json.loads(request.body)
-            stk_callback = body.get('Body', {}).get('stkCallback', {})
+            callback_data = json.loads(request.body.decode('utf-8'))
+            stk_callback = callback_data.get('Body', {}).get('stkCallback', {})
 
-            result_code = stk_callback.get('ResultCode')
             checkout_id = stk_callback.get('CheckoutRequestID')
+            result_code = stk_callback.get('ResultCode')
             result_desc = stk_callback.get('ResultDesc')
 
-            # Reference the transaction in Firebase
-            pending_ref = db.reference(f'PendingTransactions/{checkout_id}')
-            transaction_data = pending_ref.get()
+            if checkout_id:
+                status = 'Completed' if result_code == 0 else 'Failed'
 
-            if result_code == 0:
-                # --- SUCCESSFUL PAYMENT ---
-                metadata = stk_callback.get('CallbackMetadata', {}).get('Item', [])
+                # Update Firebase so the frontend realtime listener triggers
+                db.reference(f'PendingTransactions/{checkout_id}').update({
+                    'status': status,
+                    'resultDesc': result_desc,
+                    'updatedAt': datetime.now().isoformat()
+                })
 
-                # Extract Receipt
-                mpesa_receipt = next((item['Value'] for item in metadata if item['Name'] == 'MpesaReceiptNumber'), None)
+            return JsonResponse({'ResultCode': 0, 'ResultDesc': 'Accepted'})
+        except Exception as e:
+            logger.error(f"Callback Error: {str(e)}")
+            return JsonResponse({'error': 'Internal Server Error'}, status=500)
 
-                if transaction_data and mpesa_receipt:
-                    payment_record = {
-                        'userId': transaction_data.get('userId'),
-                        'amount': transaction_data.get('amount'),
-                        'mpesaCode': mpesa_receipt,
-                        'phoneNumber': transaction_data.get('phone'),
-                        'status': 'Completed',
-                        'plan': transaction_data.get('plan'),
-                        'timestamp': datetime.now().isoformat()
-                    }
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-                    # 1. Save Permanent Records
-                    db.reference('Payments').push(payment_record)
-                    db.reference('Receipts').push(payment_record)
 
-                    # 2. Update Pending Node (Frontend listener triggers here)
-                    pending_ref.update({
-                        'status': 'Completed',
-                        'mpesaCode': mpesa_receipt
-                    })
-            else:
-                # --- FAILED PAYMENT ---
-                if transaction_data:
-                    pending_ref.update({
-                        'status': 'Failed',
-                        'reason': result_desc
-                    })
+@csrf_exempt
+def query_payment_status(request):
+    """Actively asks Safaricom for the status of a transaction using direct API calls"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            checkout_id = data.get('checkout_id')
+
+            if not checkout_id:
+                return JsonResponse({'error': 'CheckoutRequestID required'}, status=400)
+
+            # Get Access Token
+            access_token = get_mpesa_access_token()
+            if not access_token:
+                return JsonResponse({'status': 'Pending', 'message': 'Generating Token...'})
+
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            passkey = settings.MPESA_PASSKEY
+            business_short_code = settings.MPESA_EXPRESS_SHORTCODE
+            password = base64.b64encode((business_short_code + passkey + timestamp).encode()).decode()
+
+            payload = {
+                "BusinessShortCode": business_short_code,
+                "Password": password,
+                "Timestamp": timestamp,
+                "CheckoutRequestID": checkout_id
+            }
+
+            api_url = 'https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query' if settings.MPESA_ENVIRONMENT == 'production' else 'https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query'
+            headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
+
+            response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+            res_data = response.json()
+
+            logger.info(f"M-Pesa Direct Query Response: {res_data}")
+
+            result_code = str(res_data.get('ResultCode', ''))
+            result_desc = str(res_data.get('ResultDesc', 'Processing'))
+
+            status = 'Pending'
+            if result_code == '0':
+                status = 'Completed'
+            elif result_code in ['1032', '1', '2001', '1037']:
+                status = 'Failed'
+
+            # Sync to Firebase
+            if status != 'Pending':
+                db.reference(f'PendingTransactions/{checkout_id}').update({
+                    'status': status,
+                    'resultDesc': result_desc,
+                    'updatedAt': datetime.now().isoformat()
+                })
+
+            return JsonResponse({
+                'status': status,
+                'result_code': result_code,
+                'result_desc': result_desc
+            })
 
         except Exception as e:
-            print(f"Callback Error: {e}")
+            logger.error(f"STK Query Exception: {str(e)}")
+            return JsonResponse({'status': 'Pending', 'message': 'Still processing...'}, status=200)
 
-        return JsonResponse({'result': 'ok'})
+    return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
-    return JsonResponse({'error': 'Invalid method'}, status=405)
+@csrf_exempt
+def query_payment_status(request):
+    """Actively asks Safaricom for the status of a transaction using direct API calls"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            checkout_id = data.get('checkout_id')
+
+            if not checkout_id:
+                return JsonResponse({'error': 'CheckoutRequestID required'}, status=400)
+
+            # Get Access Token
+            access_token = get_mpesa_access_token()
+            if not access_token:
+                return JsonResponse({'status': 'Pending', 'message': 'Generating Token...'})
+
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            passkey = settings.MPESA_PASSKEY
+            business_short_code = settings.MPESA_EXPRESS_SHORTCODE
+            password = base64.b64encode((business_short_code + passkey + timestamp).encode()).decode()
+
+            payload = {
+                "BusinessShortCode": business_short_code,
+                "Password": password,
+                "Timestamp": timestamp,
+                "CheckoutRequestID": checkout_id
+            }
+
+            api_url = 'https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query' if settings.MPESA_ENVIRONMENT == 'production' else 'https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query'
+            headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
+
+            response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+            res_data = response.json()
+
+            logger.info(f"M-Pesa Direct Query Response: {res_data}")
+
+            result_code = str(res_data.get('ResultCode', ''))
+            result_desc = str(res_data.get('ResultDesc', 'Processing'))
+
+            status = 'Pending'
+            # ResultCode '0' means success in Safaricom Query
+            if result_code == '0':
+                status = 'Completed'
+            # 1032 = Cancelled, 1 = Insufficient funds, 2001 = Wrong PIN, 1037 = Timeout
+            elif result_code in ['1032', '1', '2001', '1037']:
+                status = 'Failed'
+
+            return JsonResponse({
+                'status': status,
+                'result_code': result_code,
+                'result_desc': result_desc
+            })
+
+        except Exception as e:
+            logger.error(f"STK Query Exception: {str(e)}")
+            return JsonResponse({'status': 'Pending', 'message': 'Still processing...'}, status=200)
+
+    return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+import requests
+from requests.auth import HTTPBasicAuth
+from django.core.cache import cache
+
+def get_mpesa_access_token():
+    """Fetches and caches the Safaricom M-Pesa Access Token securely."""
+    cached_token = cache.get('mpesa_access_token')
+    if cached_token:
+        return cached_token
+
+    consumer_key = settings.MPESA_CONSUMER_KEY
+    consumer_secret = settings.MPESA_CONSUMER_SECRET
+
+    api_url = ('https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+               if getattr(settings, 'MPESA_ENVIRONMENT', 'sandbox') == 'production'
+               else 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials')
+
+    try:
+        r = requests.get(api_url, auth=HTTPBasicAuth(consumer_key, consumer_secret), timeout=10)
+        r.raise_for_status()
+        token = r.json()['access_token']
+
+        # Cache token for 58 minutes (3500 seconds)
+        cache.set('mpesa_access_token', token, 3500)
+        return token
+    except Exception as e:
+        logger.error(f"M-PESA TOKEN ERROR: {e}")
+        return None

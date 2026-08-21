@@ -1,13 +1,14 @@
 {% load static %}
-
-
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>BimaDrive | Client Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- PDF Generation Library (jsPDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #4e37b5 0%, #46bbf4 100%);
@@ -18,30 +19,57 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: var(--bg-body); display: flex; min-height: 100vh; }
+        body { background: var(--bg-body); display: flex; min-height: 100vh; user-select: none; }
 
         /* Sidebar */
         .sidebar {
             width: var(--sidebar-width); background: var(--sidebar-bg); padding: 40px 30px;
             position: fixed; height: 100vh; display: flex; flex-direction: column; color: white;
-            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 100;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 100; overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .logo { font-size: 26px; font-weight: 700; color: white; margin-bottom: 60px; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .sidebar.collapsed {
+            width: 90px;
+            padding: 40px 15px;
+        }
+        .sidebar.collapsed .logo span,
+        .sidebar.collapsed .menu-item span,
+        .sidebar.collapsed .sidebar-divider {
+            display: none;
+        }
+        .sidebar.collapsed .logo {
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .sidebar.collapsed .menu-item {
+            justify-content: center;
+            padding: 14px;
+        }
+        .sidebar.collapsed .menu-item i {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .logo { font-size: 24px; font-weight: 700; color: white; margin-bottom: 40px; display: flex; align-items: center; gap: 12px; text-decoration: none; white-space: nowrap; }
         .logo i { color: #46bbf4; font-size: 30px; }
 
         .menu-item {
-            display: flex; align-items: center; gap: 15px; padding: 16px 20px;
-            color: rgba(255,255,255,0.6); text-decoration: none; border-radius: 16px;
-            margin-bottom: 12px; transition: 0.3s; font-weight: 500; font-size: 15px;
+            display: flex; align-items: center; gap: 15px; padding: 14px 18px;
+            color: rgba(255,255,255,0.6); text-decoration: none; border-radius: 14px;
+            margin-bottom: 8px; transition: 0.3s; font-weight: 500; font-size: 14px; cursor: pointer;
+            border: none; background: transparent; width: 100%; text-align: left; white-space: nowrap;
         }
         .menu-item:hover, .menu-item.active {
             background: rgba(255,255,255,0.1); color: white;
             border-left: 4px solid #46bbf4;
         }
-        .menu-item i { font-size: 20px; width: 25px; }
+        .menu-item i { font-size: 18px; width: 22px; text-align: center; }
+
+        .sidebar-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 15px 0; transition: 0.3s; }
 
         /* Main Content */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; }
+        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .main-content.expanded { margin-left: 90px; }
 
         /* Hero Banner */
         .dashboard-hero {
@@ -52,13 +80,62 @@
             border-bottom-left-radius: 40px;
             border-bottom-right-radius: 40px;
             position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            justify-content: space-between;
+            flex-wrap: wrap;
         }
-        .hero-title h1 { font-size: 32px; font-weight: 700; margin-bottom: 5px; }
-        .hero-title p { opacity: 0.8; font-size: 14px; }
 
-        /* Profile Pill */
+        .hero-left-group { display: flex; align-items: flex-start; gap: 20px; }
+
+        /* Sidebar Toggle Button */
+        .sidebar-toggle-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(5px);
+            flex-shrink: 0;
+        }
+        .sidebar-toggle-btn:hover { background: rgba(255,255,255,0.35); }
+
+        .hero-title h1 { font-size: 30px; font-weight: 700; margin-bottom: 5px; }
+        .hero-title p { opacity: 0.8; font-size: 13.5px; }
+
+        /* Search Bar Widget in Hero */
+        .dashboard-search-wrapper {
+            position: relative;
+            min-width: 280px;
+        }
+        .dashboard-search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            padding: 12px 16px 12px 42px;
+            border-radius: 30px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .dashboard-search-input::placeholder { color: rgba(255, 255, 255, 0.7); }
+        .dashboard-search-input:focus { background: rgba(255, 255, 255, 0.28); border-color: white; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+        .dashboard-search-wrapper i {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.8); font-size: 16px; pointer-events: none;
+        }
+
+        /* Profile Pill Group */
+        .hero-right-group { display: flex; align-items: center; gap: 20px; }
+
         .profile-pill {
-            position: absolute; top: 40px; right: 50px;
             background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
             padding: 8px 20px; border-radius: 30px;
             display: flex; align-items: center; gap: 15px;
@@ -72,11 +149,31 @@
         /* Dashboard Grid */
         .dashboard-container {
             padding: 0 50px 50px;
-            margin-top: -80px; /* Overlap effect */
+            margin-top: -80px;
             position: relative; z-index: 10;
         }
 
-        .grid-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        /* Policy Expiry Banner */
+        .policy-status-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px; padding: 30px;
+            box-shadow: 0 15px 35px rgba(78, 55, 181, 0.08); margin-bottom: 35px;
+            border: 1px solid rgba(78, 55, 181, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 25px;
+            position: relative; overflow: hidden; transition: 0.3s;
+        }
+        .policy-status-card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 6px; background: var(--primary-gradient); }
+        .policy-info h4 { font-size: 12px; color: #4e37b5; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .policy-info h2 { font-size: 22px; color: #1a1a2e; font-weight: 700; margin-bottom: 12px; }
+        .policy-details-grid { display: flex; gap: 25px; font-size: 13px; color: #64748b; flex-wrap: wrap; }
+        .badge-tag { background: #eef2ff; color: #4e37b5; padding: 4px 12px; border-radius: 8px; font-weight: 600; border: 1px solid #c7d2fe; }
+
+        .countdown-container { display: flex; gap: 10px; align-items: center; background: #ffffff; padding: 12px 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .time-box { text-align: center; min-width: 45px; }
+        .time-val { font-size: 18px; font-weight: 800; color: #1a1a2e; line-height: 1; }
+        .time-lbl { font-size: 9px; text-transform: uppercase; font-weight: 700; color: #94a3b8; margin-top: 4px; display: block; }
+        .time-sep { font-size: 16px; font-weight: 700; color: #cbd5e1; margin-bottom: 10px; }
+
+        .grid-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 35px; }
 
         .card {
             background: white; border-radius: 24px; padding: 30px;
@@ -86,11 +183,7 @@
         }
         .card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
 
-        .icon-box {
-            width: 70px; height: 70px; border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 32px; margin-bottom: 20px;
-        }
+        .icon-box { width: 70px; height: 70px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 20px; }
         .icon-primary { background: #eff4ff; color: #4e37b5; }
         .icon-accent { background: #e0f7fa; color: #00bcd4; }
         .icon-warn { background: #fff8e1; color: #ffc107; }
@@ -99,107 +192,556 @@
         .card h3 { font-size: 20px; color: #1a1a2e; margin-bottom: 10px; font-weight: 700; }
         .card p { color: #8898aa; font-size: 13px; line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
 
-        .btn-card {
-            padding: 12px; border-radius: 12px; text-align: center; text-decoration: none;
-            font-weight: 600; font-size: 14px; transition: 0.3s; cursor: pointer;
-            display: block;
-        }
+        .btn-card { padding: 12px; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; display: block; cursor: pointer; border: none; width: 100%; font-family: 'Poppins', sans-serif; }
         .btn-fill { background: #1a1a2e; color: white; }
         .btn-fill:hover { background: #4e37b5; box-shadow: 0 5px 15px rgba(78, 55, 181, 0.3); }
-
         .btn-grad { background: var(--primary-gradient); color: white; border: none; }
         .btn-grad:hover { box-shadow: 0 8px 20px rgba(70, 187, 244, 0.4); }
 
-        /* Highlight Card (Towing) */
         .card-highlight { background: #1a1a2e; color: white; }
         .card-highlight h3 { color: white; }
         .card-highlight p { color: rgba(255,255,255,0.7); }
         .card-highlight .icon-box { background: rgba(255,255,255,0.1); color: #46bbf4; }
         .card-highlight .btn-card { background: white; color: #1a1a2e; }
 
+        /* Search No-Result State */
+        #noSearchResults {
+            text-align: center; padding: 50px; background: white; border-radius: 24px;
+            box-shadow: var(--card-shadow); display: none; margin-bottom: 35px; color: #64748b;
+        }
+
+        /* --- PASSWORD & SECURITY MODAL POPUP --- */
+        #passwordModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-card { background: white; width: 100%; max-width: 520px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-header { text-align: center; margin-bottom: 25px; }
+        .modal-header i { font-size: 38px; color: #4e37b5; display: block; margin-bottom: 10px; }
+        .modal-header h2 { font-size: 20px; font-weight: 800; color: #1e293b; }
+
+        .modal-input-group { margin-bottom: 15px; position: relative; }
+        .modal-input-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+
+        .input-with-eye { position: relative; display: flex; align-items: center; }
+        .modal-input-group input, .modal-input-group select { width: 100%; padding: 12px 45px 12px 14px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; outline: none; background: #f8fafc; font-weight: 500; transition: 0.2s; font-family: 'Poppins', sans-serif; }
+        .modal-input-group input.error-input { border-color: #ef4444; background: #fef2f2; }
+
+        .toggle-eye { position: absolute; right: 14px; cursor: pointer; color: #64748b; font-size: 18px; z-index: 5; }
+        .toggle-eye:hover { color: #1e293b; }
+
+        .error-hint { font-size: 11px; color: #ef4444; margin-top: 4px; display: none; font-weight: 600; }
+        .password-rules { font-size: 11px; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .password-rules ul { padding-left: 15px; margin: 4px 0 0 0; }
+        .password-rules li { margin-bottom: 2px; }
+
+        .modal-buttons { display: flex; gap: 12px; margin-top: 25px; }
+        .btn-modal-close { flex: 1; padding: 14px; background: #f1f5f9; color: #475569; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .btn-modal-close:hover { background: #e2e8f0; }
+        .btn-modal-submit { flex: 1; padding: 14px; background: #4e37b5; color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(78,55,181,0.3); }
+        .btn-modal-submit:hover { background: #3c2a91; }
+        .btn-modal-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+        /* Passkey Section inside Modal */
+        .passkey-box { background: #e0f2fe; border: 1px solid #bae6fd; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+        .passkey-box p { font-size: 12px; color: #0369a1; margin: 0; line-height: 1.4; }
+        .btn-passkey { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .btn-passkey:hover { background: #0369a1; }
+
+        /* --- INACTIVITY TIMEOUT MODAL --- */
+        #inactivityModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
+        .inactivity-card i { font-size: 48px; color: #f59e0b; display: block; margin-bottom: 15px; }
+        .inactivity-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .inactivity-card p { font-size: 13.5px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+        .inactivity-timer { font-size: 32px; font-weight: 800; color: #ef4444; margin-bottom: 25px; font-family: monospace; }
+        .btn-stay { width: 100%; padding: 16px; background: #4e37b5; color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
+        .btn-stay:hover { background: #3c2a91; }
+
+        @media (max-width: 1024px) {
+            .grid-cards { grid-template-columns: repeat(2, 1fr); }
+            .sidebar { width: 90px; padding: 40px 15px; }
+            .sidebar .logo span, .sidebar .menu-item span, .sidebar .sidebar-divider { display: none; }
+            .sidebar .logo { justify-content: center; }
+            .sidebar .menu-item { justify-content: center; padding: 14px; }
+            .sidebar .menu-item i { margin: 0; font-size: 22px; }
+            .main-content { margin-left: 90px; }
+            .dashboard-container { padding: 0 20px 30px; }
+            .profile-pill { right: 20px; }
+            .dashboard-hero { flex-direction: column; height: auto; gap: 20px; }
+            .hero-right-group { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <a href="#" class="logo"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
-
-        <div style="margin-top: 20px;">
-            <a href="{% url 'client_dashboard' %}" class="menu-item active"><i class="bi bi-grid-fill"></i> Dashboard</a>
-            <a href="{% url 'profile' %}" class="menu-item"><i class="bi bi-person-circle"></i> My Profile</a>
-            <a href="{% url 'add_vehicle' %}" class="menu-item"><i class="bi bi-plus-circle-fill"></i> Add Vehicle</a>
-            <a href="{% url 'view_vehicle' %}" class="menu-item"><i class="bi bi-car-front-fill"></i> My Vehicles</a>
-            <a href="{% url 'cover' %}" class="menu-item"><i class="bi bi-shield-check"></i> My Cover</a>
-            <a href="{% url 'client_claims' %}" class="menu-item"><i class="bi bi-exclamation-triangle-fill"></i> Track Claims</a>
-            <a href="{% url 'client_valuation' %}" class="menu-item"><i class="bi bi-camera-fill"></i> Valuation</a>
+    <!-- INACTIVITY WARNING MODAL -->
+    <div id="inactivityModal">
+        <div class="inactivity-card">
+            <i class="bi bi-clock-history"></i>
+            <h2>Inactivity Warning</h2>
+            <p>You have been inactive for a while. For your security, your session will automatically expire in:</p>
+            <div class="inactivity-timer" id="inactivityCountdown">30</div>
+            <button type="button" class="btn-stay" onclick="resetInactivityTimer()">Stay Logged In</button>
         </div>
-
-        <a href="#" id="logoutBtn" class="menu-item" style="margin-top: auto; color: #ff6b6b;"><i class="bi bi-box-arrow-left"></i> Logout</a>
     </div>
 
-    <div class="main-content">
-        <div class="dashboard-hero">
-            <div class="hero-title">
-                <h1 id="welcomeText">Hello, Client 👋</h1>
-                <p>Welcome to your personal insurance command center.</p>
+    <!-- PASSWORD & SECURITY MODAL POPUP -->
+    <div id="passwordModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <i class="bi bi-shield-lock-fill"></i>
+                <h2>Security & Password</h2>
             </div>
 
-            <div class="profile-pill">
-                <span id="profileName">Loading...</span>
-                <div class="user-avatar" id="profileInitials">--</div>
+            <!-- Passkey Registration Box -->
+            <div class="passkey-box">
+                <div>
+                    <strong style="font-size: 13px; color: #0369a1; display:block; margin-bottom:2px;">Biometric Passkeys</strong>
+                    <p>Log in securely using TouchID, FaceID, or Windows Hello without typing a password.</p>
+                </div>
+                <button type="button" class="btn-passkey" onclick="createPasskey()">Create Passkey</button>
+            </div>
+
+            <form id="passwordForm">
+                <div class="password-rules">
+                    <strong>Strong Password Requirements:</strong>
+                    <ul>
+                        <li>At least 8 characters long</li>
+                        <li>Must include uppercase & lowercase letters & numbers</li>
+                        <li>Must include at least one symbol (@$!%*?&)</li>
+                    </ul>
+                </div>
+
+                <div class="modal-input-group">
+                    <label>Current Password</label>
+                    <div class="input-with-eye">
+                        <input type="password" id="currentPassword" placeholder="Enter current password" required>
+                        <i class="bi bi-eye-slash toggle-eye" id="eyeCurrent" onclick="togglePasswordVisibility('currentPassword', 'eyeCurrent')"></i>
+                    </div>
+                </div>
+
+                <div class="modal-input-group">
+                    <label>New Password</label>
+                    <div class="input-with-eye">
+                        <input type="password" id="newPassword" placeholder="Enter new secure password" required oninput="validatePasswordInputs()">
+                        <i class="bi bi-eye-slash toggle-eye" id="eyeNew" onclick="togglePasswordVisibility('newPassword', 'eyeNew')"></i>
+                    </div>
+                    <div class="error-hint" id="strengthHint">Password must be strong (8+ chars, upper, lower, number, symbol).</div>
+                </div>
+
+                <div class="modal-input-group">
+                    <label>Confirm New Password</label>
+                    <div class="input-with-eye">
+                        <input type="password" id="confirmPassword" placeholder="Re-enter new password" required oninput="validatePasswordInputs()">
+                        <i class="bi bi-eye-slash toggle-eye" id="eyeConfirm" onclick="togglePasswordVisibility('confirmPassword', 'eyeConfirm')"></i>
+                    </div>
+                    <div class="error-hint" id="matchHint">Passwords do not match.</div>
+                </div>
+
+                <div class="modal-input-group">
+                    <label>Security Question (for recovery)</label>
+                    <select id="securityQuestion" required>
+                        <option value="" disabled selected>Select a security question</option>
+                        <option value="pet">What was the name of your first pet?</option>
+                        <option value="school">What primary school did you attend?</option>
+                        <option value="city">In what city were you born?</option>
+                        <option value="car">What was your first car model?</option>
+                    </select>
+                </div>
+
+                <div class="modal-input-group">
+                    <label>Security Answer</label>
+                    <input type="text" id="securityAnswer" placeholder="Enter your answer (case-insensitive)" required oninput="validatePasswordInputs()">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal-close" onclick="closePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn-modal-submit" id="btnSubmitPass" disabled>Update Security</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="appSidebar">
+        <a href="#" class="logo">
+            <i class="bi bi-shield-check-fill"></i>
+            <span>BimaDrive</span>
+        </a>
+
+        <div style="margin-top: 5px; flex-grow: 1;">
+            <a href="{% url 'client_dashboard' %}" class="menu-item active" title="Dashboard">
+                <i class="bi bi-grid-fill"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'profile' %}" class="menu-item" title="My Profile">
+                <i class="bi bi-person-circle"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="{% url 'add_vehicle' %}" class="menu-item" title="Add Vehicle">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Add Vehicle</span>
+            </a>
+            <a href="{% url 'view_vehicle' %}" class="menu-item" title="My Vehicles">
+                <i class="bi bi-car-front-fill"></i>
+                <span>My Vehicles</span>
+            </a>
+            <a href="{% url 'cover' %}" class="menu-item" title="My Cover">
+                <i class="bi bi-shield-check"></i>
+                <span>My Cover</span>
+            </a>
+            <a href="{% url 'client_claims' %}" class="menu-item" title="Track Claims">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Track Claims</span>
+            </a>
+            <a href="{% url 'client_valuation' %}" class="menu-item" title="Valuation">
+                <i class="bi bi-camera-fill"></i>
+                <span>Valuation</span>
+            </a>
+
+            <div class="sidebar-divider"></div>
+
+            <button type="button" class="menu-item" onclick="downloadKenyanCertificate()" style="color: #46bbf4;" title="Download Cover Note">
+                <i class="bi bi-file-earmark-medical-fill"></i>
+                <span>Download Cover Note</span>
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <button type="button" class="menu-item" onclick="openPasswordModal()" title="Security & Passkeys">
+                <i class="bi bi-fingerprint"></i>
+                <span>Security & Passkeys</span>
+            </button>
+        </div>
+
+        <a href="#" id="logoutBtn" class="menu-item" style="color: #ff6b6b; margin-top: auto;" title="Logout">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+        <div class="dashboard-hero">
+            <div class="hero-left-group">
+                <!-- Sidebar Toggle Menu Button -->
+                <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Menu">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="hero-title">
+                    <h1 id="welcomeText">Hello, Client 👋</h1>
+                    <p>Welcome to your personal insurance command center.</p>
+                </div>
+            </div>
+
+            <div class="hero-right-group">
+                <!-- Dashboard Instant Search Widget -->
+                <div class="dashboard-search-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="dashboardSearchInput" class="dashboard-search-input" placeholder="Search services, plates, policy..." oninput="handleDashboardSearch(this.value)">
+                </div>
+
+                <div class="profile-pill">
+                    <span id="profileName">Loading...</span>
+                    <div class="user-avatar" id="profileInitials">--</div>
+                </div>
             </div>
         </div>
 
         <div class="dashboard-container">
-            <div class="grid-cards">
 
-                <!-- 1. Towing (Highlighted) -->
-                <div class="card card-highlight">
+            <!-- Policy Expiry Banner -->
+            <div class="policy-status-card searchable-item" id="policyCard" data-searchkeywords="active policy protection comprehensive expiry days hours vehicle plate logbook" style="display: none;">
+                <div class="policy-info">
+                    <h4>Active Policy Protection</h4>
+                    <h2 id="planHeader">Comprehensive Protection</h2>
+                    <div class="policy-details-grid">
+                        <span class="badge-tag"><i class="bi bi-car-front"></i> Plate: <strong id="vehPlateVal" style="color:#1a1a2e;">---</strong></span>
+                        <span class="badge-tag"><i class="bi bi-file-earmark-text"></i> Logbook: <strong id="vehLogbookVal" style="color:#1a1a2e;">---</strong></span>
+                        <span style="display:flex; align-items:center; gap:5px;"><i class="bi bi-calendar-event"></i> Expires: <strong id="expiryDateVal" style="color:#1a1a2e;">---</strong></span>
+                    </div>
+                </div>
+
+                <div class="countdown-container">
+                    <div class="time-box">
+                        <div class="time-val" id="cdDays">00</div>
+                        <span class="time-lbl">Days</span>
+                    </div>
+                    <div class="time-sep">:</div>
+                    <div class="time-box">
+                        <div class="time-val" id="cdHours">00</div>
+                        <span class="time-lbl">Hours</span>
+                    </div>
+                    <div class="time-sep">:</div>
+                    <div class="time-box">
+                        <div class="time-val" id="cdMins">00</div>
+                        <span class="time-lbl">Mins</span>
+                    </div>
+                    <div class="time-sep">:</div>
+                    <div class="time-box">
+                        <div class="time-val" id="cdSecs" style="color: #4e37b5;">00</div>
+                        <span class="time-lbl">Secs</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-cards" id="cardsGridContainer">
+                <div class="card card-highlight searchable-item" data-searchkeywords="need a tow stuck road emergency roadside rescue partner tow truck">
                     <div class="icon-box"><i class="bi bi-truck-front-fill"></i></div>
                     <h3>Need a Tow?</h3>
                     <p style="margin-bottom: 25px;">Stuck on the road? Tap below to broadcast your location to our nearest partner.</p>
                     <a href="{% url 'towing' %}" class="btn-card">Request Tow Truck</a>
                 </div>
 
-                <!-- 2. Insurance Cover -->
-                <div class="card">
+                <div class="card searchable-item" data-searchkeywords="my insurance view vehicle valuation value select premium plan cover details">
                     <div class="icon-box icon-success"><i class="bi bi-shield-check"></i></div>
                     <h3>My Insurance</h3>
                     <p style="color: #8898aa; margin-bottom: 25px;">View your vehicle's valuation value and select your premium plan.</p>
                     <a href="{% url 'cover' %}" class="btn-card btn-fill">View Cover Details</a>
                 </div>
 
-                <!-- 3. Add Vehicle -->
-                <div class="card">
+                <div class="card searchable-item" data-searchkeywords="register vehicle add new car garage start valuation process">
                     <div class="icon-box icon-primary"><i class="bi bi-car-front"></i></div>
                     <h3>Register Vehicle</h3>
                     <p style="color: #8898aa; margin-bottom: 25px;">Add a new car to your garage to start the valuation process.</p>
                     <a href="{% url 'add_vehicle' %}" class="btn-card btn-fill">Add New Vehicle</a>
                 </div>
 
-                <!-- 4. Report Accident -->
-                <div class="card">
+                <div class="card searchable-item" data-searchkeywords="report incident involved accident file claim report securely">
                     <div class="icon-box icon-warn"><i class="bi bi-cone-striped"></i></div>
                     <h3>Report Incident</h3>
                     <p style="color: #8898aa; margin-bottom: 25px;">Involved in an accident? File a claim report securely.</p>
                     <a href="{% url 'report_accident' %}" class="btn-card btn-grad">File Report</a>
                 </div>
 
-                <!-- 5. Valuation -->
-                <div class="card">
+                <div class="card searchable-item" data-searchkeywords="valuation upload photos vehicle components insurer assessment">
                     <div class="icon-box icon-accent"><i class="bi bi-camera"></i></div>
                     <h3>Valuation</h3>
                     <p style="color: #8898aa; margin-bottom: 25px;">Upload photos of your vehicle components for insurer assessment.</p>
                     <a href="{% url 'client_valuation' %}" class="btn-card btn-fill" style="background: #f4f7fe; color: #4e37b5;">Start Process</a>
                 </div>
             </div>
+
+            <!-- No Search Match State -->
+            <div id="noSearchResults">
+                <i class="bi bi-search" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                <h3 style="color: #334155; font-size: 18px; margin-bottom: 5px;">No matching features or policies found</h3>
+                <p style="font-size: 13px;">Try searching for "tow", "insurance", "accident", or vehicle registration plates.</p>
+            </div>
+
         </div>
     </div>
 
+    <script>
+        // Disable Right-Click across the dashboard
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // --- SIDEBAR TOGGLE LOGIC ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('appSidebar');
+            const mainContent = document.getElementById('mainContent');
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+
+        // --- DASHBOARD INSTANT SEARCH LOGIC ---
+        window.handleDashboardSearch = (query) => {
+            const q = query.toLowerCase().trim();
+            const searchableItems = document.querySelectorAll('.searchable-item');
+            let matchCount = 0;
+
+            searchableItems.forEach(item => {
+                const keywords = (item.getAttribute('data-searchkeywords') || '') + ' ' + item.innerText.toLowerCase();
+                if (q === '' || keywords.includes(q)) {
+                    item.style.display = '';
+                    matchCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const noResultsEl = document.getElementById('noSearchResults');
+            if (matchCount === 0 && q !== '') {
+                noResultsEl.style.display = 'block';
+            } else {
+                noResultsEl.style.display = 'none';
+            }
+        };
+
+        // --- PASSKEY (WebAuthn) CREATION LOGIC (Fixed Domain Scope) ---
+        window.createPasskey = async () => {
+            if (!window.PublicKeyCredential) {
+                alert("Passkeys are not supported on this browser or device.");
+                return;
+            }
+
+            try {
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const userId = new Uint8Array(16);
+                window.crypto.getRandomValues(userId);
+
+                const publicKeyCredentialCreationOptions = {
+                    challenge: challenge,
+                    rp: {
+                        name: "BimaDrive Insurance"
+                        // Omitted explicit 'id' property so the browser defaults to the current origin effective domain automatically
+                    },
+                    user: {
+                        id: userId,
+                        name: window.currentUserEmail || "client@bimadrive.com",
+                        displayName: document.getElementById('profileName').innerText || "Client User",
+                    },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                    timeout: 60000,
+                    attestation: "direct"
+                };
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+
+                if (credential) {
+                    alert("Passkey created successfully! You can now use your biometric sensor to authenticate.");
+                }
+            } catch (err) {
+                console.error("Passkey creation error:", err);
+                if (err.name !== 'NotAllowedError') {
+                    alert("Failed to create passkey: " + err.message);
+                }
+            }
+        };
+
+        // --- INACTIVITY TIMER LOGIC ---
+        let inactivityTimer = null;
+        let warningTimer = null;
+        let secondsLeft = 30;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_LIMIT);
+        }
+
+        function showInactivityWarning() {
+            document.getElementById('inactivityModal').style.display = 'flex';
+            secondsLeft = 30;
+            document.getElementById('inactivityCountdown').innerText = secondsLeft;
+
+            clearInterval(warningTimer);
+            warningTimer = setInterval(() => {
+                secondsLeft--;
+                document.getElementById('inactivityCountdown').innerText = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(warningTimer);
+                    const authInstance = window.firebaseAuthInstance;
+                    if(authInstance) {
+                        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ signOut }) => {
+                            signOut(authInstance).then(() => window.location.href = "{% url 'login' %}");
+                        });
+                    } else {
+                        window.location.href = "{% url 'login' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        window.resetInactivityTimer = function() {
+            document.getElementById('inactivityModal').style.display = 'none';
+            clearInterval(warningTimer);
+            startInactivityTimer();
+        };
+
+        ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            window.addEventListener(event, () => {
+                if (document.getElementById('inactivityModal').style.display !== 'flex') {
+                    startInactivityTimer();
+                }
+            }, { passive: true });
+        });
+
+        startInactivityTimer();
+
+        // --- PASSWORD MODAL & VALIDATION ---
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'flex';
+        }
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            document.getElementById('passwordForm').reset();
+            document.getElementById('currentPassword').classList.remove('error-input');
+            document.getElementById('newPassword').classList.remove('error-input');
+            document.getElementById('confirmPassword').classList.remove('error-input');
+            document.getElementById('strengthHint').style.display = 'none';
+            document.getElementById('matchHint').style.display = 'none';
+            document.getElementById('btnSubmitPass').disabled = true;
+        }
+
+        function togglePasswordVisibility(fieldId, iconId) {
+            const inputField = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            if (inputField.type === 'password') {
+                inputField.type = 'text';
+                icon.className = 'bi bi-eye toggle-eye';
+            } else {
+                inputField.type = 'password';
+                icon.className = 'bi bi-eye-slash toggle-eye';
+            }
+        }
+
+        function validatePasswordInputs() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const secQuestion = document.getElementById('securityQuestion').value;
+            const secAnswer = document.getElementById('securityAnswer').value.trim();
+
+            const strengthHint = document.getElementById('strengthHint');
+            const matchHint = document.getElementById('matchHint');
+
+            const newPassInput = document.getElementById('newPassword');
+            const confirmInput = document.getElementById('confirmPassword');
+            const submitBtn = document.getElementById('btnSubmitPass');
+
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+            let isStrong = strongRegex.test(newPass);
+            let isMatch = (newPass === confirmPass && confirmPass.length > 0);
+            let hasSecurityQA = (secQuestion !== "" && secAnswer.length > 0);
+
+            if (newPass.length > 0 && !isStrong) {
+                newPassInput.classList.add('error-input');
+                strengthHint.style.display = 'block';
+            } else {
+                newPassInput.classList.remove('error-input');
+                strengthHint.style.display = 'none';
+            }
+
+            if (confirmPass.length > 0 && !isMatch) {
+                confirmInput.classList.add('error-input');
+                matchHint.style.display = 'block';
+            } else {
+                confirmInput.classList.remove('error-input');
+                matchHint.style.display = 'none';
+            }
+
+            submitBtn.disabled = !(isStrong && isMatch && hasSecurityQA);
+        }
+
+        document.getElementById('securityQuestion').addEventListener('change', validatePasswordInputs);
+        document.getElementById('securityAnswer').addEventListener('input', validatePasswordInputs);
+        document.getElementById('currentPassword').addEventListener('input', validatePasswordInputs);
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -213,37 +755,243 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        window.firebaseAuthInstance = auth;
         const db = getDatabase(app);
+        let countdownInterval = null;
+
+        let activePolicyData = null;
+        let clientUserData = {};
+        let currentUserId = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                currentUserId = user.uid;
+                window.currentUserEmail = user.email;
                 const dbRef = ref(db);
                 try {
                     let snapshot = await get(child(dbRef, `Client/${user.uid}`));
-
-                    if (!snapshot.exists()) {
-                        // Check fallback location if data structure changed
-                        const appId = firebaseConfig.projectId;
-                        snapshot = await get(child(dbRef, `artifacts/${appId}/users/${user.uid}/profile`));
-                    }
-
                     if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        const name = data.name || "Client";
-
+                        clientUserData = snapshot.val();
+                        const name = clientUserData.name || "Client";
                         document.getElementById('welcomeText').innerText = `Hello, ${name.split(' ')[0]} 👋`;
                         document.getElementById('profileName').innerText = name;
                         document.getElementById('profileInitials').innerText = name.charAt(0).toUpperCase();
-                    } else {
-                        console.log("No client data found.");
                     }
+
+                    // Fetch Vehicles & Active Policy
+                    const vSnap = await get(ref(db, 'Vehicles'));
+                    if (vSnap.exists()) {
+                        const vehicles = vSnap.val();
+                        let activeVehicle = null;
+
+                        for (const key in vehicles) {
+                            if (vehicles[key].ownerId === user.uid && vehicles[key].insuranceStatus === 'Active') {
+                                activeVehicle = vehicles[key];
+                                break;
+                            }
+                        }
+
+                        if (activeVehicle) {
+                            activePolicyData = activeVehicle;
+                            const policyCard = document.getElementById('policyCard');
+                            policyCard.style.display = 'flex';
+
+                            const existingKeywords = policyCard.getAttribute('data-searchkeywords');
+                            policyCard.setAttribute('data-searchkeywords', `${existingKeywords} ${activeVehicle.regPlate} ${activeVehicle.logbookNo || ''} ${activeVehicle.model || ''}`);
+
+                            document.getElementById('planHeader').innerText = `${activeVehicle.activePlan || 'Comprehensive'} Protection`;
+                            document.getElementById('vehPlateVal').innerText = activeVehicle.regPlate || 'N/A';
+                            document.getElementById('vehLogbookVal').innerText = activeVehicle.logbookNo || activeVehicle.chassisNo || 'N/A';
+
+                            let expiryTime = activeVehicle.policyExpiry;
+                            if (!expiryTime && activeVehicle.lastValuedAt) {
+                                let purchaseDate = new Date(activeVehicle.lastValuedAt);
+                                purchaseDate.setFullYear(purchaseDate.getFullYear() + 1);
+                                expiryTime = purchaseDate.toISOString();
+                            }
+
+                            if (expiryTime) {
+                                const expDate = new Date(expiryTime);
+                                document.getElementById('expiryDateVal').innerText = expDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                startSecondCountdown(expDate);
+                            }
+                        }
+                    }
+
                 } catch (error) {
-                    console.error("Error fetching user data:", error);
+                    console.error("Dashboard error:", error);
                 }
             } else {
                 window.location.href = "{% url 'login' %}";
             }
         });
+
+        // --- PASSWORD & SECURITY QUESTION FORM SUBMISSION ---
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPass = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const secQuestion = document.getElementById('securityQuestion').value;
+            const secAnswer = document.getElementById('securityAnswer').value.trim().toLowerCase();
+
+            if (!confirm("Are you sure you want to update your password and security questions?")) {
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Session expired. Please log in again.");
+                window.location.href = "{% url 'login' %}";
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitPass');
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            try {
+                // Verify current password first
+                await signInWithEmailAndPassword(auth, user.email, currentPass);
+
+                // Update auth password
+                await updatePassword(user, newPass);
+
+                // Save security Q&A hash/data in Client node in Realtime DB
+                await update(ref(db, `Client/${user.uid}`), {
+                    securityQuestion: secQuestion,
+                    securityAnswerHash: btoa(secAnswer)
+                });
+
+                alert("Security credentials updated successfully! Please sign in with your new password.");
+                await signOut(auth);
+                window.location.href = "{% url 'login' %}";
+            } catch (error) {
+                console.error("Security update error:", error);
+                if (error.code === 'auth/wrong-password') {
+                    alert("Incorrect current password entered.");
+                } else {
+                    alert("Error: " + error.message);
+                }
+                btn.innerText = "Update Security";
+                btn.disabled = false;
+            }
+        });
+
+        // --- KENYAN CERTIFICATE OF INSURANCE PDF GENERATOR ---
+        window.downloadKenyanCertificate = () => {
+            if (!activePolicyData) {
+                alert("No active insurance policy found to generate certificate.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFillColor(15, 23, 42); // Dark Navy
+            doc.rect(0, 0, 210, 40, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.text("CERTIFICATE OF MOTOR INSURANCE", 105, 18, null, null, "center");
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("Issued in accordance with the Insurance Act (Cap 487) of Kenya", 105, 28, null, null, "center");
+
+            doc.setTextColor(30, 41, 59);
+            doc.setFontSize(11);
+            doc.text(`Policy Number: BIMADRIVE-POL-${Math.floor(100000 + Math.random() * 900000)}`, 20, 55);
+            doc.text(`Underwriter: BimaDrive Insurance Underwriters Kenya Ltd`, 20, 63);
+
+            doc.setDrawColor(203, 213, 225);
+            doc.setLineWidth(0.5);
+            doc.line(20, 72, 190, 72);
+
+            doc.setFontSize(13);
+            doc.setFont("helvetica", "bold");
+            doc.text("1. Name of Policyholder:", 20, 86);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${clientUserData.name || 'Valued Client'}`, 80, 86);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("2. Registration Mark & No.:", 20, 96);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${activePolicyData.regPlate || 'N/A'}`, 80, 96);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("3. Make and Model:", 20, 106);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${activePolicyData.model || 'N/A'}`, 80, 106);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("4. Chassis Number / Serial:", 20, 116);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${activePolicyData.chassisNo || 'N/A'}`, 80, 116);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("5. Cover Type:", 20, 126);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${activePolicyData.activePlan || 'Comprehensive'} Protection`, 80, 126);
+
+            doc.line(20, 138, 190, 138);
+            doc.setFontSize(13);
+            doc.setFont("helvetica", "bold");
+            doc.text("Period of Insurance:", 20, 150);
+
+            const startDate = new Date().toLocaleDateString('en-GB');
+            const endDate = new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString('en-GB');
+
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text(`From: ${startDate}    To: ${endDate} (Midnight)`, 20, 160);
+
+            doc.setDrawColor(78, 55, 181);
+            doc.setLineWidth(1);
+            doc.rect(20, 175, 170, 45);
+
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text("This certificate complies with Section 5 of the Insurance (Motor Vehicles Third Party Risks) Act.", 25, 186);
+            doc.text("Authorized Signature & Stamp:", 25, 202);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(78, 55, 181);
+            doc.text("BIMADRIVE DIGITAL AUTHORITY - KENYA", 25, 212);
+
+            doc.save(`Kenyan_Insurance_Certificate_${activePolicyData.regPlate || 'Vehicle'}.pdf`);
+        };
+
+        function startSecondCountdown(expiryDate) {
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            function computeTime() {
+                const now = new Date();
+                const diff = expiryDate - now;
+
+                if (diff <= 0) {
+                    document.getElementById('cdDays').innerText = "00";
+                    document.getElementById('cdHours').innerText = "00";
+                    document.getElementById('cdMins').innerText = "00";
+                    document.getElementById('cdSecs').innerText = "00";
+                    document.getElementById('planHeader').innerText = "Policy Expired";
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('cdDays').innerText = String(days).padStart(2, '0');
+                document.getElementById('cdHours').innerText = String(hours).padStart(2, '0');
+                document.getElementById('cdMins').innerText = String(minutes).padStart(2, '0');
+                document.getElementById('cdSecs').innerText = String(seconds).padStart(2, '0');
+            }
+
+            computeTime();
+            countdownInterval = setInterval(computeTime, 1000);
+        }
 
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();

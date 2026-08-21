@@ -3,145 +3,265 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Select Insurance</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Insurance Cover Selection | BimaDrive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary: #4f46e5;
-            --secondary: #0ea5e9;
-            --dark: #0f172a;
-            --surface: #ffffff;
+            --primary: #4e37b5;
+            --secondary: #46bbf4;
+            --success: #05cd99;
+            --glass-bg: rgba(255, 255, 255, 0.92);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --text-dark: #1e293b;
+            --text-light: #64748b;
         }
 
         body {
-            background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif;
-            display: flex; flex-direction: column; align-items: center; padding: 60px 20px;
-            min-height: 100vh;
-            background-image: radial-gradient(#e2e8f0 1px, transparent 1px); background-size: 24px 24px;
+            background: #f0f4f8; font-family: 'Poppins', sans-serif;
+            display: flex; justify-content: center; padding: 50px 20px; min-height: 100vh;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                              radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
+                              radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-size: cover; background-attachment: fixed;
         }
 
-        .back-link {
-            position: absolute; top: 30px; left: 30px; text-decoration: none;
-            color: #64748b; font-weight: 600; font-size: 14px;
-            background: white; padding: 8px 16px; border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
-        }
-        .back-link:hover { color: var(--primary); transform: translateX(-3px); }
-
-        .header { text-align: center; margin-bottom: 60px; max-width: 600px; }
-        .header h1 { font-size: 32px; font-weight: 800; color: var(--dark); margin: 0 0 15px 0; letter-spacing: -0.5px; }
-        .header p { color: #64748b; font-size: 15px; line-height: 1.6; }
-
-        .val-badge {
-            background: #e0e7ff; color: var(--primary); padding: 8px 20px;
-            border-radius: 30px; font-weight: 700; font-size: 18px; display: inline-block;
-            margin-top: 10px; border: 1px solid #c7d2fe;
+        .main-card {
+            width: 1100px; background: var(--glass-bg); backdrop-filter: blur(20px);
+            border-radius: 30px; border: var(--glass-border);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.2);
+            padding: 50px; position: relative; overflow: hidden;
         }
 
-        /* Cards */
-        .pricing-wrapper {
-            display: flex; justify-content: center; gap: 30px; align-items: center; flex-wrap: wrap;
+        /* Top Bar & Garage Switcher */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-wrap: wrap; gap: 20px; }
+        .back-link { color: var(--text-light); text-decoration: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .back-link:hover { color: var(--text-dark); }
+
+        .garage-selector-box {
+            background: #1a1a2e; padding: 12px 20px; border-radius: 12px; display: none;
+            align-items: center; gap: 12px; color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
+        .garage-selector-box span { font-size: 12px; font-weight: 600; color: #cbd5e1; }
+        .vehicle-dropdown {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            outline: none; cursor: pointer; font-family: 'Poppins', sans-serif;
+        }
+        .vehicle-dropdown option { background: #1a1a2e; color: white; }
+
+        /* Header Info */
+        .header-section { text-align: center; margin-bottom: 40px; }
+        .badge { background: rgba(5, 205, 153, 0.1); color: var(--success); padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; }
+        h1 { font-size: 32px; color: var(--text-dark); margin: 0 0 8px; font-weight: 800; }
+        p.sub-text { color: var(--text-light); font-size: 14px; max-width: 600px; margin: 0 auto; }
+
+        /* Status Lock Banner */
+        .cover-lock-banner {
+            background: #ecfdf5; border: 1px solid #d1fae5; color: #047857; padding: 20px 25px;
+            border-radius: 16px; margin-bottom: 35px; display: none; align-items: center; gap: 15px; font-size: 14px; font-weight: 600;
+        }
+        .cover-lock-banner i { font-size: 24px; flex-shrink: 0; }
+
+        /* Pricing Cards Grid */
+        .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
 
         .plan-card {
-            background: var(--surface); width: 360px; border-radius: 24px; padding: 40px;
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); transition: 0.3s;
-            position: relative; border: 1px solid #e2e8f0;
+            background: white; border-radius: 24px; padding: 35px; border: 2px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02); display: flex; flex-direction: column; transition: 0.3s; position: relative;
         }
-        .plan-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); }
+        .plan-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 20px 40px rgba(78,55,181,0.08); }
+        .plan-card.featured { border-color: var(--primary); background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); }
 
-        /* Premium Highlight */
-        .plan-card.premium {
-            border: 2px solid var(--primary); transform: scale(1.05);
-            box-shadow: 0 25px 50px -10px rgba(79, 70, 229, 0.15); z-index: 2;
+        .plan-tag { position: absolute; top: -12px; right: 30px; background: var(--primary); color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 10px; letter-spacing: 0.5px; }
+
+        .plan-header h3 { font-size: 20px; font-weight: 800; color: var(--text-dark); margin-bottom: 5px; }
+        .plan-header p { font-size: 12px; color: var(--text-light); margin-bottom: 20px; }
+
+        .price-box { background: #f8fafc; padding: 18px; border-radius: 14px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .price-label { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #94a3b8; letter-spacing: 0.5px; }
+        .price-val { font-size: 26px; font-weight: 800; color: var(--text-dark); margin-top: 2px; }
+
+        .features-list { list-style: none; padding: 0; margin: 0 0 30px 0; flex-grow: 1; }
+        .features-list li { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; margin-bottom: 12px; }
+        .features-list li i { color: var(--success); font-size: 16px; }
+
+        .btn-select-plan {
+            width: 100%; padding: 16px; background: var(--text-dark); color: white; border: none;
+            border-radius: 14px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
         }
-        .plan-card.premium:hover { transform: scale(1.05) translateY(-10px); }
+        .btn-select-plan:hover { background: var(--primary); box-shadow: 0 10px 20px rgba(78,55,181,0.2); }
+        .btn-select-plan.disabled-btn { background: #cbd5e1; color: #64748b; cursor: not-allowed; box-shadow: none; pointer-events: none; }
 
-        .rec-badge {
-            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-            background: var(--primary); color: white; padding: 6px 16px; border-radius: 20px;
-            font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+        .unvalued-notice { text-align: center; padding: 40px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 20px; color: #b45309; display: none; }
+        .unvalued-notice h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .unvalued-notice p { font-size: 13px; margin-bottom: 20px; }
+        .btn-val { display: inline-block; padding: 12px 25px; background: #d97706; color: white; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 13px; }
+
+        /* --- INACTIVITY TIMEOUT MODAL --- */
+        #inactivityModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
         }
-
-        .plan-title { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-        .plan-price { font-size: 42px; color: var(--dark); font-weight: 800; margin-bottom: 30px; letter-spacing: -1px; }
-        .plan-price span { font-size: 16px; color: #94a3b8; font-weight: 500; }
-
-        ul { list-style: none; padding: 0; margin-bottom: 40px; text-align: left; }
-        li { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 14px; color: #475569; font-weight: 500; }
-        .icon-check { color: #10b981; font-size: 18px; flex-shrink: 0; }
-        .icon-x { color: #cbd5e1; font-size: 18px; flex-shrink: 0; }
-        .text-mute { color: #cbd5e1; text-decoration: line-through; }
-
-        /* Buttons */
-        .btn {
-            width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer;
-            border: none; font-size: 14px; transition: 0.2s;
-        }
-        .btn-basic { background: #f1f5f9; color: #475569; }
-        .btn-basic:hover { background: #e2e8f0; color: var(--dark); }
-
-        .btn-pro { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
-        .btn-pro:hover { box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3); transform: translateY(-1px); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; background: #eee; color: #aaa; box-shadow: none; transform: none; }
-
-        .debug-info {
-            margin-top: 50px; font-size: 12px; color: #94a3b8; font-family: monospace;
-            background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee;
-        }
-
+        .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
+        .inactivity-card i { font-size: 48px; color: #f59e0b; display: block; margin-bottom: 15px; }
+        .inactivity-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .inactivity-card p { font-size: 13.5px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+        .inactivity-timer { font-size: 32px; font-weight: 800; color: #ef4444; margin-bottom: 25px; font-family: monospace; }
+        .btn-stay { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
+        .btn-stay:hover { background: #3c2a91; }
     </style>
 </head>
 <body>
 
-    <a href="{% url 'client_dashboard' %}" class="back-link"><i class="bi bi-arrow-left"></i> Dashboard</a>
-
-    <div class="header">
-        <h1>Choose Your Protection</h1>
-        <p>Based on your vehicle's approved market valuation.</p>
-        <div id="valuationDisplay" class="val-tag">Scanning Database...</div>
-    </div>
-
-    <div class="pricing-wrapper">
-        <!-- Standard Plan -->
-        <div class="plan-card">
-            <div class="plan-title">Third Party Only</div>
-            <div class="plan-price" id="tpPrice">--- <span>/yr</span></div>
-
-            <ul>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Legal Liability Coverage</li>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Property Damage</li>
-                <li class="text-mute"><i class="bi bi-x-circle-fill icon-x"></i> Theft Protection</li>
-                <li class="text-mute"><i class="bi bi-x-circle-fill icon-x"></i> Fire & Vandalism</li>
-                <li class="text-mute"><i class="bi bi-x-circle-fill icon-x"></i> Roadside Assistance</li>
-            </ul>
-            <button id="btnTP" class="btn btn-basic" onclick="selectPlan('Third Party')" disabled>Select Basic</button>
-        </div>
-
-        <!-- Comprehensive Plan -->
-        <div class="plan-card premium">
-            <div class="rec-badge">Recommended</div>
-            <div class="plan-title">Comprehensive</div>
-            <div class="plan-price" id="compPrice">--- <span>/yr</span></div>
-
-            <ul>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Legal Liability Coverage</li>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Property Damage</li>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Theft Protection</li>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Fire & Vandalism</li>
-                <li><i class="bi bi-check-circle-fill icon-check"></i> Free Roadside Assistance</li>
-            </ul>
-            <button id="btnComp" class="btn btn-pro" onclick="selectPlan('Comprehensive')" disabled>Select Premium</button>
+    <!-- INACTIVITY WARNING MODAL -->
+    <div id="inactivityModal">
+        <div class="inactivity-card">
+            <i class="bi bi-clock-history"></i>
+            <h2>Inactivity Warning</h2>
+            <p>You have been inactive for a while. For your security, your session will automatically expire in:</p>
+            <div class="inactivity-timer" id="inactivityCountdown">30</div>
+            <button type="button" class="btn-stay" onclick="resetInactivityTimer()">Stay Logged In</button>
         </div>
     </div>
 
-    <div class="debug-info" id="debugText">Initializing Firebase...</div>
+    <div class="main-card">
+        <div class="top-bar">
+            <a href="{% url 'client_dashboard' %}" class="back-link"><i class="bi bi-arrow-left"></i> Dashboard</a>
+
+            <div class="garage-selector-box" id="garageBar">
+                <span><i class="bi bi-car-front-fill" style="color: #46bbf4;"></i> Target Vehicle:</span>
+                <select id="vehicleSelector" class="vehicle-dropdown"></select>
+            </div>
+        </div>
+
+        <div class="header-section">
+            <span class="badge">Verified Market Valuation</span>
+            <h1>Select Insurance Cover</h1>
+            <p class="sub-text">Choose your preferred protection plan based on professional vehicle assessment.</p>
+        </div>
+
+        <!-- Anti-Double Purchase Banner -->
+        <div class="cover-lock-banner" id="coverLockBanner">
+            <i class="bi bi-shield-fill-check"></i>
+            <div>
+                <strong>Vehicle Already Insured!</strong>
+                <div id="lockDesc">This vehicle currently holds an active insurance policy. New purchases are disabled until expiration.</div>
+            </div>
+        </div>
+
+        <!-- PLANS CONTAINER -->
+        <div class="plans-grid" id="plansContainer">
+            <!-- Comprehensive Plan -->
+            <div class="plan-card featured">
+                <div class="plan-tag">Most Popular</div>
+                <div class="plan-header">
+                    <h3>Comprehensive Cover</h3>
+                    <p>Full protection against theft, fire, accidental damage, and third-party liabilities.</p>
+                </div>
+                <div class="price-box">
+                    <div class="price-label">Annual Premium</div>
+                    <div class="price-val" id="compPriceVal">KES ---</div>
+                </div>
+                <ul class="features-list">
+                    <li><i class="bi bi-check-circle-fill"></i> Accidental collision & overturn</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Fire, theft & hijack protection</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Free 24/7 emergency roadside towing</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Third-party property damage up to KES 3M</li>
+                </ul>
+                <button class="btn-select-plan" id="btnComp" onclick="proceedToPayment('Comprehensive')">
+                    Select Comprehensive <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Third Party Plan -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <h3>Third Party Only (TPO)</h3>
+                    <p>Standard legal cover protecting against liabilities to third-party injuries and properties.</p>
+                </div>
+                <div class="price-box">
+                    <div class="price-label">Annual Premium</div>
+                    <div class="price-val" id="tpPriceVal">KES ---</div>
+                </div>
+                <ul class="features-list">
+                    <li><i class="bi bi-check-circle-fill"></i> Statutory legal compliance</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Third-party bodily injury liability</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Third-party property damage protection</li>
+                    <li><i class="bi bi-x-circle" style="color:#cbd5e1;"></i> Own damage & theft protection</li>
+                </ul>
+                <button class="btn-select-plan" id="btnTp" onclick="proceedToPayment('Third Party')">
+                    Select Third Party <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- UNVALUATED NOTICE STATE -->
+        <div class="unvalued-notice" id="unvaluedNotice">
+            <h3>Vehicle Valuation Required</h3>
+            <p id="unvaluedText">This vehicle has not yet been appraised by our insurance assessors. Valuation is mandatory before cover selection.</p>
+            <a href="{% url 'client_valuation' %}" class="btn-val"><i class="bi bi-camera-fill"></i> Proceed to Valuation</a>
+        </div>
+    </div>
+
+    <script>
+        // --- INACTIVITY TIMER LOGIC ---
+        let inactivityTimer = null;
+        let warningTimer = null;
+        let secondsLeft = 30;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_LIMIT);
+        }
+
+        function showInactivityWarning() {
+            document.getElementById('inactivityModal').style.display = 'flex';
+            secondsLeft = 30;
+            document.getElementById('inactivityCountdown').innerText = secondsLeft;
+
+            clearInterval(warningTimer);
+            warningTimer = setInterval(() => {
+                secondsLeft--;
+                document.getElementById('inactivityCountdown').innerText = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(warningTimer);
+                    const authInstance = window.firebaseAuthInstance;
+                    if(authInstance) {
+                        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ signOut }) => {
+                            signOut(authInstance).then(() => window.location.href = "{% url 'login' %}");
+                        });
+                    } else {
+                        window.location.href = "{% url 'login' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        window.resetInactivityTimer = function() {
+            document.getElementById('inactivityModal').style.display = 'none';
+            clearInterval(warningTimer);
+            startInactivityTimer();
+        };
+
+        ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            window.addEventListener(event, () => {
+                if (document.getElementById('inactivityModal').style.display !== 'flex') {
+                    startInactivityTimer();
+                }
+            }, { passive: true });
+        });
+
+        startInactivityTimer();
+    </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -155,87 +275,121 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        window.firebaseAuthInstance = auth;
         const db = getDatabase(app);
 
-        onAuthStateChanged(auth, (user) => {
+        let allVehicles = {};
+        let allValuations = {};
+        let activeVehicleKey = null;
+
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const debugEl = document.getElementById('debugText');
-                debugEl.innerText = `Auth OK: ${user.uid}`;
+                try {
+                    const [valSnap, vehSnap] = await Promise.all([
+                        get(ref(db, 'valuations')),
+                        get(ref(db, 'Vehicles'))
+                    ]);
 
-                // Listen to ALL valuations
-                onValue(ref(db, 'valuations'), (snapshot) => {
-                    if (snapshot.exists()) {
-                        const allVals = snapshot.val();
-                        debugEl.innerText += ` | DB Total: ${Object.keys(allVals).length}`;
+                    allValuations = valSnap.exists() ? valSnap.val() : {};
+                    const rawVehicles = vehSnap.exists() ? vehSnap.val() : {};
 
-                        const userVals = [];
+                    allVehicles = {};
+                    for (const key in rawVehicles) {
+                        if (rawVehicles[key].ownerId === user.uid) {
+                            allVehicles[key] = rawVehicles[key];
+                        }
+                    }
 
-                        // Filter for current user (Handle both userId and ownerId naming conventions)
-                        Object.values(allVals).forEach(v => {
-                            if (v.userId === user.uid || v.ownerId === user.uid) {
-                                userVals.push(v);
-                            }
+                    const vehicleKeys = Object.keys(allVehicles);
+                    if (vehicleKeys.length > 0) {
+                        if (vehicleKeys.length > 1) {
+                            const selector = document.getElementById('vehicleSelector');
+                            selector.innerHTML = '';
+                            vehicleKeys.forEach(key => {
+                                const v = allVehicles[key];
+                                const opt = document.createElement('option');
+                                opt.value = key;
+                                opt.textContent = `${v.regPlate || 'Vehicle'} (${v.model || 'N/A'})`;
+                                selector.appendChild(opt);
+                            });
+                            document.getElementById('garageBar').style.display = 'flex';
+                        }
+
+                        activeVehicleKey = vehicleKeys[0];
+                        evaluateVehicleCoverState(activeVehicleKey);
+
+                        document.getElementById('vehicleSelector').addEventListener('change', (e) => {
+                            activeVehicleKey = e.target.value;
+                            evaluateVehicleCoverState(activeVehicleKey);
                         });
 
-                        debugEl.innerText += ` | My Records: ${userVals.length}`;
-
-                        if (userVals.length > 0) {
-                            // Sort by timestamp descending (newest first)
-                            userVals.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-                            const latestVal = userVals[0];
-
-                            // Case-insensitive check for completed status
-                            const status = (latestVal.status || '').toLowerCase();
-
-                            if (status === 'completed') {
-                                // SUCCESS
-                                const formatMoney = (amount) => "KES " + Number(amount).toLocaleString();
-
-                                document.getElementById('valuationDisplay').innerText = `Valuation: ${formatMoney(latestVal.marketValue)}`;
-                                document.getElementById('tpPrice').innerHTML = `${formatMoney(latestVal.thirdPartyPremium)} <span>/yr</span>`;
-                                document.getElementById('compPrice').innerHTML = `${formatMoney(latestVal.comprehensivePremium)} <span>/yr</span>`;
-
-                                document.getElementById('btnTP').disabled = false;
-                                document.getElementById('btnComp').disabled = false;
-                            } else {
-                                // PENDING
-                                document.getElementById('valuationDisplay').innerText = "Assessment In Progress";
-                                document.getElementById('valuationDisplay').style.background = "#fff7ed";
-                                document.getElementById('valuationDisplay').style.color = "#c2410c";
-                            }
-                        } else {
-                            document.getElementById('valuationDisplay').innerText = "No Valuation Requests Found";
-                        }
                     } else {
-                        document.getElementById('valuationDisplay').innerText = "Database Empty";
+                        alert("Please register a vehicle first.");
+                        window.location.href = "{% url 'add_vehicle' %}";
                     }
-                }, (error) => {
-                    debugEl.innerText += ` | Error: ${error.message}`;
-                });
+                } catch (error) {
+                    console.error("Initialization Error:", error);
+                }
             } else {
                 window.location.href = "{% url 'login' %}";
             }
         });
 
-        window.selectPlan = (planName) => {
-            let amountText = "";
+        function evaluateVehicleCoverState(vKey) {
+            const vehicle = allVehicles[vKey];
+            localStorage.setItem('currentVehicleId', vKey);
 
-            if (planName === 'Third Party') {
-                amountText = document.getElementById('tpPrice').innerText;
-            } else {
-                amountText = document.getElementById('compPrice').innerText;
+            let matchingValuation = null;
+            for (const valKey in allValuations) {
+                const val = allValuations[valKey];
+                if ((val.vehicleId === vKey || val.reg_plate === vehicle.regPlate || val.regPlate === vehicle.regPlate) && val.status === 'Completed') {
+                    matchingValuation = val;
+                    break;
+                }
             }
 
-            const amount = amountText.replace(/[^0-9]/g, '');
+            const plansContainer = document.getElementById('plansContainer');
+            const unvaluedNotice = document.getElementById('unvaluedNotice');
+            const lockBanner = document.getElementById('coverLockBanner');
 
-            if (!amount || amount === '0') {
-                alert("Pricing error. Please refresh.");
+            if (!matchingValuation) {
+                plansContainer.style.display = 'none';
+                lockBanner.style.display = 'none';
+                unvaluedNotice.style.display = 'block';
+                document.getElementById('unvaluedText').innerText = `Vehicle (${vehicle.regPlate || 'Selected'}) has not yet completed valuation. Please submit your valuation request first.`;
                 return;
             }
 
-            localStorage.setItem('selectedPlan', planName);
-            localStorage.setItem('premiumAmount', amount);
+            unvaluedNotice.style.display = 'none';
+            plansContainer.style.display = 'grid';
 
+            const compAmt = matchingValuation.comprehensivePremium || 25000;
+            const tpAmt = matchingValuation.thirdPartyPremium || 7500;
+
+            document.getElementById('compPriceVal').innerText = `KES ${Number(compAmt).toLocaleString()}`;
+            document.getElementById('tpPriceVal').innerText = `KES ${Number(tpAmt).toLocaleString()}`;
+
+            const isAlreadyActive = vehicle.insuranceStatus === 'Active';
+            if (isAlreadyActive) {
+                lockBanner.style.display = 'flex';
+                document.getElementById('lockDesc').innerText = `Vehicle ${vehicle.regPlate} is currently insured under an active policy. New purchases are locked until expiration.`;
+
+                document.getElementById('btnComp').className = 'btn-select-plan disabled-btn';
+                document.getElementById('btnComp').innerHTML = 'Policy Already Active';
+                document.getElementById('btnTp').className = 'btn-select-plan disabled-btn';
+                document.getElementById('btnTp').innerHTML = 'Policy Already Active';
+            } else {
+                lockBanner.style.display = 'none';
+
+                document.getElementById('btnComp').className = 'btn-select-plan';
+                document.getElementById('btnComp').innerHTML = 'Select Comprehensive <i class="bi bi-arrow-right"></i>';
+                document.getElementById('btnTp').className = 'btn-select-plan';
+                document.getElementById('btnTp').innerHTML = 'Select Third Party <i class="bi bi-arrow-right"></i>';
+            }
+        }
+
+        window.proceedToPayment = (planName) => {
+            localStorage.setItem('selectedPlan', planName);
             window.location.href = "{% url 'payment' %}";
         };
     </script>

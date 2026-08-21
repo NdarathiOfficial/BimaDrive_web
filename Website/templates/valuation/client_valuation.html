@@ -3,15 +3,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vehicle Valuation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Vehicle Valuation | BimaDrive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
             --primary: #4e37b5;
             --secondary: #46bbf4;
-            --glass-bg: rgba(255, 255, 255, 0.9);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --glass-bg: rgba(255, 255, 255, 0.92);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
             --text-dark: #1e293b;
             --text-light: #64748b;
         }
@@ -32,6 +32,33 @@
             padding: 60px; position: relative; overflow: hidden;
         }
 
+        /* Garage Switcher Bar */
+        .garage-selector-box {
+            background: #1a1a2e; padding: 15px 25px; border-radius: 14px; display: none;
+            align-items: center; justify-content: space-between; color: white; margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .garage-selector-box span { font-size: 13px; font-weight: 600; color: #cbd5e1; display: flex; align-items: center; gap: 8px; }
+        .vehicle-dropdown-wrapper { position: relative; display: flex; align-items: center; }
+        .vehicle-dropdown-wrapper i { position: absolute; right: 15px; color: #46bbf4; pointer-events: none; font-size: 13px; }
+
+        .vehicle-dropdown {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 8px 35px 8px 15px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            outline: none; cursor: pointer; transition: 0.3s; appearance: none; font-family: 'Poppins', sans-serif;
+        }
+        .vehicle-dropdown option { background: #1a1a2e; color: white; }
+
+        /* Status Alert Banner */
+        .valuation-alert {
+            background: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; padding: 18px 24px;
+            border-radius: 16px; margin-bottom: 30px; display: none; align-items: center; gap: 15px; font-size: 14px; font-weight: 600;
+        }
+        .valuation-alert.success-alert {
+            background: #ecfdf5; border-color: #d1fae5; color: #047857;
+        }
+        .valuation-alert i { font-size: 22px; flex-shrink: 0; }
+
         /* Decorative Header */
         .header-section {
             text-align: center; margin-bottom: 40px; position: relative;
@@ -51,32 +78,26 @@
         }
         .form-section-title::after { content: ''; height: 1px; background: #e2e8f0; flex: 1; }
 
-        /* Inputs - Fixed & Compact Layout */
         .input-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px 40px; /* Vertical gap 30px, Horizontal gap 40px */
+            gap: 30px 40px;
             margin-bottom: 40px;
         }
         .floating-group { position: relative; }
 
         .floating-group input {
-            width: 100%; padding: 12px 15px; /* Smaller padding for compactness */
+            width: 100%; padding: 12px 15px;
             border: 1px solid #e2e8f0; border-radius: 10px;
             background: white; font-size: 14px; font-weight: 500; color: var(--text-dark);
-            transition: 0.3s; outline: none; box-sizing: border-box; /* Prevent overflow */
+            transition: 0.3s; outline: none; box-sizing: border-box;
         }
         .floating-group input:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(70, 187, 244, 0.1); }
-
-        /* Readonly State */
-        .floating-group input:read-only {
-            background: #f8fafc; color: #64748b; border-color: #e2e8f0; cursor: not-allowed;
-        }
+        .floating-group input:read-only { background: #f8fafc; color: #64748b; border-color: #e2e8f0; cursor: not-allowed; }
 
         .floating-group label {
             position: absolute; top: -9px; left: 12px; background: white; padding: 0 6px;
-            font-size: 11px; font-weight: 600; color: var(--primary); border-radius: 4px;
-            z-index: 2;
+            font-size: 11px; font-weight: 600; color: var(--primary); border-radius: 4px; z-index: 2;
         }
 
         /* Viewfinder Upload Grid */
@@ -106,7 +127,6 @@
         .slot-title { font-size: 13px; font-weight: 600; color: var(--text-dark); display: block; }
         .slot-desc { font-size: 10px; color: var(--text-light); }
 
-        /* Preview Image */
         .preview-img {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
             opacity: 0; transition: 0.5s; z-index: 1;
@@ -114,7 +134,6 @@
         .has-image .preview-img { opacity: 1; }
         .has-image .slot-content { opacity: 0; }
 
-        /* Overlay on hover for filled slots */
         .has-image::after {
             content: 'Change Photo'; position: absolute; bottom: 0; left: 0; width: 100%;
             background: rgba(0,0,0,0.7); color: white; font-size: 12px; padding: 8px;
@@ -136,17 +155,122 @@
             cursor: pointer; box-shadow: 0 10px 25px rgba(78, 55, 181, 0.3); transition: 0.3s;
         }
         .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(78, 55, 181, 0.4); }
-        .btn-submit:disabled { opacity: 0.7; cursor: wait; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* LEGAL INTEGRITY POPUP MODAL */
+        #integrityModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+            animation: fadeInModal 0.3s ease;
+        }
+        @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-card {
+            background: white; width: 100%; max-width: 550px; border-radius: 24px; padding: 40px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3); text-align: center; position: relative;
+        }
+        .modal-icon {
+            width: 70px; height: 70px; background: #fef2f2; color: #ef4444; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;
+        }
+        .modal-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 12px; }
+        .modal-card p { font-size: 13.5px; color: #64748b; line-height: 1.6; margin-bottom: 25px; text-align: left; background: #f8fafc; padding: 15px 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+
+        .checkbox-container {
+            display: flex; align-items: flex-start; gap: 12px; text-align: left; margin-bottom: 30px; cursor: pointer;
+        }
+        .checkbox-container input { width: 18px; height: 18px; accent-color: var(--primary); margin-top: 2px; cursor: pointer; }
+        .checkbox-container span { font-size: 13px; color: #334155; font-weight: 500; user-select: none; }
+
+        .modal-actions { display: flex; gap: 15px; }
+        .btn-modal-cancel {
+            flex: 1; padding: 14px; background: #f1f5f9; color: #475569; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-modal-cancel:hover { background: #e2e8f0; }
+
+        .btn-modal-confirm {
+            flex: 1; padding: 14px; background: #ef4444; color: white; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+        }
+        .btn-modal-confirm:hover { background: #dc2626; transform: translateY(-2px); }
+        .btn-modal-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* --- INACTIVITY TIMEOUT MODAL --- */
+        #inactivityModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
+        .inactivity-card i { font-size: 48px; color: #f59e0b; display: block; margin-bottom: 15px; }
+        .inactivity-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .inactivity-card p { font-size: 13.5px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+        .inactivity-timer { font-size: 32px; font-weight: 800; color: #ef4444; margin-bottom: 25px; font-family: monospace; }
+        .btn-stay { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
+        .btn-stay:hover { background: #3c2a91; }
 
     </style>
 </head>
 <body>
 
+    <!-- INACTIVITY WARNING MODAL -->
+    <div id="inactivityModal">
+        <div class="inactivity-card">
+            <i class="bi bi-clock-history"></i>
+            <h2>Inactivity Warning</h2>
+            <p>You have been inactive for a while. For your security, your session will automatically expire in:</p>
+            <div class="inactivity-timer" id="inactivityCountdown">30</div>
+            <button type="button" class="btn-stay" onclick="resetInactivityTimer()">Stay Logged In</button>
+        </div>
+    </div>
+
+    <!-- LEGAL INTEGRITY MODAL POPUP -->
+    <div id="integrityModal">
+        <div class="modal-card">
+            <div class="modal-icon"><i class="bi bi-shield-exclamation"></i></div>
+            <h2>Mandatory Data Integrity Warning</h2>
+            <p>
+                <strong>Legal Notice:</strong> You are about to submit official inspection photographs for insurance valuation. Falsifying, editing, using AI-generated artifacts, or submitting pre-owned/unrelated vehicle imagery constitutes <strong>insurance fraud</strong> under statutory law.
+                <br><br>
+                Submitting falsified information will lead to <strong>immediate policy termination, blacklisting from all partner underwriters, and potential criminal prosecution</strong>.
+            </p>
+
+            <label class="checkbox-container">
+                <input type="checkbox" id="legalCheckbox" onchange="toggleConfirmBtn()">
+                <span>I solemnly declare that all 9 uploaded inspection photos are genuine, unedited, and directly captured from the vehicle specified above.</span>
+            </label>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeIntegrityModal()">Review Photos</button>
+                <button type="button" class="btn-modal-confirm" id="modalConfirmBtn" onclick="executeValuationSubmission()" disabled>Confirm & Submit</button>
+            </div>
+        </div>
+    </div>
+
     <div class="main-card">
+
+        <!-- Garage Switcher Bar -->
+        <div class="garage-selector-box" id="garageBar">
+            <span><i class="bi bi-car-front-fill" style="color: #46bbf4; font-size: 16px;"></i> Select Vehicle for Valuation</span>
+            <div class="vehicle-dropdown-wrapper">
+                <select id="vehicleSelector" class="vehicle-dropdown"></select>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+        </div>
+
+        <!-- Valuation Lock Alert Notice -->
+        <div class="valuation-alert" id="valAlert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <strong id="alertTitle">Valuation Already Submitted!</strong>
+                <div id="alertDesc">This vehicle has already undergone or requested valuation. Further assessment trials are locked.</div>
+            </div>
+        </div>
+
         <div class="header-section">
             <span class="badge">AI-Assisted Valuation</span>
             <h1>Vehicle Assessment</h1>
-            <p class="sub-text">We've pre-filled your vehicle details. Please verify and upload clear photos for inspection.</p>
+            <p class="sub-text">Verify your vehicle details and upload clear inspection photos.</p>
         </div>
 
         <form id="valForm">
@@ -167,15 +291,13 @@
                 </div>
                 <div class="floating-group">
                     <label>Logbook Number</label>
-                    <!-- Logbook is entered manually as it might not be in initial reg -->
                     <input type="text" id="logbook_no" placeholder="Enter Serial No." required>
                 </div>
             </div>
 
-            <div class="form-section-title">2. Visual Inspection (9 Photos Required)</div>
+            <div class="form-section-title" id="photoSectionTitle">2. Visual Inspection (9 Photos Required)</div>
 
             <div class="photo-grid" id="photoContainer">
-                <!-- Exterior -->
                 <label class="upload-slot" id="slot1">
                     <div class="slot-content">
                         <div class="icon-circle"><i class="bi bi-car-front-fill"></i></div>
@@ -216,7 +338,6 @@
                     <input type="file" data-key="imgPass" onchange="preview(this, 'p4', 'slot4')" hidden>
                 </label>
 
-                <!-- Interior & Details -->
                 <label class="upload-slot" id="slot5">
                     <div class="slot-content">
                         <div class="icon-circle"><i class="bi bi-grid-1x2"></i></div>
@@ -269,13 +390,63 @@
             </div>
 
             <div class="action-bar">
-                <a href="{% url 'client_dashboard' %}" class="back-link"><i class="bi bi-arrow-left"></i> Cancel</a>
-                <button type="submit" class="btn-submit">Submit Assessment <i class="bi bi-arrow-right"></i></button>
+                <a href="{% url 'client_dashboard' %}" class="back-link"><i class="bi bi-arrow-left"></i> Return Dashboard</a>
+                <button type="button" class="btn-submit" id="submitBtn" onclick="handlePreSubmitCheck()">Submit Assessment <i class="bi bi-arrow-right"></i></button>
             </div>
         </form>
     </div>
 
     <script>
+        // --- INACTIVITY TIMER LOGIC ---
+        let inactivityTimer = null;
+        let warningTimer = null;
+        let secondsLeft = 30;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_LIMIT);
+        }
+
+        function showInactivityWarning() {
+            document.getElementById('inactivityModal').style.display = 'flex';
+            secondsLeft = 30;
+            document.getElementById('inactivityCountdown').innerText = secondsLeft;
+
+            clearInterval(warningTimer);
+            warningTimer = setInterval(() => {
+                secondsLeft--;
+                document.getElementById('inactivityCountdown').innerText = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(warningTimer);
+                    const authInstance = window.firebaseAuthInstance;
+                    if(authInstance) {
+                        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ signOut }) => {
+                            signOut(authInstance).then(() => window.location.href = "{% url 'login' %}");
+                        });
+                    } else {
+                        window.location.href = "{% url 'login' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        window.resetInactivityTimer = function() {
+            document.getElementById('inactivityModal').style.display = 'none';
+            clearInterval(warningTimer);
+            startInactivityTimer();
+        };
+
+        ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            window.addEventListener(event, () => {
+                if (document.getElementById('inactivityModal').style.display !== 'flex') {
+                    startInactivityTimer();
+                }
+            }, { passive: true });
+        });
+
+        startInactivityTimer();
+
         function preview(input, imgId, slotId) {
             if (input.files && input.files[0]) {
                 const img = document.getElementById(imgId);
@@ -285,12 +456,41 @@
                 slot.classList.add('has-image');
             }
         }
+
+        function handlePreSubmitCheck() {
+            const inputs = document.querySelectorAll('input[type="file"]');
+            let count = 0;
+            inputs.forEach(input => { if (input.files[0]) count++; });
+
+            if (count < 9) {
+                alert("Please upload all 9 required inspection photos before submitting.");
+                return;
+            }
+
+            const logbookNo = document.getElementById('logbook_no').value.trim();
+            if (!logbookNo) {
+                alert("Please enter your Logbook Number.");
+                document.getElementById('logbook_no').focus();
+                return;
+            }
+
+            document.getElementById('integrityModal').style.display = 'flex';
+        }
+
+        function closeIntegrityModal() {
+            document.getElementById('integrityModal').style.display = 'none';
+        }
+
+        function toggleConfirmBtn() {
+            const checkbox = document.getElementById('legalCheckbox');
+            document.getElementById('modalConfirmBtn').disabled = !checkbox.checked;
+        }
     </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, push, set, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -304,9 +504,13 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        window.firebaseAuthInstance = auth;
         const db = getDatabase(app);
 
-        // --- CLOUDINARY UPLOAD FUNCTION ---
+        let allOwnerVehicles = {};
+        let allValuations = {};
+        let activeVehicleKey = null;
+
         async function uploadToCloudinary(file) {
             const cloudName = "drx3tzhrk";
             const uploadPreset = "app_images";
@@ -325,64 +529,120 @@
             return data.secure_url;
         }
 
-        // On Load: Fetch Vehicle Data
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Fetch vehicle linked to user
-                const vRef = ref(db, 'Vehicles');
-                const q = query(vRef, orderByChild('ownerId'), equalTo(user.uid));
-
                 try {
-                    const snapshot = await get(q);
-                    if (snapshot.exists()) {
-                        const vehicles = snapshot.val();
-                        // Get first vehicle
-                        const key = Object.keys(vehicles)[0];
-                        const car = vehicles[key];
+                    const valSnap = await get(ref(db, 'valuations'));
+                    allValuations = valSnap.exists() ? valSnap.val() : {};
 
-                        // Populate and Lock fields
-                        document.getElementById('reg_plate').value = car.regPlate || '';
-                        document.getElementById('owner').value = car.ownerName || '';
-                        document.getElementById('color').value = car.color || '';
+                    const vSnap = await get(ref(db, 'Vehicles'));
+                    if (vSnap.exists()) {
+                        const allVehicles = vSnap.val();
+                        allOwnerVehicles = {};
+
+                        for (const key in allVehicles) {
+                            if (allVehicles[key].ownerId === user.uid) {
+                                allOwnerVehicles[key] = allVehicles[key];
+                            }
+                        }
+
+                        const vehicleKeys = Object.keys(allOwnerVehicles);
+
+                        if (vehicleKeys.length > 0) {
+                            if (vehicleKeys.length > 1) {
+                                const selector = document.getElementById('vehicleSelector');
+                                selector.innerHTML = '';
+                                vehicleKeys.forEach(key => {
+                                    const v = allOwnerVehicles[key];
+                                    const opt = document.createElement('option');
+                                    opt.value = key;
+                                    opt.textContent = `${v.regPlate || 'Vehicle'} (${v.model || 'N/A'})`;
+                                    selector.appendChild(opt);
+                                });
+                                document.getElementById('garageBar').style.display = 'flex';
+                            }
+
+                            activeVehicleKey = vehicleKeys[0];
+                            evaluateAndRenderVehicle(activeVehicleKey);
+
+                            document.getElementById('vehicleSelector').addEventListener('change', (e) => {
+                                activeVehicleKey = e.target.value;
+                                evaluateAndRenderVehicle(activeVehicleKey);
+                            });
+
+                        } else {
+                            alert("You must register a vehicle before starting valuation.");
+                            window.location.href = "{% url 'add_vehicle' %}";
+                        }
                     } else {
-                        alert("You must register a vehicle before starting valuation.");
+                        alert("No vehicles found.");
                         window.location.href = "{% url 'add_vehicle' %}";
                     }
                 } catch (error) {
-                    console.error(error);
-                    // Fallback client-side filtering if indexing fails
-                    const snap = await get(ref(db, 'Vehicles'));
-                    if (snap.exists()) {
-                        const all = snap.val();
-                        let found = false;
-                        for(let k in all) {
-                            if(all[k].ownerId === user.uid) {
-                                document.getElementById('reg_plate').value = all[k].regPlate;
-                                document.getElementById('owner').value = all[k].ownerName;
-                                document.getElementById('color').value = all[k].color;
-                                found = true;
-                                break;
-                            }
-                        }
-                        if(!found) {
-                            alert("Please register a vehicle first.");
-                            window.location.href = "{% url 'add_vehicle' %}";
-                        }
-                    }
+                    console.error("Initialization Error:", error);
                 }
             } else {
-                alert('Please login first');
                 window.location.href = "{% url 'login' %}";
             }
         });
 
-        // Form Submit
-        document.getElementById('valForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const user = auth.currentUser;
+        function evaluateAndRenderVehicle(vKey) {
+            const vehicle = allOwnerVehicles[vKey];
+            document.getElementById('reg_plate').value = vehicle.regPlate || '';
+            document.getElementById('owner').value = vehicle.ownerName || '';
+            document.getElementById('color').value = vehicle.color || '';
+            if(vehicle.logbookNo) document.getElementById('logbook_no').value = vehicle.logbookNo;
 
-            const btn = document.querySelector('.btn-submit');
-            btn.innerHTML = 'Uploading <span class="spinner-border spinner-border-sm"></span>';
+            localStorage.setItem('currentVehicleId', vKey);
+
+            let existingVal = null;
+            for (const valKey in allValuations) {
+                const val = allValuations[valKey];
+                if (val.vehicleId === vKey || val.reg_plate === vehicle.regPlate || val.regPlate === vehicle.regPlate) {
+                    existingVal = val;
+                    break;
+                }
+            }
+
+            const alertBox = document.getElementById('valAlert');
+            const submitBtn = document.getElementById('submitBtn');
+            const photoGrid = document.getElementById('photoContainer');
+            const photoTitle = document.getElementById('photoSectionTitle');
+            const logbookInput = document.getElementById('logbook_no');
+
+            if (existingVal) {
+                alertBox.style.display = 'flex';
+                if (existingVal.status === 'Completed') {
+                    alertBox.className = 'valuation-alert success-alert';
+                    document.getElementById('alertTitle').innerText = "Valuation Completed!";
+                    document.getElementById('alertDesc').innerText = `This vehicle has been evaluated with a market value of KES ${Number(existingVal.marketValue || 0).toLocaleString()}.`;
+                } else {
+                    alertBox.className = 'valuation-alert';
+                    document.getElementById('alertTitle').innerText = "Valuation Under Review";
+                    document.getElementById('alertDesc').innerText = "Your inspection photos are currently being assessed by our insurance partners.";
+                }
+
+                photoGrid.style.display = 'none';
+                photoTitle.style.display = 'none';
+                submitBtn.style.display = 'none';
+                logbookInput.readOnly = true;
+            } else {
+                alertBox.style.display = 'none';
+                photoGrid.style.display = 'grid';
+                photoTitle.style.display = 'flex';
+                submitBtn.style.display = 'block';
+                logbookInput.readOnly = false;
+                logbookInput.value = '';
+            }
+        }
+
+        window.executeValuationSubmission = async () => {
+            closeIntegrityModal();
+            const user = auth.currentUser;
+            const vehicle = allOwnerVehicles[activeVehicleKey];
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = 'Uploading Photos... <span class="spinner-border spinner-border-sm"></span>';
             btn.disabled = true;
 
             try {
@@ -394,7 +654,6 @@
                 for (let input of inputs) {
                     if (input.files[0]) {
                         count++;
-                        // Parallel uploads using uploadToCloudinary (FIXED)
                         uploadPromises.push(
                             uploadToCloudinary(input.files[0])
                                 .then(url => { images[input.dataset.key] = url; })
@@ -402,21 +661,14 @@
                     }
                 }
 
-                if (count < 9) {
-                    alert("Please upload all 9 required photos.");
-                    btn.innerHTML = 'Submit Assessment <i class="bi bi-arrow-right"></i>';
-                    btn.disabled = false;
-                    return;
-                }
-
-                // Wait for all uploads
                 await Promise.all(uploadPromises);
 
                 const data = {
-                    reg_plate: document.getElementById('reg_plate').value,
+                    vehicleId: activeVehicleKey,
+                    reg_plate: vehicle.regPlate,
                     logbook_no: document.getElementById('logbook_no').value,
-                    owner: document.getElementById('owner').value,
-                    color: document.getElementById('color').value,
+                    owner: vehicle.ownerName,
+                    color: vehicle.color,
                     userId: user.uid,
                     status: 'Pending',
                     timestamp: new Date().toISOString(),
@@ -434,7 +686,7 @@
                 btn.innerHTML = 'Submit Assessment <i class="bi bi-arrow-right"></i>';
                 btn.disabled = false;
             }
-        });
+        };
     </script>
 
 </body>

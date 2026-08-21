@@ -3,147 +3,288 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Secure Payment | M-Pesa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BimaDrive | Secure Payment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- jsPDF for Receipt Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --mpesa-green: #43a047; --dark: #0f172a; }
-        body { background: #f0fdf4; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-
-        .payment-card {
-            width: 450px; background: white; border-radius: 30px; padding: 40px;
-            box-shadow: 0 20px 50px rgba(22, 163, 74, 0.1); border: 1px solid #dcfce7;
-            position: relative; overflow: hidden; transition: 0.3s;
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4e37b5 0%, #46bbf4 100%);
+            --sidebar-bg: #1a1a2e;
+            --bg-body: #f3f5f9;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            --sidebar-width: 280px;
+            --mpesa-green: #05cd99;
         }
 
-        .mpesa-logo { font-size: 32px; font-weight: 900; color: var(--mpesa-green); text-align: center; letter-spacing: -1px; margin-bottom: 30px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg-body); display: flex; min-height: 100vh; }
+
+        /* Sidebar Styling (Matched with Dashboard) */
+        .sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-bg); padding: 40px 30px;
+            position: fixed; height: 100vh; display: flex; flex-direction: column; color: white;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 700; color: white; margin-bottom: 60px; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo i { color: #46bbf4; font-size: 30px; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 15px; padding: 16px 20px;
+            color: rgba(255,255,255,0.6); text-decoration: none; border-radius: 16px;
+            margin-bottom: 12px; transition: 0.3s; font-weight: 500; font-size: 15px;
+        }
+        .menu-item:hover, .menu-item.active {
+            background: rgba(255,255,255,0.1); color: white;
+            border-left: 4px solid #46bbf4;
+        }
+        .menu-item i { font-size: 20px; width: 25px; }
+
+        /* Main Content Layout */
+        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; }
+
+        /* Hero Banner */
+        .dashboard-hero {
+            background: var(--primary-gradient);
+            height: 250px;
+            padding: 40px 50px;
+            color: white;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            position: relative;
+        }
+        .hero-title h1 { font-size: 32px; font-weight: 700; margin-bottom: 5px; }
+        .hero-title p { opacity: 0.8; font-size: 14px; }
+
+        /* Profile Pill */
+        .profile-pill {
+            position: absolute; top: 40px; right: 50px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+            padding: 8px 20px; border-radius: 30px;
+            display: flex; align-items: center; gap: 15px;
+            border: 1px solid rgba(255,255,255,0.3); color: white;
+        }
+        .user-avatar {
+            width: 35px; height: 35px; background: white; color: #4e37b5;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;
+        }
+
+        /* Container & Payment Card */
+        .dashboard-container {
+            padding: 0 50px 50px;
+            margin-top: -100px;
+            position: relative; z-index: 10;
+            display: flex; justify-content: center;
+        }
+
+        .payment-card {
+            width: 100%; max-width: 550px; background: white; border-radius: 24px; padding: 40px;
+            box-shadow: var(--card-shadow); border: 1px solid rgba(0,0,0,0.02);
+            position: relative; overflow: hidden; display: none;
+        }
+
+        .mpesa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .mpesa-logo { font-size: 24px; font-weight: 800; color: #05cd99; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+        .secure-badge { background: #e6fdf3; color: #05cd99; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
         .amount-display {
             text-align: center; margin-bottom: 30px;
-            background: #f0fdf4; padding: 20px; border-radius: 20px; border: 1px solid #bbf7d0;
+            background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0;
         }
-        .amount-label { font-size: 12px; color: #166534; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
-        .amount-val { font-size: 36px; color: var(--dark); font-weight: 800; margin-top: 5px; }
+        .amount-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .amount-val { font-size: 38px; color: #1a1a2e; font-weight: 800; margin-top: 5px; }
+        .plan-badge { display: inline-block; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 10px; }
 
         .input-group { margin-bottom: 25px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 10px; }
 
-        .phone-input-wrapper, .code-input-wrapper {
-            display: flex; align-items: center; border: 2px solid #e2e8f0; border-radius: 14px;
-            padding: 0 15px; background: white; transition: 0.2s;
+        .phone-input-wrapper {
+            display: flex; align-items: center; border: 2px solid #e2e8f0; border-radius: 16px;
+            padding: 0 18px; background: white; transition: 0.3s;
         }
-        .phone-input-wrapper:focus-within, .code-input-wrapper:focus-within {
-            border-color: var(--mpesa-green); box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.2);
-        }
+        .phone-input-wrapper:focus-within { border-color: #4e37b5; box-shadow: 0 0 0 4px rgba(78, 55, 181, 0.1); }
 
         .prefix { font-weight: 700; color: #64748b; margin-right: 10px; font-size: 16px; }
 
         .styled-input {
             width: 100%; border: none; outline: none; font-size: 16px; font-weight: 600;
-            color: var(--dark); padding: 16px 0; background: transparent; text-transform: uppercase;
+            color: #1a1a2e; padding: 16px 0; background: transparent; text-transform: uppercase;
         }
 
         .btn-pay {
             width: 100%; padding: 18px; border-radius: 16px; border: none; cursor: pointer;
-            background: var(--mpesa-green); color: white; font-size: 16px; font-weight: 700;
-            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.3); transition: 0.2s;
+            background: #05cd99; color: white; font-size: 16px; font-weight: 700;
+            box-shadow: 0 10px 25px rgba(5, 205, 153, 0.3); transition: 0.3s;
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(22, 163, 74, 0.4); }
+        .btn-pay:hover { background: #04b889; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(5, 205, 153, 0.4); }
         .btn-pay:disabled { background: #a5d6a7; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* Sections */
-        .step-section { display: none; animation: fadeUp 0.3s ease; }
-        .step-section.active { display: block; }
-
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Success Message */
-        .success-view { text-align: center; display: none; }
-        .success-icon { font-size: 60px; color: #22c55e; margin-bottom: 20px; }
-
-        .btn-download {
-            width: 100%; padding: 15px; border-radius: 14px; border: 2px solid #22c55e; cursor: pointer;
-            background: white; color: #22c55e; font-weight: 700; margin-top: 15px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-download:hover { background: #f0fdf4; }
-
-        .back-link { position: absolute; top: 20px; left: 20px; color: #94a3b8; font-size: 24px; cursor: pointer; text-decoration: none; }
-        .back-link:hover { color: var(--dark); }
-
-        .loader {
-            border: 3px solid #f3f3f3; border-top: 3px solid var(--mpesa-green);
-            border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;
-        }
+        /* Auth Guard Loader */
+        #auth-guard { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;}
+        .spinner { width: 45px; height: 45px; border: 4px solid #e2e8f0; border-top: 4px solid #4e37b5; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        .loader-small {
+            border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white;
+            border-radius: 50%; width: 22px; height: 22px; animation: spin 1s linear infinite;
+        }
+
+        /* --- INACTIVITY TIMEOUT MODAL --- */
+        #inactivityModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
+        .inactivity-card i { font-size: 48px; color: #f59e0b; display: block; margin-bottom: 15px; }
+        .inactivity-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .inactivity-card p { font-size: 13.5px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+        .inactivity-timer { font-size: 32px; font-weight: 800; color: #ef4444; margin-bottom: 25px; font-family: monospace; }
+        .btn-stay { width: 100%; padding: 16px; background: #4e37b5; color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
+        .btn-stay:hover { background: #3c2a91; }
+
+        @media (max-width: 992px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .dashboard-container { padding: 0 20px 30px; }
+            .profile-pill { right: 20px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="payment-card">
-        <a href="{% url 'cover' %}" class="back-link"><i class="bi bi-arrow-left-circle-fill"></i></a>
-        <div class="mpesa-logo">M-PESA</div>
-
-        <div class="amount-display">
-            <div class="amount-label">Amount Payable</div>
-            <div class="amount-val" id="payAmount">KES ---</div>
+    <!-- INACTIVITY WARNING MODAL -->
+    <div id="inactivityModal">
+        <div class="inactivity-card">
+            <i class="bi bi-clock-history"></i>
+            <h2>Inactivity Warning</h2>
+            <p>You have been inactive for a while. For your security, your session will automatically expire in:</p>
+            <div class="inactivity-timer" id="inactivityCountdown">30</div>
+            <button type="button" class="btn-stay" onclick="resetInactivityTimer()">Stay Logged In</button>
         </div>
-
-        <!-- STEP 1: Enter Phone -->
-        <div id="step1" class="step-section active">
-            <div class="input-group">
-                <label>M-Pesa Phone Number</label>
-                <div class="phone-input-wrapper">
-                    <span class="prefix">+254</span>
-                    <input type="tel" id="phoneNumber" class="styled-input" placeholder="7XXXXXXXX">
-                </div>
-            </div>
-            <button class="btn-pay" id="btnInitPay">
-                Pay Now <i class="bi bi-arrow-right-circle-fill"></i>
-            </button>
-        </div>
-
-        <!-- STEP 2: Enter Code -->
-        <div id="step2" class="step-section">
-            <div style="text-align: center; margin-bottom: 20px; color: #334155;">
-                <i class="bi bi-phone-vibrate" style="font-size: 40px; color: var(--mpesa-green);"></i>
-                <p style="font-size: 14px; margin-top: 10px;">STK Push Sent! Check your phone and enter PIN.</p>
-            </div>
-            <div class="input-group">
-                <label>Enter M-Pesa Transaction Code</label>
-                <div class="code-input-wrapper">
-                    <input type="text" id="mpesaCode" class="styled-input" placeholder="e.g. RC12345678" maxlength="10">
-                </div>
-                <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Code received in SMS (e.g., QKH...)</p>
-            </div>
-            <button class="btn-pay" id="btnVerify">
-                Verify & Complete <i class="bi bi-check-lg"></i>
-            </button>
-        </div>
-
-        <!-- STEP 3: Success -->
-        <div id="step3" class="step-section success-view">
-            <i class="bi bi-check-circle-fill success-icon"></i>
-            <h2 style="margin: 0 0 10px; color: #0f172a;">Payment Confirmed!</h2>
-            <p style="color: #64748b; font-size: 14px;">Your policy has been activated.</p>
-
-            <button class="btn-download" onclick="generateReceipt()">
-                <i class="bi bi-file-earmark-pdf"></i> Download Receipt
-            </button>
-
-            <a href="{% url 'client_dashboard' %}" style="display: block; margin-top: 20px; text-decoration: none; color: #64748b; font-size: 13px;">Return to Dashboard</a>
-        </div>
-
     </div>
 
+    <!-- Auth Guard Loader -->
+    <div id="auth-guard">
+        <div class="spinner"></div>
+        <p id="guardText" style="margin-top:20px; color:#64748b; font-size:14px; font-weight:600;">Securely Fetching Premium Details...</p>
+    </div>
+
+    <!-- Dashboard Sidebar -->
+    <div class="sidebar">
+        <a href="#" class="logo"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
+
+        <div style="margin-top: 20px;">
+            <a href="{% url 'client_dashboard' %}" class="menu-item"><i class="bi bi-grid-fill"></i> Dashboard</a>
+            <a href="{% url 'profile' %}" class="menu-item"><i class="bi bi-person-circle"></i> My Profile</a>
+            <a href="{% url 'add_vehicle' %}" class="menu-item"><i class="bi bi-plus-circle-fill"></i> Add Vehicle</a>
+            <a href="{% url 'view_vehicle' %}" class="menu-item"><i class="bi bi-car-front-fill"></i> My Vehicles</a>
+            <a href="{% url 'cover' %}" class="menu-item active"><i class="bi bi-shield-check"></i> My Cover</a>
+            <a href="{% url 'client_claims' %}" class="menu-item"><i class="bi bi-exclamation-triangle-fill"></i> Track Claims</a>
+            <a href="{% url 'client_valuation' %}" class="menu-item"><i class="bi bi-camera-fill"></i> Valuation</a>
+        </div>
+
+        <a href="#" id="logoutBtn" class="menu-item" style="margin-top: auto; color: #ff6b6b;"><i class="bi bi-box-arrow-left"></i> Logout</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <div class="dashboard-hero">
+            <div class="hero-title">
+                <h1>Secure Payment</h1>
+                <p>Complete your vehicle insurance premium via M-Pesa STK Push.</p>
+            </div>
+
+            <div class="profile-pill">
+                <span id="profileName">Client</span>
+                <div class="user-avatar" id="profileInitials">C</div>
+            </div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="payment-card" id="mainCard">
+                <div class="mpesa-header">
+                    <div class="mpesa-logo"><i class="bi bi-phone-vibrate"></i> M-PESA</div>
+                    <div class="secure-badge"><i class="bi bi-shield-lock-fill"></i> Secure SSL</div>
+                </div>
+
+                <div class="amount-display">
+                    <div class="amount-label">Amount Payable</div>
+                    <div class="amount-val" id="payAmount">KES ---</div>
+                    <div class="plan-badge" id="planBadge">Loading Plan...</div>
+                </div>
+
+                <div class="input-group">
+                    <label>M-Pesa Phone Number</label>
+                    <div class="phone-input-wrapper">
+                        <span class="prefix">+254</span>
+                        <input type="tel" id="phoneNumber" class="styled-input" placeholder="7XXXXXXXX">
+                    </div>
+                </div>
+
+                <button class="btn-pay" id="btnInitPay">
+                    Initiate Payment <i class="bi bi-arrow-right-circle-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- INACTIVITY TIMER LOGIC ---
+        let inactivityTimer = null;
+        let warningTimer = null;
+        let secondsLeft = 30;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_LIMIT);
+        }
+
+        function showInactivityWarning() {
+            document.getElementById('inactivityModal').style.display = 'flex';
+            secondsLeft = 30;
+            document.getElementById('inactivityCountdown').innerText = secondsLeft;
+
+            clearInterval(warningTimer);
+            warningTimer = setInterval(() => {
+                secondsLeft--;
+                document.getElementById('inactivityCountdown').innerText = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(warningTimer);
+                    const authInstance = window.firebaseAuthInstance;
+                    if(authInstance) {
+                        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ signOut }) => {
+                            signOut(authInstance).then(() => window.location.href = "{% url 'login' %}");
+                        });
+                    } else {
+                        window.location.href = "{% url 'login' %}";
+                    }
+                }
+            }, 1000);
+        }
+
+        window.resetInactivityTimer = function() {
+            document.getElementById('inactivityModal').style.display = 'none';
+            clearInterval(warningTimer);
+            startInactivityTimer();
+        };
+
+        ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            window.addEventListener(event, () => {
+                if (document.getElementById('inactivityModal').style.display !== 'flex') {
+                    startInactivityTimer();
+                }
+            }, { passive: true });
+        });
+
+        startInactivityTimer();
+    </script>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, get, push, set, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -157,33 +298,119 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        window.firebaseAuthInstance = auth;
         const db = getDatabase(app);
 
-        const amount = localStorage.getItem('premiumAmount') || '0';
-        const planName = localStorage.getItem('selectedPlan') || 'Insurance';
-        let userData = { name: 'Client', email: '' };
+        let amount = 0;
+        let planName = localStorage.getItem('selectedPlan') || 'Comprehensive';
+        let vehicleId = localStorage.getItem('currentVehicleId');
+        let activeRegPlate = "---";
 
-        document.getElementById('payAmount').innerText = `KES ${Number(amount).toLocaleString()}`;
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const dbRef = ref(db);
                 try {
-                    const snapshot = await get(child(dbRef, `Client/${user.uid}`));
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        userData = data;
-                        let phone = data.phone || '';
-                        phone = phone.replace(/^\+254/, '').replace(/^254/, '').replace(/^0/, '');
-                        document.getElementById('phoneNumber').value = phone;
+                    const userSnap = await get(child(ref(db), `Client/${user.uid}`));
+                    if (userSnap.exists()) {
+                        let userData = userSnap.val();
+                        let phone = userData.phone || '';
+                        document.getElementById('phoneNumber').value = phone.replace(/^\+254/, '').replace(/^254/, '').replace(/^0/, '');
+
+                        const name = userData.name || 'Client';
+                        localStorage.setItem('payerName', name);
+                        document.getElementById('profileName').innerText = name;
+                        document.getElementById('profileInitials').innerText = name.charAt(0).toUpperCase();
                     }
-                } catch (e) { console.error(e); }
+
+                    if (!vehicleId || vehicleId === 'null') {
+                        const vSnap = await get(ref(db, 'Vehicles'));
+                        if (vSnap.exists()) {
+                            const vehicles = vSnap.val();
+                            for (const key in vehicles) {
+                                if (vehicles[key].ownerId === user.uid) {
+                                    vehicleId = key;
+                                    localStorage.setItem('currentVehicleId', vehicleId);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!vehicleId) throw new Error("No registered vehicle found.");
+
+                    const vehSnap = await get(child(ref(db), `Vehicles/${vehicleId}`));
+                    if (vehSnap.exists()) {
+                        const vData = vehSnap.val();
+                        activeRegPlate = vData.regPlate || "Unknown Vehicle";
+
+                        let compAmount = vData.comprehensivePremium || 0;
+                        let tpAmount = vData.thirdPartyPremium || 0;
+
+                        if (!compAmount || !tpAmount) {
+                            const valSnap = await get(ref(db, 'valuations'));
+                            if (valSnap.exists()) {
+                                const allVals = valSnap.val();
+                                let latestVal = null;
+                                for (const key in allVals) {
+                                    const v = allVals[key];
+                                    if ((v.reg_plate === activeRegPlate || v.regPlate === activeRegPlate) && v.status === 'Completed') {
+                                        if (!latestVal || new Date(v.timestamp || v.assessedAt) > new Date(latestVal.timestamp || latestVal.assessedAt)) {
+                                            latestVal = v;
+                                        }
+                                    }
+                                }
+                                if (latestVal) {
+                                    compAmount = latestVal.comprehensivePremium || 0;
+                                    tpAmount = latestVal.thirdPartyPremium || 0;
+                                }
+                            }
+                        }
+
+                        if (planName.toLowerCase().includes('third')) {
+                            amount = tpAmount; planName = 'Third Party';
+                        } else {
+                            amount = compAmount; planName = 'Comprehensive';
+                        }
+
+                        if (!amount || amount === 0) throw new Error("Vehicle has not been valued yet.");
+
+                        localStorage.setItem('paymentAmount', amount);
+                        localStorage.setItem('paymentPlan', planName);
+                        localStorage.setItem('paymentRegPlate', activeRegPlate);
+
+                        document.getElementById('payAmount').innerText = `KES ${Number(amount).toLocaleString()}`;
+                        document.getElementById('planBadge').innerText = `${planName} Cover for ${activeRegPlate}`;
+
+                        document.getElementById('auth-guard').style.display = 'none';
+                        document.getElementById('mainCard').style.display = 'block';
+
+                    } else {
+                        throw new Error("Vehicle record not found.");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    document.getElementById('guardText').innerHTML = `<span style="color:#dc2626;">${e.message}</span><br><br><a href="{% url 'cover' %}" style="color:#4e37b5; font-weight:600; text-decoration:none;">Return to Cover</a>`;
+                    document.querySelector('.spinner').style.display = 'none';
+                }
             } else {
                 window.location.href = "{% url 'login' %}";
             }
         });
 
-        // STEP 1: Initiate STK Push (Strict Backend Requirement)
         document.getElementById('btnInitPay').addEventListener('click', async () => {
             const phone = document.getElementById('phoneNumber').value;
             if (phone.length < 9) { alert("Invalid Phone Number"); return; }
@@ -193,60 +420,20 @@
 
             const btn = document.getElementById('btnInitPay');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<div class="loader"></div>';
+            btn.innerHTML = '<div class="loader-small"></div>';
             btn.disabled = true;
 
             const formattedPhone = `254${phone.replace(/^0/, '')}`;
+            localStorage.setItem('paymentPhone', formattedPhone);
 
             try {
-                // Attempt Real Backend Call
-                // NOTE: This will FAIL if your Django server is not running at /stk_push/
-                const response = await fetch("/stk_push/", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        phone: formattedPhone,
-                        amount: amount,
-                        userId: user.uid,
-                        plan: planName
-                    })
-                });
-
-                // Check content type to ensure we got JSON (and not an HTML 404 page)
-                const contentType = response.headers.get("content-type");
-                if (!response.ok || !contentType || !contentType.includes("application/json")) {
-                    throw new Error(`Backend Connection Failed (${response.status}). Ensure Django server is running and route is valid.`);
-                }
-
-                const result = await response.json();
-
-                if (result.ResponseCode === "0") {
-                    alert("STK Push Sent! Please check your phone.");
-                    document.getElementById('step1').classList.remove('active');
-                    document.getElementById('step2').classList.add('active');
-
-                    // Real-time listener for backend callback updates
-                    const checkoutId = result.CheckoutRequestID;
-                    const statusRef = ref(db, `PendingTransactions/${checkoutId}`);
-
-                    onValue(statusRef, (snapshot) => {
-                         const data = snapshot.val();
-                         if (data) {
-                             if (data.status === 'Completed') {
-                                 // Auto-fill code if backend sends it
-                                 document.getElementById('mpesaCode').value = data.mpesaCode;
-                                 alert("Payment Confirmed by Network!");
-                             } else if (data.status === 'Failed') {
-                                 alert("Payment Failed: " + (data.reason || "Transaction cancelled"));
-                                 location.reload();
-                             }
-                         }
-                    });
-
+                const response = await initiateSTKPushBackend(formattedPhone, amount, user.uid, planName);
+                if (response.ResponseCode === "0") {
+                    localStorage.setItem('checkoutRequestId', response.CheckoutRequestID);
+                    window.location.href = "{% url 'payment_processing' %}";
                 } else {
-                    throw new Error(result.errorMessage || "STK Push Failed");
+                    throw new Error(response.error || "STK Push Failed");
                 }
-
             } catch (error) {
                 console.error("Payment Error:", error);
                 alert("System Error: " + error.message);
@@ -255,87 +442,19 @@
             }
         });
 
-        // STEP 2: Verify & Save
-        document.getElementById('btnVerify').addEventListener('click', async () => {
-            const code = document.getElementById('mpesaCode').value.trim().toUpperCase();
+        async function initiateSTKPushBackend(phone, amount, userId, plan) {
+            const res = await fetch("/initiate_stk_push/", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ phone, amount, userId, plan })
+            });
+            return await res.json();
+        }
 
-            if (code.length < 10) {
-                alert("Please enter a valid M-Pesa Transaction Code");
-                return;
-            }
-
-            const btn = document.getElementById('btnVerify');
-            btn.innerHTML = '<div class="loader"></div> Verifying...';
-            btn.disabled = true;
-
-            try {
-                const user = auth.currentUser;
-
-                const paymentData = {
-                    userId: user.uid,
-                    userName: userData.name,
-                    amount: amount,
-                    phoneNumber: document.getElementById('phoneNumber').value,
-                    mpesaCode: code,
-                    status: "Completed",
-                    plan: planName,
-                    timestamp: new Date().toISOString()
-                };
-
-                await set(push(ref(db, 'Payments')), paymentData);
-                await set(push(ref(db, 'Receipts')), paymentData);
-
-                document.getElementById('step2').classList.remove('active');
-                document.getElementById('step3').classList.add('active');
-                document.getElementById('transCode').innerText = code;
-
-            } catch (error) {
-                console.error(error);
-                alert("System Error: " + error.message);
-                btn.innerHTML = 'Verify & Complete';
-                btn.disabled = false;
-            }
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut(auth).then(() => window.location.href = "{% url 'login' %}");
         });
-
-        // STEP 3: Generate Receipt
-        window.generateReceipt = () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            const code = document.getElementById('mpesaCode').value.toUpperCase();
-            const date = new Date().toLocaleString();
-
-            doc.setFillColor(67, 160, 71);
-            doc.rect(0, 0, 210, 40, 'F');
-
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.text("BimaDrive Receipt", 105, 25, null, null, "center");
-
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(12);
-            doc.text("Payment Confirmation", 105, 55, null, null, "center");
-
-            doc.setFontSize(10);
-            doc.text(`Transaction Ref: ${code}`, 20, 70);
-            doc.text(`Date: ${date}`, 20, 80);
-            doc.text(`Payer: ${userData.name}`, 20, 90);
-            doc.text(`Phone: +254${document.getElementById('phoneNumber').value}`, 20, 100);
-
-            doc.setLineWidth(0.5);
-            doc.line(20, 110, 190, 110);
-
-            doc.setFontSize(14);
-            doc.text(`Policy: ${planName} Cover`, 20, 125);
-            doc.text(`Amount Paid: KES ${Number(amount).toLocaleString()}`, 20, 135);
-
-            doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
-            doc.text("Thank you for using BimaDrive.", 105, 160, null, null, "center");
-
-            doc.save(`Receipt_${code}.pdf`);
-        };
-
     </script>
 </body>
 </html>

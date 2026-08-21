@@ -21,17 +21,16 @@
         body {
             margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
             background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh;
-            /* Mesh Gradient Background */
             background-image:
                 radial-gradient(at 0% 0%, hsla(253,16%,7%,0.05) 0, transparent 50%),
                 radial-gradient(at 50% 0%, hsla(225,39%,30%,0.05) 0, transparent 50%),
                 radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
             background-size: cover;
+            padding: 20px;
         }
 
-        /* Floating Card */
         .login-wrapper {
-            width: 1000px; height: 600px;
+            width: 1000px; height: 620px;
             background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px);
             border-radius: 32px; border: var(--glass-border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
@@ -39,56 +38,75 @@
             position: relative;
         }
 
-        /* Left: Form Section */
         .form-section {
-            padding: 60px; display: flex; flex-direction: column; justify-content: center;
-            position: relative; z-index: 2;
+            padding: 35px 60px; display: flex; flex-direction: column; justify-content: center;
+            position: relative; z-index: 2; overflow-y: auto;
         }
 
         .brand {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 40px;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
             font-size: 20px; font-weight: 800; color: var(--dark); text-decoration: none;
         }
         .brand i { color: var(--primary); font-size: 24px; }
 
-        h1 { font-size: 32px; font-weight: 800; color: var(--dark); margin: 0 0 10px 0; letter-spacing: -0.5px; }
-        p.subtitle { color: #64748b; font-size: 14px; margin: 0 0 30px 0; }
+        h1 { font-size: 32px; font-weight: 800; color: var(--dark); margin: 0 0 8px 0; letter-spacing: -0.5px; }
+        p.subtitle { color: #64748b; font-size: 14px; margin: 0 0 20px 0; }
 
-        .input-group { margin-bottom: 20px; position: relative; }
-        .input-group i {
+        .input-group { margin-bottom: 14px; position: relative; }
+        .input-group > i.left-icon {
             position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-            color: #94a3b8; transition: 0.3s;
+            color: #94a3b8; transition: 0.3s; z-index: 3;
         }
         .input-group input {
-            width: 100%; padding: 16px 16px 16px 45px; border: 1px solid #e2e8f0;
+            width: 100%; padding: 13px 45px 13px 45px; border: 1px solid #e2e8f0;
             border-radius: 14px; font-size: 14px; transition: 0.3s;
             background: rgba(255, 255, 255, 0.6); color: var(--dark); font-weight: 500;
         }
         .input-group input:focus {
             background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
-        .input-group input:focus + i { color: var(--primary); }
+        .input-group input:focus ~ i.left-icon { color: var(--primary); }
+
+        .toggle-eye {
+            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; cursor: pointer; font-size: 18px; z-index: 3; transition: 0.2s;
+        }
+        .toggle-eye:hover { color: var(--dark); }
+
+        .forgot-row { text-align: right; margin-bottom: 15px; margin-top: -5px; }
+        .forgot-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .forgot-link:hover { color: var(--primary); text-decoration: underline; }
 
         .btn-login {
-            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
             cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
         }
         .btn-login:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.4); }
         .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        /* Links */
-        .links { margin-top: 30px; text-align: center; font-size: 13px; color: #64748b; }
+        .divider { display: flex; align-items: center; text-align: center; margin: 14px 0; color: #94a3b8; font-size: 12px; font-weight: 600; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
+        .divider::before { margin-right: .75em; }
+        .divider::after { margin-left: .75em; }
+
+        .btn-google {
+            width: 100%; padding: 12px; background: white; color: #334155; border: 1px solid #cbd5e1;
+            border-radius: 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .btn-google:hover { background: #f8fafc; border-color: #94a3b8; }
+        .btn-google img { width: 18px; height: 18px; }
+
+        .links { margin-top: 18px; text-align: center; font-size: 13px; color: #64748b; }
         .links a { color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 5px; }
         .links a:hover { text-decoration: underline; }
 
-        /* Right: Visual Section */
         .visual-section {
             position: relative; background: #0f172a; overflow: hidden;
             display: flex; align-items: center; justify-content: center; text-align: center;
             color: white; padding: 40px;
         }
-
         .visual-section::before {
             content: ''; position: absolute; width: 150%; height: 150%;
             background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 60%);
@@ -106,43 +124,98 @@
 
         .error-banner {
             background: #fef2f2; color: #dc2626; padding: 12px; border-radius: 10px;
-            font-size: 12px; margin-bottom: 20px; display: none; border: 1px solid #fee2e2; text-align: center;
+            font-size: 13px; margin-bottom: 15px; display: none; border: 1px solid #fee2e2; text-align: center; font-weight: 600;
+            word-wrap: break-word;
         }
 
+        /* --- FORGOT PASSWORD MODAL --- */
+        #forgotModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-card { background: white; width: 100%; max-width: 480px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+        .modal-header { text-align: center; margin-bottom: 25px; }
+        .modal-header i { font-size: 38px; color: var(--primary); display: block; margin-bottom: 10px; }
+        .modal-header h2 { font-size: 20px; font-weight: 800; color: #1e293b; }
+        .modal-input-group { margin-bottom: 16px; position: relative; }
+        .modal-input-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+        .modal-input-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; outline: none; background: #f8fafc; font-weight: 500; }
+        .modal-input-group input:focus { border-color: var(--primary); background: white; }
+        .modal-buttons { display: flex; gap: 12px; margin-top: 25px; }
+        .btn-modal-close { flex: 1; padding: 14px; background: #f1f5f9; color: #475569; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .btn-modal-close:hover { background: #e2e8f0; }
+        .btn-modal-submit { flex: 1; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 5px 15px rgba(79,70,229,0.3); }
+        .btn-modal-submit:hover { background: #4338ca; }
+
+        @media (max-width: 900px) {
+            .login-wrapper { grid-template-columns: 1fr; width: 95%; height: auto; }
+            .visual-section { display: none; }
+            .form-section { padding: 40px; }
+        }
     </style>
 </head>
 <body>
 
+    <div id="forgotModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <i class="bi bi-question-circle-fill"></i>
+                <h2>Password Recovery</h2>
+            </div>
+            <div>
+                <p style="font-size: 13.5px; color: #334155; margin-bottom: 15px; text-align: center;">Enter your registered account email and we will send you a secure password reset link.</p>
+                <div class="modal-input-group">
+                    <label>Account Email</label>
+                    <input type="email" id="recoveryEmail" name="recoveryEmail" placeholder="e.g. client@example.com" autocomplete="email">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal-close" onclick="closeForgotModal()">Cancel</button>
+                    <button type="button" class="btn-modal-submit" onclick="sendPasswordReset()">Send Reset Link</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="login-wrapper">
-        <!-- Form Section -->
         <div class="form-section">
-            <a href="#" class="brand"><i class="bi bi-shield-lock-fill"></i> BimaDrive</a>
+            <a href="#" class="brand"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
 
             <h1>Welcome Back</h1>
-            <p class="subtitle">Enter your credentials to access your workspace.</p>
+            <p class="subtitle">Enter your credentials or sign in with Google.</p>
 
             <div id="errorMsg" class="error-banner"></div>
 
             <form id="loginForm">
                 <div class="input-group">
-                    <input type="email" id="email" placeholder="Email Address" required>
-                    <i class="bi bi-envelope"></i>
+                    <input type="email" id="email" name="email" placeholder="Email Address" required autocomplete="username">
+                    <i class="bi bi-envelope left-icon"></i>
                 </div>
 
                 <div class="input-group">
-                    <input type="password" id="password" placeholder="Password" required>
-                    <i class="bi bi-key"></i>
+                    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password">
+                    <i class="bi bi-key left-icon"></i>
+                    <i class="bi bi-eye-slash toggle-eye" id="eyePassword" onclick="togglePasswordVisibility('password', 'eyePassword')"></i>
                 </div>
 
-                <button type="submit" class="btn-login">Sign In to Dashboard</button>
+                <div class="forgot-row">
+                    <a class="forgot-link" onclick="openForgotModal()">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="mainLoginBtn">Sign In to Dashboard</button>
             </form>
+
+            <div class="divider">OR</div>
+
+            <button type="button" class="btn-google" id="googleLoginBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                <span id="googleBtnText">Sign In with Google</span>
+            </button>
 
             <div class="links">
                 New here? <a href="{% url 'register_client' %}">Create Client Account</a>
             </div>
         </div>
 
-        <!-- Visual Section -->
         <div class="visual-section">
             <div class="glass-overlay">
                 <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
@@ -152,10 +225,60 @@
         </div>
     </div>
 
+    <script>
+        function togglePasswordVisibility(fieldId, iconId) {
+            const inputField = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            if (inputField.type === 'password') {
+                inputField.type = 'text';
+                icon.className = 'bi bi-eye toggle-eye';
+            } else {
+                inputField.type = 'password';
+                icon.className = 'bi bi-eye-slash toggle-eye';
+            }
+        }
+
+        function openForgotModal() {
+            document.getElementById('forgotModal').style.display = 'flex';
+            document.getElementById('recoveryEmail').value = '';
+        }
+
+        function closeForgotModal() {
+            document.getElementById('forgotModal').style.display = 'none';
+        }
+
+        function updateUIState(message, isLoading) {
+            const btn = document.getElementById('mainLoginBtn');
+            const gBtn = document.getElementById('googleLoginBtn');
+            const gText = document.getElementById('googleBtnText');
+
+            if (isLoading) {
+                btn.disabled = true;
+                gBtn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${message}`;
+                gText.innerText = message;
+            } else {
+                btn.disabled = false;
+                gBtn.disabled = false;
+                btn.innerHTML = 'Sign In to Dashboard';
+                gText.innerText = 'Sign In with Google';
+            }
+        }
+
+        function displayError(msg) {
+            console.error("Displaying Error to User:", msg);
+            const errBox = document.getElementById('errorMsg');
+            errBox.innerText = msg;
+            errBox.style.display = 'block';
+            updateUIState('', false);
+        }
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        // Switched to signInWithRedirect to bypass Django COOP security headers and popup blockers
+        import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -170,84 +293,150 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
+        const googleProvider = new GoogleAuthProvider();
 
-        const loginForm = document.getElementById('loginForm');
-        const errorMsg = document.getElementById('errorMsg');
-        const btn = document.querySelector('.btn-login');
+        let isRouting = false;
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        async function routeUserByRole(user) {
+            if (isRouting) return; // Prevent double-execution
+            isRouting = true;
 
-            errorMsg.style.display = 'none';
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Authenticating...';
+            document.getElementById('errorMsg').style.display = 'none';
+            updateUIState('Checking database permissions...', true);
+            const dbRef = ref(db);
 
             try {
-                // 1. Authenticate
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // 2. Check & Route Role
-                const dbRef = ref(db);
-
-                // A. Check Staff Table (Admins & Insurers)
+                // 1. Check Staff
+                console.log("Checking Staff node...");
+                updateUIState('Verifying staff privileges...', true);
                 let snapshot = await get(child(dbRef, `Staff/${user.uid}`));
 
                 if (snapshot.exists()) {
+                    console.log("Found in Staff. Routing...");
                     const data = snapshot.val();
-
-                    // SUSPENSION CHECK FOR STAFF
-                    if(data.suspended) {
+                    if (data.suspended) {
                         await signOut(auth);
-                        throw new Error("Your account has been suspended. Contact Administrator.");
+                        alert("Your account has been suspended. Contact Administrator.");
+                        window.location.reload();
+                        return;
                     }
-
-                    if (data.role === 'admin') {
-                        window.location.href = "{% url 'system_admin' %}";
-                    } else {
-                        // Standard Insurer
-                        window.location.href = "{% url 'insurer_dashboard' %}";
-                    }
+                    updateUIState('Redirecting to Staff Portal...', true);
+                    window.location.href = data.role === 'admin' ? "{% url 'system_admin' %}" : "{% url 'insurer_dashboard' %}";
                     return;
                 }
 
-                // B. Check Client Table
+                // 2. Check Client
+                console.log("Not staff. Checking Client node...");
+                updateUIState('Verifying client profile...', true);
                 snapshot = await get(child(dbRef, `Client/${user.uid}`));
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
 
-                    // SUSPENSION CHECK FOR CLIENTS
-                    if(data.suspended) {
-                        await signOut(auth);
-                        throw new Error("Your account has been suspended. Contact Administrator.");
-                    }
-
-                    window.location.href = "{% url 'client_dashboard' %}";
+                if (!snapshot.exists()) {
+                    console.log("Client not found. Creating new Client record...");
+                    updateUIState('Creating new profile...', true);
+                    await set(ref(db, `Client/${user.uid}`), {
+                        name: user.displayName || "Google User",
+                        email: user.email,
+                        role: 'client',
+                        createdAt: new Date().toISOString(),
+                        suspended: false
+                    });
+                    console.log("Client record created.");
+                } else if (snapshot.val().suspended) {
+                    await signOut(auth);
+                    alert("Your account has been suspended. Contact Administrator.");
+                    window.location.reload();
                     return;
                 }
 
-                // C. Fallback (Auth exists but no DB record)
+                console.log("Routing to Client Dashboard...");
+                updateUIState('Redirecting to Dashboard...', true);
+                window.location.href = "{% url 'client_dashboard' %}";
+
+            } catch (err) {
+                console.error("Critical Routing error:", err);
+                displayError("Database Error: " + err.message + "\nPlease check Firebase Database Rules.");
                 await signOut(auth);
-                throw new Error("User profile not found in database. Please contact support.");
+                isRouting = false;
+            }
+        }
 
-            } catch (error) {
-                console.error(error);
-                let msg = "Login failed. Please check your credentials.";
+        // --- CATCH REDIRECT RESULTS (Bypasses Django COOP Header Issues & Popup blockers) ---
+        getRedirectResult(auth).then((result) => {
+            if (result && result.user) {
+                console.log("Google Redirect Sign-In Successful!");
+                updateUIState('Google Auth Success. Routing...', true);
+                routeUserByRole(result.user);
+            }
+        }).catch((err) => {
+            console.error("Redirect Error:", err);
+            displayError("Google Sign-In failed: " + err.message);
+        });
 
-                if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
-                if(error.code === 'auth/user-not-found') msg = "No account found with this email.";
-                if(error.message) msg = error.message; // Use custom error message if available
-
-                errorMsg.innerText = msg;
-                errorMsg.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'Sign In to Dashboard';
+        // Automatic re-routing if user reloads page while already logged in
+        onAuthStateChanged(auth, async (user) => {
+            console.log("Auth state changed. User:", user ? user.uid : "None");
+            if (user && !isRouting) {
+                updateUIState('Restoring session...', true);
+                await routeUserByRole(user);
             }
         });
-    </script>
 
+        // --- Google Authentication Logic (Using Redirect) ---
+        document.getElementById('googleLoginBtn').addEventListener('click', () => {
+            console.log("Google Login Clicked - Initiating Redirect");
+            document.getElementById('errorMsg').style.display = 'none';
+            updateUIState('Redirecting to Google...', true);
+
+            signInWithRedirect(auth, googleProvider).catch((err) => {
+                console.error("Failed to initiate redirect:", err);
+                displayError("Failed to initiate Google login: " + err.message);
+            });
+        });
+
+        // Standard Email/Password Login
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('errorMsg').style.display = 'none';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            updateUIState('Authenticating...', true);
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                updateUIState('Login Success...', true);
+
+                // Explicitly call route function
+                await routeUserByRole(userCredential.user);
+
+            } catch (error) {
+                console.error("Login Auth Error:", error);
+                let msg = "Login failed. Please check your credentials.";
+                if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+                if(error.code === 'auth/user-not-found') msg = "No account found with this email.";
+                if(error.message) msg = error.message;
+
+                displayError(msg);
+            }
+        });
+
+        // Password Reset Handler
+        window.sendPasswordReset = async () => {
+            const email = document.getElementById('recoveryEmail').value.trim();
+            if (!email) { alert("Please enter your account email address."); return; }
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Password reset link has been sent to your email address. Please check your inbox.");
+                closeForgotModal();
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+            }
+        };
+
+    </script>
 </body>
 </html>
