@@ -55,5 +55,7 @@ urlpatterns = [
     path('initiate_stk_push/', views.initiate_stk_push, name='initiate_stk_push'),
     path('query_payment_status/', views.query_payment_status, name='query_payment_status'),
     path('mpesa_callback/', views.mpesa_callback, name='mpesa_callback'),
+    path('api/passkey/challenge/', views.passkey_challenge_view, name='passkey_challenge'),
+    path('api/passkey/verify/', views.passkey_verify_view, name='passkey_verify'),
 
 ]
