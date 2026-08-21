@@ -18,13 +18,14 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: var(--bg-body); display: flex; min-height: 100vh; }
+        body { background: var(--bg-body); display: flex; min-height: 100vh; overflow-x: hidden; }
 
         /* Sidebar Styling (Matched with Dashboard) */
         .sidebar {
             width: var(--sidebar-width); background: var(--sidebar-bg); padding: 40px 30px;
             position: fixed; height: 100vh; display: flex; flex-direction: column; color: white;
-            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 100;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 1000;
+            transition: left 0.3s ease;
         }
         .logo { font-size: 26px; font-weight: 700; color: white; margin-bottom: 60px; display: flex; align-items: center; gap: 12px; text-decoration: none; }
         .logo i { color: #46bbf4; font-size: 30px; }
@@ -41,7 +42,17 @@
         .menu-item i { font-size: 20px; width: 25px; }
 
         /* Main Content Layout */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; }
+        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; width: 100%; transition: margin-left 0.3s ease; }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none; align-items: center; justify-content: space-between;
+            padding: 15px 20px; background: var(--sidebar-bg); color: white;
+            position: sticky; top: 0; z-index: 999;
+        }
+        .mobile-header-logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .mobile-header-logo i { color: #46bbf4; font-size: 24px; }
+        .mobile-menu-btn { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; }
 
         /* Hero Banner */
         .dashboard-hero {
@@ -85,7 +96,7 @@
 
         .mpesa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
         .mpesa-logo { font-size: 24px; font-weight: 800; color: #05cd99; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
-        .secure-badge { background: #e6fdf3; color: #05cd99; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .secure-badge { background: #e6fdf3; color: #05cd99; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; }
 
         .amount-display {
             text-align: center; margin-bottom: 30px;
@@ -143,11 +154,51 @@
         .btn-stay { width: 100%; padding: 16px; background: #4e37b5; color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
         .btn-stay:hover { background: #3c2a91; }
 
+        /* Mobile Overlay */
+        #mobileOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 990; }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
         @media (max-width: 992px) {
-            .sidebar { display: none; }
+            .sidebar { left: -300px; }
+            .sidebar.mobile-open { left: 0; }
             .main-content { margin-left: 0; }
-            .dashboard-container { padding: 0 20px 30px; }
-            .profile-pill { right: 20px; }
+            .mobile-header { display: flex; }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-hero {
+                padding: 25px 20px;
+                height: auto;
+                border-bottom-left-radius: 25px;
+                border-bottom-right-radius: 25px;
+                display: flex;
+                flex-direction: column-reverse;
+                align-items: center;
+                text-align: center;
+            }
+            .hero-title h1 { font-size: 24px; }
+            .hero-title p { font-size: 13px; margin-top: 10px; }
+
+            .profile-pill {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 20px;
+                align-self: flex-end;
+            }
+
+            .dashboard-container { padding: 0 15px 30px; margin-top: -30px; }
+            .payment-card { padding: 25px 20px; border-radius: 20px; }
+
+            .mpesa-header { flex-direction: column; gap: 15px; text-align: center; }
+
+            .amount-val { font-size: 32px; }
+            .amount-display { padding: 15px; margin-bottom: 20px; }
+
+            .input-group label { font-size: 12px; }
+            .styled-input { font-size: 15px; padding: 14px 0; }
+
+            .inactivity-card { padding: 30px 20px; }
         }
     </style>
 </head>
@@ -170,11 +221,18 @@
         <p id="guardText" style="margin-top:20px; color:#64748b; font-size:14px; font-weight:600;">Securely Fetching Premium Details...</p>
     </div>
 
-    <!-- Dashboard Sidebar -->
-    <div class="sidebar">
-        <a href="#" class="logo"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
-        <div style="margin-top: 20px;">
+    <!-- Dashboard Sidebar -->
+    <div class="sidebar" id="appSidebar">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:60px;">
+            <a href="#" class="logo" style="margin-bottom:0;"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
+            <!-- Close button only visible on mobile when sidebar is open -->
+            <button class="mobile-menu-btn d-lg-none" style="display:none;" onclick="toggleMobileMenu()" id="closeMenuBtn"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <div>
             <a href="{% url 'client_dashboard' %}" class="menu-item"><i class="bi bi-grid-fill"></i> Dashboard</a>
             <a href="{% url 'profile' %}" class="menu-item"><i class="bi bi-person-circle"></i> My Profile</a>
             <a href="{% url 'add_vehicle' %}" class="menu-item"><i class="bi bi-plus-circle-fill"></i> Add Vehicle</a>
@@ -189,6 +247,12 @@
 
     <!-- Main Content Area -->
     <div class="main-content">
+        <!-- Mobile Header (Visible only on small screens) -->
+        <div class="mobile-header">
+            <a href="#" class="mobile-header-logo"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="bi bi-list"></i></button>
+        </div>
+
         <div class="dashboard-hero">
             <div class="hero-title">
                 <h1>Secure Payment</h1>
@@ -230,6 +294,30 @@
     </div>
 
     <script>
+        // Mobile Sidebar Toggle Logic
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('appSidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            const closeBtn = document.getElementById('closeMenuBtn');
+
+            sidebar.classList.toggle('mobile-open');
+
+            if (sidebar.classList.contains('mobile-open')) {
+                overlay.style.display = 'block';
+                closeBtn.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+                closeBtn.style.display = 'none';
+            }
+        }
+
+        // Hide close button if resized to desktop
+        window.addEventListener('resize', () => {
+            if(window.innerWidth > 992) {
+                 document.getElementById('closeMenuBtn').style.display = 'none';
+            }
+        });
+
         // --- INACTIVITY TIMER LOGIC ---
         let inactivityTimer = null;
         let warningTimer = null;

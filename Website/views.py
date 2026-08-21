@@ -250,7 +250,9 @@ def initiate_stk_push(request):
         try:
             data = json.loads(request.body)
             phone_number = data.get('phone')
-            amount = int(data.get('amount'))
+
+            # Safely handle the amount
+            amount = int(float(data.get('amount')))
             user_id = data.get('userId')
             plan_name = data.get('plan')
 
@@ -258,14 +260,29 @@ def initiate_stk_push(request):
             client = MpesaClient()
             account_reference = 'BimaDrive'
             transaction_desc = f'Payment for {plan_name}'
-            callback_url = 'https://your-domain.com/mpesa/callback' # Must be a live URL
+
+            # --- LOCALHOST VS PRODUCTION CALLBACK LOGIC ---
+            host = request.get_host()
+
+            # If you are using Ngrok to test webhooks locally, you can set this env variable
+            custom_callback = os.getenv('MPESA_CALLBACK_URL')
+
+            if custom_callback:
+                callback_url = f"{custom_callback.rstrip('/')}/mpesa/callback"
+            elif host.startswith(('localhost', '127.0.0.1')):
+                # Safaricom rejects localhost URLs. We use a dummy valid URL so the prompt still appears on your phone.
+                # Note: You will not receive the automated success ping to your local database using a dummy URL.
+                callback_url = "https://sandbox.safaricom.co.ke/mpesa/callback"
+                logger.warning(
+                    "Running on localhost. Using a dummy callback URL. Payment will trigger, but the callback won't reach your local database.")
+            else:
+                # Production: Dynamically generates your live Render domain (e.g., https://your-app.onrender.com/mpesa/callback)
+                callback_url = request.build_absolute_uri('/mpesa/callback')
 
             # Make the STK Push Call
-            # This returns an MpesaResponse object, NOT a dictionary
             response = client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
 
-            # --- FIX IS HERE ---
-            # Access attributes directly using dot notation, not .get()
+            # Access attributes directly using dot notation
             response_code = getattr(response, 'response_code', None)
             checkout_id = getattr(response, 'checkout_request_id', None)
             error_message = getattr(response, 'response_description', 'Unknown Error')
@@ -281,7 +298,6 @@ def initiate_stk_push(request):
                     'timestamp': datetime.now().isoformat()
                 })
 
-                # Return dictionary manually since MpesaResponse isn't JSON serializable by default
                 return JsonResponse({
                     'ResponseCode': response_code,
                     'CheckoutRequestID': checkout_id,
@@ -295,7 +311,6 @@ def initiate_stk_push(request):
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Only POST method allowed'}, status=405)
-
 
 @csrf_exempt
 def mpesa_callback(request):

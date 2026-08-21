@@ -87,6 +87,15 @@
         }
         .sys-id { font-size: 12px; color: var(--text-sub); margin-top: 15px; font-family: monospace; font-weight: 600; }
 
+        /* Setup Banner Alert */
+        .setup-alert {
+            background: #fff8e1; color: #d97706; padding: 15px 20px;
+            border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 25px;
+            border: 1px solid #fde68a; display: flex; align-items: center; gap: 10px;
+            display: none; /* Hidden by default */
+        }
+        .setup-alert i { font-size: 18px; }
+
         /* Form Area */
         .content-area { padding: 45px; background: white; overflow-y: auto; max-height: 80vh; }
         .form-header { margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
@@ -179,6 +188,11 @@
 
                 <!-- Content Area Form -->
                 <div class="content-area">
+                    <div class="setup-alert" id="setupAlertBox">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>Action Required: Please complete your personal profile to access the dashboard.</span>
+                    </div>
+
                     <form id="profileForm">
                         <div class="form-header">
                             <h3>Personal Information</h3>
@@ -198,12 +212,12 @@
 
                         <div class="grid-2">
                             <div class="input-wrapper">
-                                <label class="input-label">Phone Number</label>
+                                <label class="input-label">Phone Number <span style="color:red">*</span></label>
                                 <input type="tel" id="phone" class="input-field" placeholder="07XXXXXXXX" required>
                             </div>
                             <div class="input-wrapper">
-                                <label class="input-label">National ID / Passport</label>
-                                <input type="text" id="nationalId" class="input-field" placeholder="Enter ID Number">
+                                <label class="input-label">National ID / Passport <span style="color:red">*</span></label>
+                                <input type="text" id="nationalId" class="input-field" placeholder="Enter ID Number" required>
                             </div>
                         </div>
 
@@ -249,6 +263,13 @@
     </div>
 
     <script>
+        // Check for ?setup=true in the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('setup')) {
+            document.getElementById('setupAlertBox').style.display = 'flex';
+            document.getElementById('dashboardLink').style.display = 'none'; // Hide back button
+        }
+
         // --- INACTIVITY TIMER LOGIC ---
         let inactivityTimer = null;
         let warningTimer = null;
@@ -324,6 +345,7 @@
 
         let dbPath = '';
         let redirectUrl = "{% url 'client_dashboard' %}";
+        let isClient = false;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -343,12 +365,14 @@
                 snap = await get(child(dbRef, `Client/${user.uid}`));
                 if(snap.exists()) {
                     dbPath = `Client/${user.uid}`;
+                    isClient = true;
                     populate(snap.val(), `UID: ${user.uid.substring(0,6).toUpperCase()}`);
                     return;
                 }
 
                 // Fallback default
                 dbPath = `Client/${user.uid}`;
+                isClient = true;
                 populate({ name: user.email.split('@')[0], email: user.email, role: 'client' }, `UID: ${user.uid.substring(0,6).toUpperCase()}`);
             } else {
                 window.location.href = "{% url 'login' %}";
@@ -367,8 +391,8 @@
 
             document.getElementById('fullName').value = data.name || '';
             document.getElementById('email').value = data.email || '';
-            document.getElementById('phone').value = data.phone || '';
-            document.getElementById('nationalId').value = data.nationalId || '';
+            document.getElementById('phone').value = data.phoneNumber || data.phone || ''; // Fallback for old schema
+            document.getElementById('nationalId').value = data.idNumber || data.nationalId || ''; // Fallback for old schema
             document.getElementById('kraPin').value = data.kraPin || '';
 
             if(data.address) {
@@ -414,6 +438,15 @@
             e.preventDefault();
             if(!dbPath) { alert("Database path not initialized."); return; }
 
+            // Validate mandatory fields
+            const phoneVal = document.getElementById('phone').value.trim();
+            const idVal = document.getElementById('nationalId').value.trim();
+
+            if (!phoneVal || !idVal) {
+                alert("Please fill in your Phone Number and National ID to continue.");
+                return;
+            }
+
             const btn = document.querySelector('.btn-primary');
             const originalText = btn.innerText;
             btn.innerText = "Saving Changes...";
@@ -430,8 +463,8 @@
 
                 const updates = {
                     email: document.getElementById('email').value,
-                    phone: document.getElementById('phone').value,
-                    nationalId: document.getElementById('nationalId').value,
+                    phoneNumber: phoneVal,
+                    idNumber: idVal,
                     kraPin: document.getElementById('kraPin').value,
                     profilePic: picUrl,
                     address: {
@@ -442,8 +475,15 @@
                     }
                 };
 
+                // Unlock the dashboard if they are a client
+                if (isClient) {
+                    updates.profileComplete = true;
+                }
+
                 await update(ref(db, dbPath), updates);
                 alert("Profile page updated successfully!");
+
+                // Route them to dashboard after setup
                 window.location.href = redirectUrl;
 
             } catch (error) {

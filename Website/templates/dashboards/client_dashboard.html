@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BimaDrive | Client Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -19,13 +20,13 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: var(--bg-body); display: flex; min-height: 100vh; user-select: none; }
+        body { background: var(--bg-body); display: flex; min-height: 100vh; user-select: none; overflow-x: hidden; }
 
         /* Sidebar */
         .sidebar {
             width: var(--sidebar-width); background: var(--sidebar-bg); padding: 40px 30px;
             position: fixed; height: 100vh; display: flex; flex-direction: column; color: white;
-            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 100; overflow-y: auto;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 1000; overflow-y: auto;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar.collapsed {
@@ -68,7 +69,7 @@
         .sidebar-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 15px 0; transition: 0.3s; }
 
         /* Main Content */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .main-content { margin-left: var(--sidebar-width); flex: 1; position: relative; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; }
         .main-content.expanded { margin-left: 90px; }
 
         /* Hero Banner */
@@ -210,8 +211,8 @@
             box-shadow: var(--card-shadow); display: none; margin-bottom: 35px; color: #64748b;
         }
 
-        /* --- PASSWORD & SECURITY MODAL POPUP --- */
-        #passwordModal {
+        /* --- MODALS (Password & Inactivity) --- */
+        #passwordModal, #inactivityModal {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
             z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
         }
@@ -222,15 +223,13 @@
 
         .modal-input-group { margin-bottom: 15px; position: relative; }
         .modal-input-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
-
         .input-with-eye { position: relative; display: flex; align-items: center; }
         .modal-input-group input, .modal-input-group select { width: 100%; padding: 12px 45px 12px 14px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; outline: none; background: #f8fafc; font-weight: 500; transition: 0.2s; font-family: 'Poppins', sans-serif; }
         .modal-input-group input.error-input { border-color: #ef4444; background: #fef2f2; }
-
         .toggle-eye { position: absolute; right: 14px; cursor: pointer; color: #64748b; font-size: 18px; z-index: 5; }
         .toggle-eye:hover { color: #1e293b; }
-
         .error-hint { font-size: 11px; color: #ef4444; margin-top: 4px; display: none; font-weight: 600; }
+
         .password-rules { font-size: 11px; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
         .password-rules ul { padding-left: 15px; margin: 4px 0 0 0; }
         .password-rules li { margin-bottom: 2px; }
@@ -242,25 +241,21 @@
         .btn-modal-submit:hover { background: #3c2a91; }
         .btn-modal-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
-        /* Passkey Section inside Modal */
         .passkey-box { background: #e0f2fe; border: 1px solid #bae6fd; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
         .passkey-box p { font-size: 12px; color: #0369a1; margin: 0; line-height: 1.4; }
         .btn-passkey { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .btn-passkey:hover { background: #0369a1; }
 
-        /* --- INACTIVITY TIMEOUT MODAL --- */
-        #inactivityModal {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
-            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
-        }
         .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
         .inactivity-card i { font-size: 48px; color: #f59e0b; display: block; margin-bottom: 15px; }
         .inactivity-card h2 { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
         .inactivity-card p { font-size: 13.5px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
         .inactivity-timer { font-size: 32px; font-weight: 800; color: #ef4444; margin-bottom: 25px; font-family: monospace; }
         .btn-stay { width: 100%; padding: 16px; background: #4e37b5; color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
-        .btn-stay:hover { background: #3c2a91; }
 
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+
+        /* Tablet Adjustments */
         @media (max-width: 1024px) {
             .grid-cards { grid-template-columns: repeat(2, 1fr); }
             .sidebar { width: 90px; padding: 40px 15px; }
@@ -270,9 +265,74 @@
             .sidebar .menu-item i { margin: 0; font-size: 22px; }
             .main-content { margin-left: 90px; }
             .dashboard-container { padding: 0 20px 30px; }
-            .profile-pill { right: 20px; }
-            .dashboard-hero { flex-direction: column; height: auto; gap: 20px; }
-            .hero-right-group { width: 100%; justify-content: space-between; }
+        }
+
+        /* Mobile Adjustments (Phones) */
+        @media (max-width: 768px) {
+            /* Sidebar transitions to an off-canvas menu */
+            .sidebar {
+                left: -300px;
+                width: 280px;
+                padding: 40px 30px;
+            }
+            .sidebar.mobile-active {
+                left: 0;
+            }
+            /* Restore text for mobile slide-out menu */
+            .sidebar .logo span, .sidebar .menu-item span, .sidebar .sidebar-divider { display: block; }
+            .sidebar .logo { justify-content: flex-start; }
+            .sidebar .menu-item { justify-content: flex-start; padding: 14px 18px; }
+            .sidebar .menu-item i { margin: 0 15px 0 0; font-size: 18px; }
+
+            /* Main content takes full width */
+            .main-content { margin-left: 0 !important; }
+
+            /* Hero area wrapping */
+            .dashboard-hero {
+                flex-direction: column;
+                height: auto;
+                padding: 25px 20px 45px;
+                border-radius: 0 0 25px 25px;
+            }
+            .hero-left-group { width: 100%; align-items: center; }
+            .hero-title h1 { font-size: 22px; }
+
+            .hero-right-group {
+                width: 100%;
+                flex-direction: column-reverse; /* Search bar on top, profile pill below */
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .dashboard-search-wrapper { width: 100%; min-width: 100%; }
+            .profile-pill { width: 100%; justify-content: space-between; }
+
+            /* Dashboard Grid & Containers */
+            .dashboard-container { padding: 0 15px 30px; margin-top: -25px; }
+            .grid-cards { grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
+
+            /* Cards & Banners */
+            .card { padding: 20px; }
+            .policy-status-card {
+                padding: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .policy-info h2 { font-size: 18px; }
+            .countdown-container {
+                width: 100%;
+                justify-content: space-between;
+                padding: 10px;
+            }
+            .time-box { min-width: 40px; }
+            .time-val { font-size: 16px; }
+
+            /* Modals */
+            .modal-card, .inactivity-card { padding: 25px 20px; }
+            .modal-header h2 { font-size: 18px; }
+            .passkey-box { flex-direction: column; align-items: flex-start; }
+            .btn-passkey { width: 100%; }
+            .modal-buttons { flex-direction: column; }
         }
     </style>
 </head>
@@ -537,16 +597,32 @@
         </div>
     </div>
 
+    <!-- Background overlay for mobile sidebar -->
+    <div id="mobileSidebarOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999;" onclick="toggleSidebar()"></div>
+
     <script>
         // Disable Right-Click across the dashboard
         document.addEventListener('contextmenu', event => event.preventDefault());
 
-        // --- SIDEBAR TOGGLE LOGIC ---
+        // --- SIDEBAR TOGGLE LOGIC (Updated for Mobile) ---
         function toggleSidebar() {
             const sidebar = document.getElementById('appSidebar');
             const mainContent = document.getElementById('mainContent');
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
+            const overlay = document.getElementById('mobileSidebarOverlay');
+
+            if (window.innerWidth <= 768) {
+                // Mobile behavior: slide in/out and show overlay
+                sidebar.classList.toggle('mobile-active');
+                if (sidebar.classList.contains('mobile-active')) {
+                    overlay.style.display = 'block';
+                } else {
+                    overlay.style.display = 'none';
+                }
+            } else {
+                // Desktop/Tablet behavior: collapse width
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            }
         }
 
         // --- DASHBOARD INSTANT SEARCH LOGIC ---
@@ -772,6 +848,15 @@
                     let snapshot = await get(child(dbRef, `Client/${user.uid}`));
                     if (snapshot.exists()) {
                         clientUserData = snapshot.val();
+
+                        // --- THE PROFILE GUARD ---
+                        if (!clientUserData.phoneNumber || !clientUserData.idNumber || clientUserData.profileComplete === false) {
+                            alert("Welcome! Please complete your personal profile details before accessing the dashboard.");
+                            window.location.href = "{% url 'profile' %}?setup=true";
+                            return; // Stop loading the dashboard
+                        }
+                        // --------------------------
+
                         const name = clientUserData.name || "Client";
                         document.getElementById('welcomeText').innerText = `Hello, ${name.split(' ')[0]} 👋`;
                         document.getElementById('profileName').innerText = name;

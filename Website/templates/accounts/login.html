@@ -94,9 +94,19 @@
             width: 100%; padding: 12px; background: white; color: #334155; border: 1px solid #cbd5e1;
             border-radius: 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            margin-bottom: 8px;
         }
         .btn-google:hover { background: #f8fafc; border-color: #94a3b8; }
         .btn-google img { width: 18px; height: 18px; }
+
+        .btn-passkey {
+            width: 100%; padding: 12px; background: #0f172a; color: white; border: none;
+            border-radius: 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            display: none; /* Hidden by default, shown via JS if supported */
+            align-items: center; justify-content: center; gap: 10px; box-shadow: 0 5px 15px rgba(15,23,42,0.2);
+        }
+        .btn-passkey:hover { background: #1e293b; }
+        .btn-passkey i { font-size: 18px; color: #38bdf8; }
 
         .links { margin-top: 18px; text-align: center; font-size: 13px; color: #64748b; }
         .links a { color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 5px; }
@@ -211,6 +221,12 @@
                 <span id="googleBtnText">Sign In with Google</span>
             </button>
 
+            <!-- Passkey Login Button (Only visible if supported) -->
+            <button type="button" class="btn-passkey" id="passkeyLoginBtn">
+                <i class="bi bi-fingerprint"></i>
+                <span id="passkeyBtnText">Sign in with Passkey</span>
+            </button>
+
             <div class="links">
                 New here? <a href="{% url 'register_client' %}">Create Client Account</a>
             </div>
@@ -226,6 +242,13 @@
     </div>
 
     <script>
+        // Check for WebAuthn (Passkey) support and display button if available
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.PublicKeyCredential) {
+                document.getElementById('passkeyLoginBtn').style.display = 'flex';
+            }
+        });
+
         function togglePasswordVisibility(fieldId, iconId) {
             const inputField = document.getElementById(fieldId);
             const icon = document.getElementById(iconId);
@@ -250,18 +273,24 @@
         function updateUIState(message, isLoading) {
             const btn = document.getElementById('mainLoginBtn');
             const gBtn = document.getElementById('googleLoginBtn');
+            const pBtn = document.getElementById('passkeyLoginBtn');
             const gText = document.getElementById('googleBtnText');
+            const pText = document.getElementById('passkeyBtnText');
 
             if (isLoading) {
                 btn.disabled = true;
                 gBtn.disabled = true;
+                pBtn.disabled = true;
                 btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${message}`;
                 gText.innerText = message;
+                pText.innerText = message;
             } else {
                 btn.disabled = false;
                 gBtn.disabled = false;
+                pBtn.disabled = false;
                 btn.innerHTML = 'Sign In to Dashboard';
                 gText.innerText = 'Sign In with Google';
+                pText.innerText = 'Sign in with Passkey';
             }
         }
 
@@ -276,7 +305,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // Switched to signInWithRedirect to bypass Django COOP security headers and popup blockers
         import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -298,7 +326,7 @@
         let isRouting = false;
 
         async function routeUserByRole(user) {
-            if (isRouting) return; // Prevent double-execution
+            if (isRouting) return;
             isRouting = true;
 
             document.getElementById('errorMsg').style.display = 'none';
@@ -306,13 +334,9 @@
             const dbRef = ref(db);
 
             try {
-                // 1. Check Staff
-                console.log("Checking Staff node...");
-                updateUIState('Verifying staff privileges...', true);
                 let snapshot = await get(child(dbRef, `Staff/${user.uid}`));
 
                 if (snapshot.exists()) {
-                    console.log("Found in Staff. Routing...");
                     const data = snapshot.val();
                     if (data.suspended) {
                         await signOut(auth);
@@ -325,13 +349,10 @@
                     return;
                 }
 
-                // 2. Check Client
-                console.log("Not staff. Checking Client node...");
                 updateUIState('Verifying client profile...', true);
                 snapshot = await get(child(dbRef, `Client/${user.uid}`));
 
                 if (!snapshot.exists()) {
-                    console.log("Client not found. Creating new Client record...");
                     updateUIState('Creating new profile...', true);
                     await set(ref(db, `Client/${user.uid}`), {
                         name: user.displayName || "Google User",
@@ -340,7 +361,6 @@
                         createdAt: new Date().toISOString(),
                         suspended: false
                     });
-                    console.log("Client record created.");
                 } else if (snapshot.val().suspended) {
                     await signOut(auth);
                     alert("Your account has been suspended. Contact Administrator.");
@@ -348,7 +368,6 @@
                     return;
                 }
 
-                console.log("Routing to Client Dashboard...");
                 updateUIState('Redirecting to Dashboard...', true);
                 window.location.href = "{% url 'client_dashboard' %}";
 
@@ -360,40 +379,64 @@
             }
         }
 
-        // --- CATCH REDIRECT RESULTS (Bypasses Django COOP Header Issues & Popup blockers) ---
         getRedirectResult(auth).then((result) => {
             if (result && result.user) {
-                console.log("Google Redirect Sign-In Successful!");
                 updateUIState('Google Auth Success. Routing...', true);
                 routeUserByRole(result.user);
             }
         }).catch((err) => {
-            console.error("Redirect Error:", err);
             displayError("Google Sign-In failed: " + err.message);
         });
 
-        // Automatic re-routing if user reloads page while already logged in
         onAuthStateChanged(auth, async (user) => {
-            console.log("Auth state changed. User:", user ? user.uid : "None");
             if (user && !isRouting) {
                 updateUIState('Restoring session...', true);
                 await routeUserByRole(user);
             }
         });
 
-        // --- Google Authentication Logic (Using Redirect) ---
         document.getElementById('googleLoginBtn').addEventListener('click', () => {
-            console.log("Google Login Clicked - Initiating Redirect");
             document.getElementById('errorMsg').style.display = 'none';
             updateUIState('Redirecting to Google...', true);
 
             signInWithRedirect(auth, googleProvider).catch((err) => {
-                console.error("Failed to initiate redirect:", err);
                 displayError("Failed to initiate Google login: " + err.message);
             });
         });
 
-        // Standard Email/Password Login
+        // --- Passkey Login Handler ---
+        document.getElementById('passkeyLoginBtn').addEventListener('click', async () => {
+            document.getElementById('errorMsg').style.display = 'none';
+            updateUIState('Waiting for biometric...', true);
+
+            try {
+                // Generate a random challenge (in production, this comes from your backend)
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: challenge,
+                        rpId: window.location.hostname, // Matches the domain where it was created
+                        userVerification: "required"
+                    }
+                });
+
+                if (credential) {
+                    updateUIState('Biometric Verified!', true);
+                    alert("✅ Passkey verified successfully!\n\nNote: To fully connect Passkeys to Firebase Auth and bypass the password screen, an active backend custom token server is required.");
+                    updateUIState('', false);
+                }
+            } catch (err) {
+                console.error("Passkey error:", err);
+                if (err.name === 'NotAllowedError') {
+                    displayError("Passkey login cancelled.");
+                } else {
+                    displayError("No matching passkey found on this device. Please log in with your email to create one.");
+                }
+            }
+        });
+
         const loginForm = document.getElementById('loginForm');
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -407,22 +450,15 @@
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 updateUIState('Login Success...', true);
-
-                // Explicitly call route function
                 await routeUserByRole(userCredential.user);
-
             } catch (error) {
-                console.error("Login Auth Error:", error);
                 let msg = "Login failed. Please check your credentials.";
                 if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
                 if(error.code === 'auth/user-not-found') msg = "No account found with this email.";
-                if(error.message) msg = error.message;
-
                 displayError(msg);
             }
         });
 
-        // Password Reset Handler
         window.sendPasswordReset = async () => {
             const email = document.getElementById('recoveryEmail').value.trim();
             if (!email) { alert("Please enter your account email address."); return; }
@@ -432,7 +468,6 @@
                 alert("Password reset link has been sent to your email address. Please check your inbox.");
                 closeForgotModal();
             } catch (err) {
-                console.error(err);
                 alert("Error: " + err.message);
             }
         };

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BimaDrive | Secure Login</title>
+    <title>BimaDrive | Client Registration</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -12,7 +12,7 @@
             --primary: #4f46e5;
             --secondary: #0ea5e9;
             --dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
@@ -29,9 +29,9 @@
             padding: 20px;
         }
 
-        .login-wrapper {
-            width: 1000px; height: 620px;
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px);
+        .register-wrapper {
+            width: 1000px; height: 680px;
+            background: var(--glass-bg); backdrop-filter: blur(24px);
             border-radius: 32px; border: var(--glass-border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             display: grid; grid-template-columns: 1fr 1fr; overflow: hidden;
@@ -39,27 +39,27 @@
         }
 
         .form-section {
-            padding: 35px 60px; display: flex; flex-direction: column; justify-content: center;
+            padding: 35px 50px; display: flex; flex-direction: column; justify-content: center;
             position: relative; z-index: 2; overflow-y: auto;
         }
 
         .brand {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
             font-size: 20px; font-weight: 800; color: var(--dark); text-decoration: none;
         }
         .brand i { color: var(--primary); font-size: 24px; }
 
-        h1 { font-size: 32px; font-weight: 800; color: var(--dark); margin: 0 0 8px 0; letter-spacing: -0.5px; }
-        p.subtitle { color: #64748b; font-size: 14px; margin: 0 0 20px 0; }
+        h1 { font-size: 28px; font-weight: 800; color: var(--dark); margin: 0 0 6px 0; letter-spacing: -0.5px; }
+        p.subtitle { color: #64748b; font-size: 13.5px; margin: 0 0 16px 0; }
 
-        .input-group { margin-bottom: 14px; position: relative; }
+        .input-group { margin-bottom: 12px; position: relative; }
         .input-group > i.left-icon {
             position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
             color: #94a3b8; transition: 0.3s; z-index: 3;
         }
         .input-group input {
-            width: 100%; padding: 13px 45px 13px 45px; border: 1px solid #e2e8f0;
-            border-radius: 14px; font-size: 14px; transition: 0.3s;
+            width: 100%; padding: 12px 45px 12px 45px; border: 1px solid #e2e8f0;
+            border-radius: 14px; font-size: 13.5px; transition: 0.3s;
             background: rgba(255, 255, 255, 0.6); color: var(--dark); font-weight: 500;
         }
         .input-group input:focus {
@@ -73,32 +73,43 @@
         }
         .toggle-eye:hover { color: var(--dark); }
 
-        .forgot-row { text-align: right; margin-bottom: 15px; margin-top: -5px; }
-        .forgot-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; cursor: pointer; }
-        .forgot-link:hover { color: var(--primary); text-decoration: underline; }
-
-        .btn-login {
-            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
-            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
+        /* Terms & Conditions Checkbox */
+        .terms-group {
+            display: flex; align-items: flex-start; gap: 10px; margin: 15px 0;
         }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.4); }
-        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
+        .terms-group input[type="checkbox"] {
+            margin-top: 3px; cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary);
+        }
+        .terms-group label {
+            font-size: 12.5px; color: #475569; line-height: 1.5; font-weight: 500;
+        }
+        .terms-group a {
+            color: var(--primary); text-decoration: none; font-weight: 700; cursor: pointer;
+        }
+        .terms-group a:hover { text-decoration: underline; }
 
-        .divider { display: flex; align-items: center; text-align: center; margin: 14px 0; color: #94a3b8; font-size: 12px; font-weight: 600; }
+        .btn-register {
+            width: 100%; padding: 13px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3); margin-top: 4px;
+        }
+        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.4); }
+        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .divider { display: flex; align-items: center; text-align: center; margin: 12px 0; color: #94a3b8; font-size: 12px; font-weight: 600; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
         .divider::before { margin-right: .75em; }
         .divider::after { margin-left: .75em; }
 
         .btn-google {
-            width: 100%; padding: 12px; background: white; color: #334155; border: 1px solid #cbd5e1;
-            border-radius: 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            width: 100%; padding: 11px; background: white; color: #334155; border: 1px solid #cbd5e1;
+            border-radius: 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
         .btn-google:hover { background: #f8fafc; border-color: #94a3b8; }
         .btn-google img { width: 18px; height: 18px; }
 
-        .links { margin-top: 18px; text-align: center; font-size: 13px; color: #64748b; }
+        .links { margin-top: 14px; text-align: center; font-size: 13px; color: #64748b; }
         .links a { color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 5px; }
         .links a:hover { text-decoration: underline; }
 
@@ -109,7 +120,7 @@
         }
         .visual-section::before {
             content: ''; position: absolute; width: 150%; height: 150%;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 60%);
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.4) 0%, transparent 60%);
             top: -20%; right: -20%; animation: pulse 8s infinite ease-in-out;
         }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
@@ -123,104 +134,120 @@
         .glass-overlay p { font-size: 13px; opacity: 0.8; line-height: 1.6; margin: 0; }
 
         .error-banner {
-            background: #fef2f2; color: #dc2626; padding: 12px; border-radius: 10px;
-            font-size: 12px; margin-bottom: 15px; display: none; border: 1px solid #fee2e2; text-align: center; font-weight: 600;
+            background: #fef2f2; color: #dc2626; padding: 10px; border-radius: 10px;
+            font-size: 12.5px; margin-bottom: 12px; display: none; border: 1px solid #fee2e2; text-align: center; font-weight: 600;
         }
 
-        /* --- FORGOT PASSWORD MODAL --- */
-        #forgotModal {
+        /* --- LEGAL MODAL STYLING --- */
+        #legalModal {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
             z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
         }
-        .modal-card { background: white; width: 100%; max-width: 480px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
-        .modal-header { text-align: center; margin-bottom: 25px; }
-        .modal-header i { font-size: 38px; color: var(--primary); display: block; margin-bottom: 10px; }
-        .modal-header h2 { font-size: 20px; font-weight: 800; color: #1e293b; }
-        .modal-input-group { margin-bottom: 16px; position: relative; }
-        .modal-input-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-        .modal-input-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; outline: none; background: #f8fafc; font-weight: 500; }
-        .modal-input-group input:focus { border-color: var(--primary); background: white; }
-        .modal-buttons { display: flex; gap: 12px; margin-top: 25px; }
-        .btn-modal-close { flex: 1; padding: 14px; background: #f1f5f9; color: #475569; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
-        .btn-modal-close:hover { background: #e2e8f0; }
-        .btn-modal-submit { flex: 1; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 5px 15px rgba(79,70,229,0.3); }
-        .btn-modal-submit:hover { background: #4338ca; }
+        .legal-modal-card {
+            background: white; width: 100%; max-width: 650px; border-radius: 24px; padding: 35px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3); max-height: 85vh; display: flex; flex-direction: column;
+        }
+        .legal-modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;
+        }
+        .legal-modal-header h2 { font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; }
+        .legal-modal-close { background: transparent; border: none; font-size: 24px; color: #64748b; cursor: pointer; transition: 0.2s; }
+        .legal-modal-close:hover { color: #ef4444; }
+        .legal-content {
+            flex: 1; overflow-y: auto; font-size: 13.5px; color: #475569; line-height: 1.6; padding-right: 15px;
+        }
+        .legal-content h3 { font-size: 16px; color: #1e293b; margin: 20px 0 10px 0; font-weight: 700; }
+        .legal-content h4 { font-size: 14px; color: #4f46e5; margin: 15px 0 5px 0; font-weight: 600; }
+        .legal-content ul { margin: 10px 0 15px 20px; padding: 0; }
+        .legal-content li { margin-bottom: 8px; }
+
+        /* Custom Scrollbar for modal */
+        .legal-content::-webkit-scrollbar { width: 6px; }
+        .legal-content::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .legal-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
         @media (max-width: 900px) {
-            .login-wrapper { grid-template-columns: 1fr; width: 95%; height: auto; }
+            .register-wrapper { grid-template-columns: 1fr; width: 95%; height: auto; }
             .visual-section { display: none; }
-            .form-section { padding: 40px; }
+            .form-section { padding: 30px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- FORGOT PASSWORD MODAL -->
-    <div id="forgotModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <i class="bi bi-question-circle-fill"></i>
-                <h2>Password Recovery</h2>
+    <!-- LEGAL MODAL (T&C and Privacy Policy) -->
+    <div id="legalModal">
+        <div class="legal-modal-card">
+            <div class="legal-modal-header">
+                <h2 id="legalModalTitle">Terms & Conditions</h2>
+                <button class="legal-modal-close" onclick="closeLegalModal()"><i class="bi bi-x-circle-fill"></i></button>
             </div>
-            <div>
-                <p style="font-size: 13.5px; color: #334155; margin-bottom: 15px; text-align: center;">Enter your registered account email and we will send you a secure password reset link.</p>
-                <div class="modal-input-group">
-                    <label>Account Email</label>
-                    <input type="email" id="recoveryEmail" placeholder="e.g. client@example.com">
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" class="btn-modal-close" onclick="closeForgotModal()">Cancel</button>
-                    <button type="button" class="btn-modal-submit" onclick="sendPasswordReset()">Send Reset Link</button>
-                </div>
+            <div class="legal-content" id="legalModalContent">
+                <!-- Content injected via JS -->
             </div>
         </div>
     </div>
 
-    <div class="login-wrapper">
+    <div class="register-wrapper">
         <div class="form-section">
             <a href="#" class="brand"><i class="bi bi-shield-check-fill"></i> BimaDrive</a>
 
-            <h1>Welcome Back</h1>
-            <p class="subtitle">Enter your credentials or sign in with Google.</p>
+            <h1>Create Account</h1>
+            <p class="subtitle">Register as a client to manage policies & claims.</p>
 
             <div id="errorMsg" class="error-banner"></div>
 
-            <form id="loginForm">
+            <form id="registerForm">
                 <div class="input-group">
-                    <input type="email" id="email" placeholder="Email Address" required>
+                    <input type="text" id="fullName" name="fullName" placeholder="Full Name" required autocomplete="name">
+                    <i class="bi bi-person left-icon"></i>
+                </div>
+
+                <div class="input-group">
+                    <input type="email" id="email" name="email" placeholder="Email Address" required autocomplete="username">
                     <i class="bi bi-envelope left-icon"></i>
                 </div>
 
                 <div class="input-group">
-                    <input type="password" id="password" placeholder="Password" required>
+                    <input type="password" id="password" name="password" placeholder="Password (Min 6 chars)" required autocomplete="new-password">
                     <i class="bi bi-key left-icon"></i>
                     <i class="bi bi-eye-slash toggle-eye" id="eyePassword" onclick="togglePasswordVisibility('password', 'eyePassword')"></i>
                 </div>
 
-                <div class="forgot-row">
-                    <a class="forgot-link" onclick="openForgotModal()">Forgot password?</a>
+                <div class="input-group">
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required autocomplete="new-password">
+                    <i class="bi bi-lock left-icon"></i>
+                    <i class="bi bi-eye-slash toggle-eye" id="eyeConfirm" onclick="togglePasswordVisibility('confirmPassword', 'eyeConfirm')"></i>
                 </div>
 
-                <button type="submit" class="btn-login">Sign In to Dashboard</button>
+                <div class="terms-group">
+                    <input type="checkbox" id="termsCheck" required>
+                    <label for="termsCheck">
+                        I have read and agree to the <a onclick="openLegalModal('terms')">Terms & Conditions</a> and <a onclick="openLegalModal('privacy')">Privacy Policy</a>.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-register" id="mainRegisterBtn">Create Client Account</button>
             </form>
 
             <div class="divider">OR</div>
 
-            <button type="button" class="btn-google" id="googleLoginBtn">
+            <button type="button" class="btn-google" id="googleRegisterBtn">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
-                Sign In with Google
+                <span id="googleBtnText">Continue with Google</span>
             </button>
 
             <div class="links">
-                New here? <a href="{% url 'register_client' %}">Create Client Account</a>
+                Already have an account? <a href="{% url 'login' %}">Sign In</a>
             </div>
         </div>
 
         <div class="visual-section">
             <div class="glass-overlay">
-                <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
-                <h3>Secure Access</h3>
-                <p>Manage insurance policies, valuations, and claims in one unified, secure environment.</p>
+                <div style="font-size: 40px; margin-bottom: 20px;">🛡️</div>
+                <h3>Client Portal</h3>
+                <p>Register today to instantly file claims, request vehicle valuations, and track auto covers seamlessly.</p>
             </div>
         </div>
     </div>
@@ -238,20 +265,92 @@
             }
         }
 
-        function openForgotModal() {
-            document.getElementById('forgotModal').style.display = 'flex';
-            document.getElementById('recoveryEmail').value = '';
+        function updateUIState(message, isLoading) {
+            const btn = document.getElementById('mainRegisterBtn');
+            const gBtn = document.getElementById('googleRegisterBtn');
+            const gText = document.getElementById('googleBtnText');
+
+            if (isLoading) {
+                btn.disabled = true;
+                gBtn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${message}`;
+                gText.innerText = message;
+            } else {
+                btn.disabled = false;
+                gBtn.disabled = false;
+                btn.innerHTML = 'Create Client Account';
+                gText.innerText = 'Continue with Google';
+            }
         }
 
-        function closeForgotModal() {
-            document.getElementById('forgotModal').style.display = 'none';
+        function displayError(msg) {
+            const errBox = document.getElementById('errorMsg');
+            errBox.innerText = msg;
+            errBox.style.display = 'block';
+            updateUIState('', false);
+        }
+
+        // --- LEGAL MODAL LOGIC ---
+        const termsContent = `
+            <h3>1. Introduction and Acceptance</h3>
+            <p>Welcome to BimaDrive. By registering an account, you enter into a binding agreement with BimaDrive Insurance Underwriters Kenya Ltd. These Terms and Conditions govern your access to and use of our digital platforms.</p>
+
+            <h3>2. Governing Law</h3>
+            <p>These terms are governed by and construed in accordance with the <strong>Laws of Kenya</strong>, specifically drawing mandate from the <strong>Insurance Act (Cap 487)</strong>. Any disputes arising from this agreement shall be subject to the exclusive jurisdiction of the Kenyan courts.</p>
+
+            <h3>3. User Responsibilities & Insurance Fraud</h3>
+            <p>You agree to provide accurate, current, and complete information during vehicle valuation and claims filing. Under the Insurance Act, the submission of fraudulent claims, forged logbooks, or staged accident reports constitutes a criminal offense punishable by law.</p>
+
+            <h3>4. Service Availability</h3>
+            <p>BimaDrive reserves the right to suspend or terminate accounts engaging in suspicious activities. Policies generated on this platform hold the legal weight of a standard motor insurance certificate as mandated by the Insurance Regulatory Authority (IRA) of Kenya.</p>
+        `;
+
+        const privacyContent = `
+            <h3>1. Our Commitment to Privacy</h3>
+            <p>BimaDrive respects your privacy. We process your data in strict compliance with <strong>Article 31 of the Constitution of Kenya (2010)</strong>, which guarantees the right to privacy, and the <strong>Data Protection Act, 2019</strong>.</p>
+
+            <h3>2. Data Collection and Usage</h3>
+            <p>To provide motor insurance services, we collect personal identifiers including your Full Name, National ID/Passport Number, KRA PIN, Phone Number, and Vehicle Registration details (NTSA Logbooks).</p>
+            <h4>Purpose of Data Collection:</h4>
+            <ul>
+                <li>Verification of identity and ownership.</li>
+                <li>Calculation of insurance premiums and risk assessment.</li>
+                <li>Processing and investigation of accident claims.</li>
+                <li>Compliance with Anti-Money Laundering (AML) regulations.</li>
+            </ul>
+
+            <h3>3. Data Storage and Security</h3>
+            <p>Your data is encrypted and securely stored. We do not sell your personal data to third parties. Data may be shared with statutory bodies such as the National Transport and Safety Authority (NTSA) or the Kenya Police Service strictly for legal compliance or accident investigations.</p>
+
+            <h3>4. Your Rights</h3>
+            <p>Under the Data Protection Act (2019), you possess the right to access, correct, or request the deletion of your personal data held by BimaDrive, subject to the retention periods mandated by Kenyan financial regulations.</p>
+        `;
+
+        function openLegalModal(type) {
+            const modal = document.getElementById('legalModal');
+            const title = document.getElementById('legalModalTitle');
+            const content = document.getElementById('legalModalContent');
+
+            if (type === 'terms') {
+                title.innerText = "Terms & Conditions";
+                content.innerHTML = termsContent;
+            } else {
+                title.innerText = "Privacy Policy";
+                content.innerHTML = privacyContent;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeLegalModal() {
+            document.getElementById('legalModal').style.display = 'none';
         }
     </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -268,103 +367,85 @@
         const db = getDatabase(app);
         const googleProvider = new GoogleAuthProvider();
 
-        async function routeUserByRole(user) {
-            const dbRef = ref(db);
-
-            // 1. Check Staff
-            let snapshot = await get(child(dbRef, `Staff/${user.uid}`));
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                if (data.suspended) {
-                    await signOut(auth);
-                    alert("Your account has been suspended. Contact Administrator.");
-                    return;
-                }
-                window.location.href = data.role === 'admin' ? "{% url 'system_admin' %}" : "{% url 'insurer_dashboard' %}";
-                return;
-            }
-
-            // 2. Check Client (or create if logging in via Google for the first time)
-            snapshot = await get(child(dbRef, `Client/${user.uid}`));
-            if (!snapshot.exists()) {
-                await set(ref(db, `Client/${user.uid}`), {
-                    name: user.displayName || "Google User",
-                    email: user.email,
-                    role: 'client',
-                    createdAt: new Date().toISOString(),
-                    suspended: false
-                });
-            } else if (snapshot.val().suspended) {
-                await signOut(auth);
-                alert("Your account has been suspended. Contact Administrator.");
-                return;
-            }
-
-            window.location.href = "{% url 'client_dashboard' %}";
+        async function createClientRecord(user, fullName) {
+            await set(ref(db, `Client/${user.uid}`), {
+                name: fullName || user.displayName || "Client User",
+                email: user.email,
+                role: 'client',
+                createdAt: new Date().toISOString(),
+                suspended: false,
+                profileComplete: false,
+                legalAccepted: true // Acknowledge policy acceptance in DB
+            });
+            window.location.href = "{% url 'profile' %}?setup=true";
         }
 
-        // Handle redirect result immediately upon page load
-        getRedirectResult(auth).then(async (result) => {
-            if (result && result.user) {
-                await routeUserByRole(result.user);
-            }
-        }).catch((err) => {
-            console.error("Google Redirect Error:", err);
-        });
-
-        document.getElementById('googleLoginBtn').addEventListener('click', async () => {
-            try {
-                await signInWithRedirect(auth, googleProvider);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('errorMsg').innerText = "Google Sign-In failed: " + err.message;
-                document.getElementById('errorMsg').style.display = 'block';
-            }
-        });
-
-        window.sendPasswordReset = async () => {
-            const email = document.getElementById('recoveryEmail').value.trim();
-            if (!email) { alert("Please enter your account email address."); return; }
-
-            try {
-                await sendPasswordResetEmail(auth, email);
-                alert("Password reset link has been sent to your email address. Please check your inbox.");
-                closeForgotModal();
-            } catch (err) {
-                console.error(err);
-                alert("Error: " + err.message);
-            }
-        };
-
-        const loginForm = document.getElementById('loginForm');
-        const errorMsg = document.getElementById('errorMsg');
-        const btn = document.querySelector('.btn-login');
-
-        loginForm.addEventListener('submit', async (e) => {
+        // --- Standard Email/Password Registration ---
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            document.getElementById('errorMsg').style.display = 'none';
 
-            errorMsg.style.display = 'none';
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Authenticating...';
+            // HTML5 'required' attribute handles the checkbox validation natively here
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                displayError("Passwords do not match.");
+                return;
+            }
+
+            if (password.length < 6) {
+                displayError("Password should be at least 6 characters long.");
+                return;
+            }
+
+            updateUIState('Creating account...', true);
 
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                await routeUserByRole(userCredential.user);
-            } catch (error) {
-                console.error(error);
-                let msg = "Login failed. Please check your credentials.";
-                if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
-                if(error.code === 'auth/user-not-found') msg = "No account found with this email.";
-                if(error.message) msg = error.message;
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
 
-                errorMsg.innerText = msg;
-                errorMsg.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Sign In to Dashboard';
+                await updateProfile(user, { displayName: fullName });
+                updateUIState('Saving profile...', true);
+
+                await createClientRecord(user, fullName);
+            } catch (error) {
+                console.error("Registration Error:", error);
+                let msg = "Registration failed. Please try again.";
+                if (error.code === 'auth/email-already-in-use') msg = "An account with this email already exists.";
+                if (error.code === 'auth/invalid-email') msg = "Invalid email address format.";
+                displayError(msg);
             }
+        });
+
+        // --- Google Registration Logic ---
+        document.getElementById('googleRegisterBtn').addEventListener('click', () => {
+            document.getElementById('errorMsg').style.display = 'none';
+
+            // Explicitly check the terms checkbox for Google Signup since it bypasses the form submit
+            if (!document.getElementById('termsCheck').checked) {
+                displayError("Please agree to the Terms & Conditions and Privacy Policy before continuing with Google.");
+                return;
+            }
+
+            document.getElementById('googleBtnText').innerText = 'Connecting to Google...';
+
+            signInWithPopup(auth, googleProvider).async = true;
+            signInWithPopup(auth, googleProvider).then(async (result) => {
+                updateUIState('Setting up profile...', true);
+                await createClientRecord(result.user, result.user.displayName);
+            }).catch((err) => {
+                console.error("Google Signup Error:", err);
+                document.getElementById('googleBtnText').innerText = 'Continue with Google';
+                if (err.code === 'auth/popup-closed-by-user') {
+                    displayError("Sign-up cancelled. Please finish the Google prompt inside the window.");
+                } else {
+                    displayError("Google Signup Error: " + err.message);
+                }
+            });
         });
     </script>
 </body>
