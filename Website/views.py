@@ -519,22 +519,30 @@ RP_ORIGIN = "http://localhost:8000"
 
 @csrf_exempt
 def passkey_challenge_view(request):
-    """Step 1: Generate challenge options dynamically based on the current domain."""
+    """Step 1: Generate challenge options safely for WebAuthn."""
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
     try:
-        # Dynamically grab the host domain from the incoming request (e.g., localhost:8000 or bimadrive-web.onrender.com)
-        current_host = request.get_host().split(':')[0]
+        raw_host = request.get_host().split(':')[0]
+        rp_id = raw_host if raw_host else "localhost"
 
         all_passkeys = UserPasskey.objects.all()
+
+        # If no passkeys exist in the database yet, return a clean error message
+        # instructing the user to create one from their dashboard first.
+        if not all_passkeys.exists():
+            return JsonResponse({
+                "error": "No passkeys registered on this server yet. Please log in with your email/password, go to your dashboard, and click 'Create Passkey' first."
+            }, status.HTTP_400_BAD_REQUEST if 'status' in globals() else 400)
+
         allow_credentials = [
             {"id": base64.b64decode(pk.credential_id), "type": "public-key"}
             for pk in all_passkeys
-        ] if all_passkeys.exists() else None  # Passes None safely if no passkeys are registered yet
+        ]
 
         options = generate_authentication_options(
-            rp_id=current_host,
+            rp_id=rp_id,
             allow_credentials=allow_credentials,
             user_verification="required",
         )
@@ -544,6 +552,8 @@ def passkey_challenge_view(request):
         return HttpResponse(options_to_json(options), content_type="application/json")
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
 
 
 @csrf_exempt
