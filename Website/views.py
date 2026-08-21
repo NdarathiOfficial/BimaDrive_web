@@ -50,34 +50,38 @@ from .forms import ClientRegisterForm, InsurerRegisterForm
 logger = logging.getLogger(__name__)
 
 # ----------------- STRICT FIREBASE INITIALIZATION ----------------- #
-current_dir = os.path.dirname(os.path.abspath(__file__))
-key_path = os.path.join(current_dir, 'firebase-service-account.json')
+if not firebase_admin._apps:
+    try:
+        # Option A: Check Render Environment Variable first
+        firebase_config_string = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
 
-if not os.path.exists(key_path):
-    raise FileNotFoundError(
-        f"\n\n🚨 FIREBASE ERROR 🚨\n"
-        f"I am looking for the credentials file exactly here:\n"
-        f">>> {key_path} <<<\n"
-        f"But the file does not exist.\n\n"
-    )
+        if firebase_config_string:
+            cred_dict = json.loads(firebase_config_string)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+            })
+            logger.info("Firebase Admin initialized successfully using Environment Variable.")
+        else:
+            # Option B: Fallback to local JSON file path for development
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            key_path = os.path.join(current_dir, 'firebase-service-account.json')
 
-try:
-    # 1. FORCE RESET: Delete any broken Firebase setups from other files
-    if firebase_admin._apps:
-        for app_name in list(firebase_admin._apps.keys()):
-            firebase_admin.delete_app(firebase_admin.get_app(app_name))
-
-    # 2. STRICT INIT: Force it to use the exact JSON key file
-    cred = credentials.Certificate(key_path)
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
-    })
-    logger.info("Firebase Admin initialized successfully with JSON Key.")
-except Exception as e:
-    logger.error(f"Failed to load credentials from {key_path}: {e}")
-    raise e
-
-
+            if os.path.exists(key_path):
+                cred = credentials.Certificate(key_path)
+                firebase_admin.initialize_app(cred, {
+                    'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+                })
+                logger.info("Firebase Admin initialized successfully with local JSON Key.")
+            else:
+                raise FileNotFoundError(
+                    f"\n\n🚨 FIREBASE ERROR 🚨\n"
+                    f"No FIREBASE_SERVICE_ACCOUNT_JSON environment variable found, "
+                    f"and local file does not exist at:\n>>> {key_path} <<<\n\n"
+                )
+    except Exception as e:
+        logger.error(f"Failed to initialize Firebase Admin: {e}")
+        raise e
 
 
 
