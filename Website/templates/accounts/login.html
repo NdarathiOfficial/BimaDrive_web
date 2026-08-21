@@ -404,35 +404,63 @@
             });
         });
 
-        // --- Passkey Login Handler ---
+        // --- Active Passkey / Biometric Authentication Handler ---
         document.getElementById('passkeyLoginBtn').addEventListener('click', async () => {
             document.getElementById('errorMsg').style.display = 'none';
-            updateUIState('Waiting for biometric...', true);
+            updateUIState('Waiting for biometric verification...', true);
 
             try {
-                // Generate a random challenge (in production, this comes from your backend)
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-
-                const credential = await navigator.credentials.get({
-                    publicKey: {
-                        challenge: challenge,
-                        rpId: window.location.hostname, // Must perfectly match the creation ID
-                        userVerification: "required"
-                    }
+                // 1. Request challenge from backend endpoint
+                const challengeRes = await fetch('/api/passkey/challenge/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (credential) {
-                    updateUIState('Biometric Verified!', true);
-                    alert("✅ Passkey verified successfully!\n\nNote: To fully connect Passkeys to Firebase Auth and bypass the password screen, an active backend custom token server is required.");
-                    updateUIState('', false);
+                if (!challengeRes.ok) throw new Error("Failed to fetch passkey challenge from server.");
+                const options = await challengeRes.json();
+
+                // Convert base64 challenge/allowCredentials back to ArrayBuffers as required by WebAuthn API
+                options.challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
+                if (options.allowCredentials) {
+                    options.allowCredentials = options.allowCredentials.map(cred => ({
+                        ...cred,
+                        id: Uint8Array.from(atob(cred.id), c => c.charCodeAt(0))
+                    }));
                 }
+
+                // 2. Trigger browser hardware biometric prompt (Fingerprint / Face ID / Windows Hello)
+                const assertion = await navigator.credentials.get({ publicKey: options });
+
+                // 3. Send assertion payload back to Django backend for verification and session login
+                const verifyRes = await fetch('/api/passkey/verify/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: assertion.id,
+                        rawId: btoa(String.fromCharCode(...new Uint8Array(assertion.rawId))),
+                        response: {
+                            clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(assertion.response.clientDataJSON))),
+                            authenticatorData: btoa(String.fromCharCode(...new Uint8Array(assertion.response.authenticatorData))),
+                            signature: btoa(String.fromCharCode(...new Uint8Array(assertion.response.signature))),
+                            userHandle: assertion.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(assertion.response.userHandle))) : null
+                        }
+                    })
+                });
+
+                const result = await verifyRes.json();
+                if (verifyRes.ok && result.success) {
+                    updateUIState('Passkey Verified! Redirecting...', true);
+                    window.location.href = result.redirect_url || "{% url 'client_dashboard' %}";
+                } else {
+                    throw new Error(result.error || "Passkey verification failed on server.");
+                }
+
             } catch (err) {
                 console.error("Passkey error:", err);
                 if (err.name === 'NotAllowedError') {
-                    displayError("Passkey login cancelled.");
+                    displayError("Passkey login cancelled by user.");
                 } else {
-                    displayError("No matching passkey found on this device. Please log in with your email to create one.");
+                    displayError("Passkey error: " + (err.message || "No registered passkey found on this device."));
                 }
             }
         });

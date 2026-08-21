@@ -269,7 +269,6 @@
 
         /* Mobile Adjustments (Phones) */
         @media (max-width: 768px) {
-            /* Sidebar transitions to an off-canvas menu */
             .sidebar {
                 left: -300px;
                 width: 280px;
@@ -278,16 +277,13 @@
             .sidebar.mobile-active {
                 left: 0;
             }
-            /* Restore text for mobile slide-out menu */
             .sidebar .logo span, .sidebar .menu-item span, .sidebar .sidebar-divider { display: block; }
             .sidebar .logo { justify-content: flex-start; }
             .sidebar .menu-item { justify-content: flex-start; padding: 14px 18px; }
             .sidebar .menu-item i { margin: 0 15px 0 0; font-size: 18px; }
 
-            /* Main content takes full width */
             .main-content { margin-left: 0 !important; }
 
-            /* Hero area wrapping */
             .dashboard-hero {
                 flex-direction: column;
                 height: auto;
@@ -299,18 +295,16 @@
 
             .hero-right-group {
                 width: 100%;
-                flex-direction: column-reverse; /* Search bar on top, profile pill below */
+                flex-direction: column-reverse;
                 align-items: flex-start;
                 gap: 15px;
             }
             .dashboard-search-wrapper { width: 100%; min-width: 100%; }
             .profile-pill { width: 100%; justify-content: space-between; }
 
-            /* Dashboard Grid & Containers */
             .dashboard-container { padding: 0 15px 30px; margin-top: -25px; }
             .grid-cards { grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
 
-            /* Cards & Banners */
             .card { padding: 20px; }
             .policy-status-card {
                 padding: 20px;
@@ -327,7 +321,6 @@
             .time-box { min-width: 40px; }
             .time-val { font-size: 16px; }
 
-            /* Modals */
             .modal-card, .inactivity-card { padding: 25px 20px; }
             .modal-header h2 { font-size: 18px; }
             .passkey-box { flex-direction: column; align-items: flex-start; }
@@ -611,7 +604,6 @@
             const overlay = document.getElementById('mobileSidebarOverlay');
 
             if (window.innerWidth <= 768) {
-                // Mobile behavior: slide in/out and show overlay
                 sidebar.classList.toggle('mobile-active');
                 if (sidebar.classList.contains('mobile-active')) {
                     overlay.style.display = 'block';
@@ -619,7 +611,6 @@
                     overlay.style.display = 'none';
                 }
             } else {
-                // Desktop/Tablet behavior: collapse width
                 sidebar.classList.toggle('collapsed');
                 mainContent.classList.toggle('expanded');
             }
@@ -667,7 +658,7 @@
                     challenge: challenge,
                     rp: {
                         name: "BimaDrive Insurance",
-                        id: window.location.hostname // Explicitly bind to current domain
+                        id: window.location.hostname
                     },
                     user: {
                         id: userId,
@@ -678,15 +669,14 @@
                         { alg: -7, type: "public-key" },
                         { alg: -257, type: "public-key" }
                     ],
-                    // THIS IS THE CRITICAL FIX: Forces the passkey to be discoverable on the login screen
                     authenticatorSelection: {
-                        authenticatorAttachment: "platform", // Forces TouchID/FaceID/Windows Hello
+                        authenticatorAttachment: "platform",
                         residentKey: "required",
                         requireResidentKey: true,
                         userVerification: "required"
                     },
                     timeout: 60000,
-                    attestation: "direct"
+                    attestation: "none"
                 };
 
                 const credential = await navigator.credentials.create({
@@ -708,7 +698,7 @@
         let inactivityTimer = null;
         let warningTimer = null;
         let secondsLeft = 30;
-        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+        const INACTIVITY_LIMIT = 5 * 60 * 1000;
 
         function startInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -859,15 +849,13 @@
                     if (snapshot.exists()) {
                         clientUserData = snapshot.val();
 
-                        // --- THE PROFILE GUARD ---
                         if ((!clientUserData.phoneNumber && !clientUserData.phone) ||
                             (!clientUserData.idNumber && !clientUserData.nationalId) ||
                             clientUserData.profileComplete === false) {
                             alert("Welcome! Please complete your personal profile details before accessing the dashboard.");
                             window.location.href = "{% url 'profile' %}?setup=true";
-                            return; // Stop loading the dashboard
+                            return;
                         }
-                        // --------------------------
 
                         const name = clientUserData.name || "Client";
                         document.getElementById('welcomeText').innerText = `Hello, ${name.split(' ')[0]} 👋`;
@@ -875,7 +863,6 @@
                         document.getElementById('profileInitials').innerText = name.charAt(0).toUpperCase();
                     }
 
-                    // Fetch Vehicles & Active Policy
                     const vSnap = await get(ref(db, 'Vehicles'));
                     if (vSnap.exists()) {
                         const vehicles = vSnap.val();
@@ -923,7 +910,6 @@
             }
         });
 
-        // --- PASSWORD & SECURITY QUESTION FORM SUBMISSION ---
         document.getElementById('passwordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const currentPass = document.getElementById('currentPassword').value;
@@ -947,13 +933,9 @@
             btn.disabled = true;
 
             try {
-                // Verify current password first
                 await signInWithEmailAndPassword(auth, user.email, currentPass);
-
-                // Update auth password
                 await updatePassword(user, newPass);
 
-                // Save security Q&A hash/data in Client node in Realtime DB
                 await update(ref(db, `Client/${user.uid}`), {
                     securityQuestion: secQuestion,
                     securityAnswerHash: btoa(secAnswer)
@@ -974,7 +956,6 @@
             }
         });
 
-        // --- KENYAN CERTIFICATE OF INSURANCE PDF GENERATOR ---
         window.downloadKenyanCertificate = () => {
             if (!activePolicyData) {
                 alert("No active insurance policy found to generate certificate.");
@@ -984,7 +965,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            doc.setFillColor(15, 23, 42); // Dark Navy
+            doc.setFillColor(15, 23, 42);
             doc.rect(0, 0, 210, 40, 'F');
 
             doc.setTextColor(255, 255, 255);

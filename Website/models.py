@@ -91,3 +91,15 @@ class User(AbstractUser):
 # from django.db import models
 #
 # # Create your models here.
+
+
+from django.db import models
+
+class UserPasskey(models.Model):
+    firebase_uid = models.CharField(max_length=128, unique=True)
+    credential_id = models.TextField() # The unique ID from the phone
+    public_key = models.TextField()    # The public part of the key
+    sign_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"Passkey for {self.firebase_uid}"

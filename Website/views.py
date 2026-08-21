@@ -8,6 +8,9 @@ import firebase_admin
 from firebase_admin import credentials, db
 import logging
 import os
+
+from google.rpc.http_pb2 import HttpResponse
+
 mpesa_api = MpesaClient()   # <-- FIX
 
 from django.http import JsonResponse
@@ -493,3 +496,98 @@ def get_mpesa_access_token():
     except Exception as e:
         logger.error(f"M-PESA TOKEN ERROR: {e}")
         return None
+
+
+
+
+import json
+import base64
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from webauthn import (
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json
+)
+from webauthn.helpers.structs import PublicKeyCredentialRequestOptions
+from .models import UserPasskey
+
+# Configure your Relying Party settings (update domain for production)
+RP_ID = "localhost"
+RP_ORIGIN = "http://localhost:8000"
+
+
+
+@csrf_exempt
+def passkey_challenge_view(request):
+    """Step 1: Generate challenge options for the browser's hardware prompt."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+
+    try:
+        # Fetch all registered passkeys to allow the browser to match device biometrics
+        all_passkeys = UserPasskey.objects.all()
+        allow_credentials = [
+            {"id": base64.b64decode(pk.credential_id), "type": "public-key"}
+            for pk in all_passkeys
+        ]
+
+        options = generate_authentication_options(
+            rp_id=RP_ID,
+            allow_credentials=allow_credentials if allow_credentials else None,
+            user_verification="required",
+        )
+
+        # Save challenge temporarily in session for verification check
+        request.session['passkey_challenge'] = options.challenge.hex()
+
+        return HttpResponse(options_to_json(options), content_type="application/json")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def passkey_verify_view(request):
+    """Step 2: Verify the signed assertion returned by the user's hardware."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        expected_challenge = request.session.get('passkey_challenge')
+
+        if not expected_challenge:
+            return JsonResponse({"error": "Challenge expired or missing."}, status=400)
+
+        credential_id_b64 = data.get("id")
+        passkey_record = UserPasskey.objects.filter(credential_id=credential_id_b64).first()
+
+        if not passkey_record:
+            return JsonResponse({"error": "Passkey not recognized in database."}, status=404)
+
+        # Verify the cryptographic assertion signature
+        verification = verify_authentication_response(
+            query=data,
+            expected_challenge=bytes.fromhex(expected_challenge),
+            expected_rp_id=RP_ID,
+            expected_origin=RP_ORIGIN,
+            credential_public_key=base64.b64decode(passkey_record.public_key),
+            credential_current_sign_count=passkey_record.sign_count,
+            require_user_verification=True,
+        )
+
+        # Update signature counter to prevent replay attacks
+        passkey_record.sign_count = verification.new_sign_count
+        passkey_record.save()
+
+        # Clear challenge
+        del request.session['passkey_challenge']
+
+        return JsonResponse({
+            "success": True,
+            "message": "Passkey verified successfully",
+            "redirect_url": "/client/dashboard/"  # Adjust to your client dashboard url name/path
+        })
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
