@@ -649,7 +649,7 @@
             }
         };
 
-        // --- PASSKEY (WebAuthn) CREATION LOGIC (Fixed Domain Scope) ---
+        // --- PASSKEY (WebAuthn) CREATION LOGIC ---
         window.createPasskey = async () => {
             if (!window.PublicKeyCredential) {
                 alert("Passkeys are not supported on this browser or device.");
@@ -666,15 +666,25 @@
                 const publicKeyCredentialCreationOptions = {
                     challenge: challenge,
                     rp: {
-                        name: "BimaDrive Insurance"
-                        // Omitted explicit 'id' property so the browser defaults to the current origin effective domain automatically
+                        name: "BimaDrive Insurance",
+                        id: window.location.hostname // Explicitly bind to current domain
                     },
                     user: {
                         id: userId,
                         name: window.currentUserEmail || "client@bimadrive.com",
                         displayName: document.getElementById('profileName').innerText || "Client User",
                     },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                    pubKeyCredParams: [
+                        { alg: -7, type: "public-key" },
+                        { alg: -257, type: "public-key" }
+                    ],
+                    // THIS IS THE CRITICAL FIX: Forces the passkey to be discoverable on the login screen
+                    authenticatorSelection: {
+                        authenticatorAttachment: "platform", // Forces TouchID/FaceID/Windows Hello
+                        residentKey: "required",
+                        requireResidentKey: true,
+                        userVerification: "required"
+                    },
                     timeout: 60000,
                     attestation: "direct"
                 };
@@ -850,7 +860,9 @@
                         clientUserData = snapshot.val();
 
                         // --- THE PROFILE GUARD ---
-                        if (!clientUserData.phoneNumber || !clientUserData.idNumber || clientUserData.profileComplete === false) {
+                        if ((!clientUserData.phoneNumber && !clientUserData.phone) ||
+                            (!clientUserData.idNumber && !clientUserData.nationalId) ||
+                            clientUserData.profileComplete === false) {
                             alert("Welcome! Please complete your personal profile details before accessing the dashboard.");
                             window.location.href = "{% url 'profile' %}?setup=true";
                             return; // Stop loading the dashboard
