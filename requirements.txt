@@ -5,3 +5,4 @@ whitenoise
 django-anymail[sendgrid]
 django_daraja
 firebase-admin
+webauthn
