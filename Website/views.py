@@ -1172,13 +1172,10 @@ def passkey_verify_view(request):
         credential_id = data.get("id")
 
         if not credential_id:
-
             return JsonResponse(
                 {
                     "success": False,
-                    "error": (
-                        "Credential ID is missing."
-                    )
+                    "error": "Credential ID is missing."
                 },
                 status=400
             )
