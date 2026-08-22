@@ -1367,7 +1367,7 @@ def passkey_verify_view(request):
                 "firebase_token": firebase_token,
 
                 "redirect_url": (
-                    "/client/dashboard/"
+                    "/client_dashboard/"
                 ),
             }
         )
