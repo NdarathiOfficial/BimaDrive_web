@@ -312,7 +312,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -426,7 +426,6 @@
 
                 options.challenge = base64UrlToUint8Array(options.challenge);
 
-                // Safely format allowCredentials ids into ArrayBuffers if present
                 if (options.allowCredentials && Array.isArray(options.allowCredentials)) {
                     options.allowCredentials = options.allowCredentials.map(cred => ({
                         ...cred,
@@ -458,7 +457,11 @@
 
                 const result = await verifyRes.json();
                 if (verifyRes.ok && result.success) {
-                    updateUIState('Passkey Verified! Redirecting...', true);
+                    updateUIState('Passkey Verified! Authenticating session...', true);
+
+                    // Securely establish Firebase session using the token provided by Django
+                    await signInWithCustomToken(auth, result.firebase_token);
+
                     window.location.href = result.redirect_url || "{% url 'client_dashboard' %}";
                 } else {
                     throw new Error(result.error || "Passkey verification failed on server.");
