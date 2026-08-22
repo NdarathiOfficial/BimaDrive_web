@@ -665,6 +665,8 @@ def passkey_register_options_view(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
+from webauthn.helpers.structs import RegistrationCredential
+
 @csrf_exempt
 def passkey_register_verify_view(request):
     """Step B: Verify and save the newly created passkey to Django."""
@@ -682,12 +684,17 @@ def passkey_register_verify_view(request):
         rp_id = "localhost" if raw_host in ["127.0.0.1", "localhost", ""] else raw_host
         origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
 
-        # Ensure data is a clean dictionary
-        if not isinstance(data, dict):
-            return JsonResponse({"error": "Invalid credential payload format."}, status=400)
+        # Map the incoming JSON payload into the structural model expected by webauthn
+        credential = RegistrationCredential(
+            id=data.get("id"),
+            raw_id=data.get("rawId"),
+            response=data.get("response"),
+            type=data.get("type", "public-key"),
+            client_extension_results=data.get("clientExtensionResults", {})
+        )
 
         verification = verify_registration_response(
-            credential=data,
+            credential=credential,
             expected_challenge=bytes.fromhex(expected_challenge),
             expected_rp_id=rp_id,
             expected_origin=origin,
@@ -708,5 +715,5 @@ def passkey_register_verify_view(request):
 
         return JsonResponse({"success": True, "message": "Passkey registered successfully!"})
     except Exception as e:
-        logger.error(f"Passkey registration verification error: {str(e)}")
+        logger.error(f"Passkey registration error: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=400)
