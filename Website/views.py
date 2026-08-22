@@ -1327,46 +1327,25 @@ def passkey_verify_view(request):
         # Firebase custom authentication token
         # ----------------------------------------------------
 
-        firebase_uid = (
-            passkey_record.firebase_uid
-        )
+        firebase_uid = passkey_record.firebase_uid
+
+        if not firebase_uid:
+            return JsonResponse({
+                "success": False,
+                "error": "Passkey is verified, but no Firebase UID is linked to this passkey record."
+            }, status=400)
 
         try:
-
-            firebase_token = (
-                firebase_auth.create_custom_token(
-                    firebase_uid
-                )
-            )
-
-            if isinstance(
-                firebase_token,
-                bytes
-            ):
-
-                firebase_token = (
-                    firebase_token.decode("utf-8")
-                )
-
+            firebase_token = firebase_auth.create_custom_token(firebase_uid)
+            if isinstance(firebase_token, bytes):
+                firebase_token = firebase_token.decode("utf-8")
         except Exception as firebase_error:
-
-            logger.error(
-                "Firebase custom token error: %s",
-                str(firebase_error),
-                exc_info=True
-            )
-
-            return JsonResponse(
-                {
-                    "success": False,
-                    "error": (
-                        "Passkey verified, but "
-                        "Firebase authentication "
-                        "could not be completed."
-                    )
-                },
-                status=500
-            )
+            logger.error(f"Firebase custom token generation failed for UID '{firebase_uid}': {str(firebase_error)}",
+                         exc_info=True)
+            return JsonResponse({
+                "success": False,
+                "error": f"Firebase Token Error: {str(firebase_error)}"
+            }, status=500)
 
         # ----------------------------------------------------
         # SUCCESS
