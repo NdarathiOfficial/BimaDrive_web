@@ -668,7 +668,7 @@ def passkey_register_options_view(request):
 from webauthn.helpers.structs import RegistrationCredential
 
 @csrf_exempt
-def passkey_register_verify_view(request):
+def passkey_register_verify_user_view(request):
     """Step B: Verify and save the newly created passkey to Django."""
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
@@ -684,14 +684,8 @@ def passkey_register_verify_view(request):
         rp_id = "localhost" if raw_host in ["127.0.0.1", "localhost", ""] else raw_host
         origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
 
-        # Map the incoming JSON payload into the structural model expected by webauthn
-        credential = RegistrationCredential(
-            id=data.get("id"),
-            raw_id=data.get("rawId"),
-            response=data.get("response"),
-            type=data.get("type", "public-key"),
-            client_extension_results=data.get("clientExtensionResults", {})
-        )
+        # Let the library parse the incoming JSON dictionary natively
+        credential = RegistrationCredential.parse_obj(data)
 
         verification = verify_registration_response(
             credential=credential,
