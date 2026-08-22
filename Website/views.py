@@ -665,6 +665,8 @@ def passkey_register_options_view(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
+
+
 @csrf_exempt
 def passkey_register_verify_view(request):
     """Step B: Verify and save the newly created passkey to Django."""
@@ -676,17 +678,15 @@ def passkey_register_verify_view(request):
         firebase_uid = request.session.get('reg_uid')
 
         if not expected_challenge or not firebase_uid:
-            return JsonResponse({"error": "Registration session expired."}, status=400)
+            return JsonResponse({"error": "Registration session expired or missing challenge."}, status=400)
 
         raw_host = request.get_host().split(':')[0]
         rp_id = "localhost" if raw_host in ["127.0.0.1", "localhost", ""] else raw_host
         origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
 
-        # Let the library parse the incoming JSON dictionary natively
-        credential = RegistrationCredential.parse_obj(data)
-
+        # Pass the raw decoded JSON dictionary directly to verify_registration_response
         verification = verify_registration_response(
-            credential=credential,
+            credential=data,
             expected_challenge=bytes.fromhex(expected_challenge),
             expected_rp_id=rp_id,
             expected_origin=origin,
@@ -702,10 +702,10 @@ def passkey_register_verify_view(request):
             }
         )
 
-        del request.session['reg_challenge']
-        del request.session['reg_uid']
+        request.session.pop('reg_challenge', None)
+        request.session.pop('reg_uid', None)
 
         return JsonResponse({"success": True, "message": "Passkey registered successfully!"})
     except Exception as e:
-        logger.error(f"Passkey registration error: {str(e)}")
+        logger.error(f"Passkey registration critical error: {str(e)}", exc_info=True)
         return JsonResponse({"success": False, "error": str(e)}, status=400)
