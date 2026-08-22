@@ -189,3 +189,27 @@ DEFAULT_FROM_EMAIL = SENDGRID_SENDER
 
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
+# ===============================
+# FIREBASE ADMIN INITIALIZATION
+# ===============================
+import json
+from firebase_admin import credentials, initialize_app, _apps
+
+if not _apps:
+    firebase_cred_string = os.environ.get('FIREBASE_CREDENTIALS')
+    if firebase_cred_string:
+        try:
+            # Parse the JSON string from Render's environment variable
+            cred_dict = json.loads(firebase_cred_string)
+            cred = credentials.Certificate(cred_dict)
+            initialize_app(cred)
+        except Exception as e:
+            print(f"Error initializing Firebase Admin: {e}")
+    else:
+        # Local fallback if you have the file locally
+        try:
+            cred = credentials.Certificate(BASE_DIR / 'firebase_service_account.json')
+            initialize_app(cred)
+        except Exception:
+            pass
