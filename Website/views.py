@@ -665,10 +665,8 @@ def passkey_register_options_view(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
-from webauthn.helpers.structs import RegistrationCredential
-
 @csrf_exempt
-def passkey_register_verify_user_view(request):
+def passkey_register_verify_view(request):
     """Step B: Verify and save the newly created passkey to Django."""
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
