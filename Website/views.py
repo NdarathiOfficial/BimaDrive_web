@@ -2,39 +2,46 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
-from django.http import JsonResponse
-from django_daraja.mpesa.core import MpesaClient
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.core.cache import cache
+
 import firebase_admin
 from firebase_admin import credentials, db
 import logging
 import os
+import json
+import requests
+import base64
+from datetime import datetime
+from requests.auth import HTTPBasicAuth
 
-from google.rpc.http_pb2 import HttpResponse
+from google.rpc.http_pb2 import HttpResponse as GoogleHttpResponse
 
-mpesa_api = MpesaClient()   # <-- FIX
+from django_daraja.mpesa.core import MpesaClient
 
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
     AuthenticatorAttachment,
     ResidentKeyRequirement,
     UserVerificationRequirement,
+    PublicKeyCredentialRequestOptions,
 )
 
 from .models import UserPasskey
+from .forms import ClientRegisterForm, InsurerRegisterForm
 
-from webauthn.helpers.structs import (
-    AuthenticatorSelectionCriteria,
-    AuthenticatorAttachment,
-    ResidentKeyRequirement,
-    UserVerificationRequirement,
-)
-
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-from django_daraja.mpesa.core import MpesaClient
+mpesa_api = MpesaClient()   # <-- FIX
 logger = logging.getLogger(__name__)
+
 if not firebase_admin._apps:
     try:
         # Construct the path to the service account JSON file securely.
@@ -56,16 +63,6 @@ if not firebase_admin._apps:
             })
         except Exception as fallback_e:
             logger.error(f"Fallback initialization also failed: {fallback_e}")
-
-import json
-import requests
-import base64
-from datetime import datetime
-import os
-import firebase_admin
-from firebase_admin import credentials, db
-
-from .forms import ClientRegisterForm, InsurerRegisterForm
 
 logger = logging.getLogger(__name__)
 
@@ -124,9 +121,9 @@ def login_view(request):
                 return redirect(next_url)
 
             # Otherwise use role-based redirect
-            if user.role == "insurer":
+            if getattr(user, 'role', None) == "insurer":
                 return redirect("insurer_dashboard")
-            elif user.role == "system_admin":
+            elif getattr(user, 'role', None) == "system_admin":
                 return redirect("system_admin")
             else:
                 return redirect("client_dashboard")
@@ -240,16 +237,6 @@ def profile(request):
 def payment(request):
     return render(request, "payment/payment.html")
 
-
-import json
-import logging
-from datetime import datetime
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-from django_daraja.mpesa.core import MpesaClient  # Ensure django-daraja is installed
-import firebase_admin
-from firebase_admin import credentials, db
 
 logger = logging.getLogger(__name__)
 
@@ -517,18 +504,6 @@ def get_mpesa_access_token():
 
 
 
-import json
-import base64
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from webauthn import (
-    generate_authentication_options,
-    verify_authentication_response,
-    options_to_json
-)
-from webauthn.helpers.structs import PublicKeyCredentialRequestOptions
-from .models import UserPasskey
-
 # Configure your Relying Party settings (update domain for production)
 RP_ID = "localhost"
 RP_ORIGIN = "http://localhost:8000"
@@ -615,20 +590,6 @@ def passkey_verify_view(request):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
-import json
-import base64
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from webauthn import (
-    generate_registration_options,
-    verify_registration_response,
-    generate_authentication_options,
-    verify_authentication_response,
-    options_to_json,
-)
-from webauthn.helpers.structs import UserVerificationRequirement
-from .models import UserPasskey
-
 @csrf_exempt
 def passkey_register_options_view(request):
     """Step A: Generate options for creating a new passkey from the dashboard."""
@@ -703,82 +664,5 @@ def passkey_register_verify_view(request):
         del request.session['reg_uid']
 
         return JsonResponse({"success": True, "message": "Passkey registered successfully!"})
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
-
-@csrf_exempt
-def passkey_challenge_view(request):
-    """Step C: Generate login challenge options for the login page."""
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid method"}, status=405)
-    try:
-        raw_host = request.get_host().split(':')[0]
-        rp_id = raw_host if raw_host else "localhost"
-
-        all_passkeys = UserPasskey.objects.all()
-        if not all_passkeys.exists():
-            return JsonResponse({
-                "error": "No passkeys registered yet. Please log in with email and create one in your dashboard first."
-            }, 400)
-
-        allow_credentials = [
-            {"id": base64.urlsafe_b64decode(pk.credential_id + "=="), "type": "public-key"}
-            for pk in all_passkeys
-        ]
-
-        options = generate_authentication_options(
-            rp_id=rp_id,
-            allow_credentials=allow_credentials,
-            user_verification=UserVerificationRequirement.PREFERRED,
-        )
-
-        request.session['passkey_challenge'] = options.challenge.hex()
-        return HttpResponse(options_to_json(options), content_type="application/json")
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-
-
-@csrf_exempt
-def passkey_verify_view(request):
-    """Step D: Verify login assertion and log the user in."""
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid method"}, status=405)
-    try:
-        data = json.loads(request.body)
-        expected_challenge = request.session.get('passkey_challenge')
-
-        if not expected_challenge:
-            return JsonResponse({"error": "Challenge expired or missing."}, status=400)
-
-        raw_id_b64 = data.get("id")
-        passkey_record = UserPasskey.objects.filter(credential_id=raw_id_b64).first()
-
-        if not passkey_record:
-            return JsonResponse({"error": "Passkey not recognized."}, status=404)
-
-        raw_host = request.get_host().split(':')[0]
-        rp_id = raw_host if raw_host else "localhost"
-        origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
-
-        verification = verify_authentication_response(
-            query=data,
-            expected_challenge=bytes.fromhex(expected_challenge),
-            expected_rp_id=rp_id,
-            expected_origin=origin,
-            credential_public_key=base64.urlsafe_b64decode(passkey_record.public_key + "=="),
-            credential_current_sign_count=passkey_record.sign_count,
-            require_user_verification=False,
-        )
-
-        passkey_record.sign_count = verification.new_sign_count
-        passkey_record.save()
-        del request.session['passkey_challenge']
-
-        return JsonResponse({
-            "success": True,
-            "message": "Authenticated!",
-            "firebase_uid": passkey_record.firebase_uid,
-            "redirect_url": "/client/dashboard/"
-        })
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
