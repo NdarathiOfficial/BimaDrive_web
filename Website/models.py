@@ -92,15 +92,28 @@ class User(AbstractUser):
 #
 # # Create your models here.
 
-
 from django.db import models
 
+
 class UserPasskey(models.Model):
-    firebase_uid = models.CharField(max_length=128)
-    credential_id = models.TextField(unique=True)  # Base64URL encoded ID
-    public_key = models.TextField()                # Base64URL encoded public key
-    sign_count = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    firebase_uid = models.CharField(
+        max_length=128,
+        db_index=True
+    )
+
+    credential_id = models.TextField(
+        unique=True
+    )
+
+    public_key = models.TextField()
+
+    sign_count = models.IntegerField(
+        default=0
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
         return f"Passkey for {self.firebase_uid}"

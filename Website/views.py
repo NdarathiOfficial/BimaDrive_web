@@ -9,6 +9,48 @@ from firebase_admin import credentials, db
 import logging
 import os
 
+import base64
+import json
+import logging
+
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
+import firebase_admin
+from firebase_admin import auth as firebase_auth
+
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    AuthenticatorAttachment,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+    PublicKeyCredentialDescriptor,
+    RegistrationCredential,
+)
+
+from .models import UserPasskey
+
+
+
+
+from webauthn import (
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+
+from webauthn.helpers.structs import (
+    PublicKeyCredentialDescriptor,
+    UserVerificationRequirement,)
+
 from google.rpc.http_pb2 import HttpResponse
 
 mpesa_api = MpesaClient()   # <-- FIX
@@ -534,178 +576,898 @@ RP_ID = "localhost"
 RP_ORIGIN = "http://localhost:8000"
 
 
-@csrf_exempt
-def passkey_challenge_view(request):
-    """Step C: Generate login challenge options for the login page."""
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid method"}, status=405)
-    try:
-        host_header = request.get_host().split(':')[0]
-        rp_id = "localhost" if host_header in ["127.0.0.1", "localhost", ""] else host_header
+# ============================================================
+# WEB AUTHN CONFIGURATION
+# ============================================================
 
-        all_passkeys = UserPasskey.objects.all()
-        if not all_passkeys.exists():
-            return JsonResponse({
-                "error": "No passkeys registered yet. Please log in with email and create one in your dashboard first."
-            }, status=400)
+def get_webauthn_config(request):
+    """
+    Returns:
 
-        allow_credentials = [
-            {"id": base64.urlsafe_b64decode(pk.credential_id + "=="), "type": "public-key"}
-            for pk in all_passkeys
-        ]
+        rp_id
+        origin
 
-        options = generate_authentication_options(
-            rp_id=rp_id,
-            allow_credentials=allow_credentials,
-            user_verification=UserVerificationRequirement.PREFERRED,
+    for the current host.
+    """
+
+    host = request.get_host().split(":")[0].lower()
+
+    # LOCAL DEVELOPMENT
+    if host in ("localhost", "127.0.0.1"):
+
+        return (
+            "localhost",
+            f"http://{request.get_host()}"
         )
 
-        request.session['passkey_challenge'] = options.challenge.hex()
-        return HttpResponse(options_to_json(options), content_type="application/json")
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    # PRODUCTION
+    return (
+        host,
+        f"https://{request.get_host()}"
+    )
 
 
+# ============================================================
+# BASE64URL HELPERS
+# ============================================================
+
+def base64url_encode(data):
+    """
+    Convert bytes -> Base64URL without padding.
+    """
+
+    return base64.urlsafe_b64encode(
+        data
+    ).decode("utf-8").rstrip("=")
 
 
-@csrf_exempt
-def passkey_verify_view(request):
-    """Step 2: Verify the signed assertion returned by the user's hardware."""
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request method"}, status=405)
+def base64url_decode(data):
+    """
+    Convert Base64URL -> bytes.
+    """
 
-    try:
-        data = json.loads(request.body)
-        expected_challenge = request.session.get('passkey_challenge')
+    if not data:
+        return b""
 
-        if not expected_challenge:
-            return JsonResponse({"error": "Challenge expired or missing."}, status=400)
+    padding = "=" * (-len(data) % 4)
 
-        credential_id_b64 = data.get("id")
-        passkey_record = UserPasskey.objects.filter(credential_id=credential_id_b64).first()
-
-        if not passkey_record:
-            return JsonResponse({"error": "Passkey not recognized in database."}, status=404)
-
-        # Verify the cryptographic assertion signature
-        verification = verify_authentication_response(
-            query=data,
-            expected_challenge=bytes.fromhex(expected_challenge),
-            expected_rp_id=RP_ID,
-            expected_origin=RP_ORIGIN,
-            credential_public_key=base64.b64decode(passkey_record.public_key),
-            credential_current_sign_count=passkey_record.sign_count,
-            require_user_verification=True,
-        )
-
-        # Update signature counter to prevent replay attacks
-        passkey_record.sign_count = verification.new_sign_count
-        passkey_record.save()
-
-        # Clear challenge
-        del request.session['passkey_challenge']
-
-        return JsonResponse({
-            "success": True,
-            "message": "Passkey verified successfully",
-            "redirect_url": "/client/dashboard/"  # Adjust to your client dashboard url name/path
-        })
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
+    return base64.urlsafe_b64decode(
+        data + padding
+    )
 
 
-import json
-import base64
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from webauthn import (
-    generate_registration_options,
-    verify_registration_response,
-    generate_authentication_options,
-    verify_authentication_response,
-    options_to_json,
-)
-from webauthn.helpers.structs import UserVerificationRequirement
-from .models import UserPasskey
+# ============================================================
+# PASSKEY REGISTRATION - STEP A
+# ============================================================
 
 @csrf_exempt
 def passkey_register_options_view(request):
-    """Step A: Generate options for creating a new passkey from the dashboard."""
+
     if request.method != "POST":
-        return JsonResponse({"error": "Invalid method"}, status=405)
-    try:
-        data = json.loads(request.body)
-        firebase_uid = data.get("uid")
-        email = data.get("email", "user@bimadrive.com")
 
-        # Normalize host: if testing locally on 127.0.0.1, treat it as localhost for WebAuthn compliance
-        host_header = request.get_host().split(':')[0]
-        rp_id = "localhost" if host_header in ["127.0.0.1", "localhost", ""] else host_header
-
-        authenticator_selection = AuthenticatorSelectionCriteria(
-            authenticator_attachment=AuthenticatorAttachment.PLATFORM,
-            resident_key=ResidentKeyRequirement.REQUIRED,
-            user_verification=UserVerificationRequirement.PREFERRED,
+        return JsonResponse(
+            {
+                "error": "Invalid request method."
+            },
+            status=405
         )
+
+    try:
+
+        data = json.loads(
+            request.body.decode("utf-8")
+        )
+
+        firebase_uid = data.get("uid")
+        email = data.get(
+            "email",
+            "user@bimadrive.com"
+        )
+
+        if not firebase_uid:
+
+            return JsonResponse(
+                {
+                    "error": (
+                        "Firebase UID is required."
+                    )
+                },
+                status=400
+            )
+
+        # ----------------------------------------------------
+        # WebAuthn configuration
+        # ----------------------------------------------------
+
+        rp_id, origin = get_webauthn_config(
+            request
+        )
+
+        # ----------------------------------------------------
+        # User ID
+        # ----------------------------------------------------
+
+        user_id = firebase_uid.encode(
+            "utf-8"
+        )[:64]
+
+        # ----------------------------------------------------
+        # Authenticator requirements
+        # ----------------------------------------------------
+
+        authenticator_selection = (
+            AuthenticatorSelectionCriteria(
+                authenticator_attachment=(
+                    AuthenticatorAttachment.PLATFORM
+                ),
+
+                resident_key=(
+                    ResidentKeyRequirement.REQUIRED
+                ),
+
+                user_verification=(
+                    UserVerificationRequirement.PREFERRED
+                ),
+            )
+        )
+
+        # ----------------------------------------------------
+        # Prevent same credential from being registered twice
+        # ----------------------------------------------------
+
+        existing_passkeys = (
+            UserPasskey.objects.filter(
+                firebase_uid=firebase_uid
+            )
+        )
+
+        exclude_credentials = []
+
+        for passkey in existing_passkeys:
+
+            credential_bytes = base64url_decode(
+                passkey.credential_id
+            )
+
+            exclude_credentials.append(
+                PublicKeyCredentialDescriptor(
+                    id=credential_bytes
+                )
+            )
+
+        # ----------------------------------------------------
+        # Generate registration options
+        # ----------------------------------------------------
 
         options = generate_registration_options(
+
             rp_id=rp_id,
+
             rp_name="BimaDrive Insurance",
-            user_id=firebase_uid.encode('utf-8')[:64],
+
+            user_id=user_id,
+
             user_name=email,
-            user_display_name=email.split('@')[0],
-            authenticator_selection=authenticator_selection,
+
+            user_display_name=(
+                email.split("@")[0]
+            ),
+
+            authenticator_selection=(
+                authenticator_selection
+            ),
+
+            exclude_credentials=(
+                exclude_credentials
+            ),
         )
 
-        request.session['reg_challenge'] = options.challenge.hex()
-        request.session['reg_uid'] = firebase_uid
+        # ----------------------------------------------------
+        # Save challenge in session
+        # ----------------------------------------------------
 
-        return HttpResponse(options_to_json(options), content_type="application/json")
+        request.session[
+            "passkey_registration_challenge"
+        ] = options.challenge.hex()
+
+        request.session[
+            "passkey_registration_uid"
+        ] = firebase_uid
+
+        request.session[
+            "passkey_registration_rp_id"
+        ] = rp_id
+
+        request.session[
+            "passkey_registration_origin"
+        ] = origin
+
+        request.session.modified = True
+
+        logger.info(
+            "Generated passkey registration challenge for %s",
+            firebase_uid
+        )
+
+        return HttpResponse(
+            options_to_json(options),
+            content_type="application/json"
+        )
+
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+
+        logger.error(
+            "Passkey registration options error: %s",
+            str(e),
+            exc_info=True
+        )
+
+        return JsonResponse(
+            {
+                "error": str(e)
+            },
+            status=400
+        )
 
 
+# ============================================================
+# PASSKEY REGISTRATION - STEP B
+# ============================================================
 
 @csrf_exempt
 def passkey_register_verify_view(request):
-    """Step B: Verify and save the newly created passkey to Django."""
+
     if request.method != "POST":
-        return JsonResponse({"error": "Invalid method"}, status=405)
-    try:
-        data = json.loads(request.body)
-        expected_challenge = request.session.get('reg_challenge')
-        firebase_uid = request.session.get('reg_uid')
 
-        if not expected_challenge or not firebase_uid:
-            return JsonResponse({"error": "Registration session expired or missing challenge."}, status=400)
-
-        raw_host = request.get_host().split(':')[0]
-        rp_id = "localhost" if raw_host in ["127.0.0.1", "localhost", ""] else raw_host
-        origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
-
-        # Pass the raw decoded JSON dictionary directly to verify_registration_response
-        verification = verify_registration_response(
-            credential=data,
-            expected_challenge=bytes.fromhex(expected_challenge),
-            expected_rp_id=rp_id,
-            expected_origin=origin,
-            require_user_verification=False,
+        return JsonResponse(
+            {
+                "error": "Invalid request method."
+            },
+            status=405
         )
 
+    try:
+
+        raw_body = request.body
+        data = json.loads(raw_body.decode("utf-8"))
+
+        # ----------------------------------------------------
+        # Get challenge
+        # ----------------------------------------------------
+
+        expected_challenge = request.session.get(
+            "passkey_registration_challenge"
+        )
+
+        firebase_uid = request.session.get(
+            "passkey_registration_uid"
+        )
+
+        rp_id = request.session.get(
+            "passkey_registration_rp_id"
+        )
+
+        origin = request.session.get(
+            "passkey_registration_origin"
+        )
+
+        if not expected_challenge:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Registration challenge "
+                        "expired or missing."
+                    )
+                },
+                status=400
+            )
+
+        if not firebase_uid:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Firebase user identity "
+                        "is missing."
+                    )
+                },
+                status=400
+            )
+
+        if not rp_id or not origin:
+
+            rp_id, origin = (
+                get_webauthn_config(request)
+            )
+
+        # ----------------------------------------------------
+        # Verify registration (Safely parse using RegistrationCredential model)
+        # ----------------------------------------------------
+
+        parsed_credential = RegistrationCredential.parse_raw(raw_body)
+
+        verification = (
+            verify_registration_response(
+
+                credential=parsed_credential,
+
+                expected_challenge=(
+                    bytes.fromhex(
+                        expected_challenge
+                    )
+                ),
+
+                expected_rp_id=rp_id,
+
+                expected_origin=origin,
+
+                require_user_verification=False,
+            )
+        )
+
+        # ----------------------------------------------------
+        # Encode credential ID
+        # ----------------------------------------------------
+
+        credential_id = base64url_encode(
+            verification.credential_id
+        )
+
+        # ----------------------------------------------------
+        # Encode public key
+        # ----------------------------------------------------
+
+        public_key = base64url_encode(
+            verification.credential_public_key
+        )
+
+        # ----------------------------------------------------
+        # Save passkey
+        # ----------------------------------------------------
+
         UserPasskey.objects.update_or_create(
-            firebase_uid=firebase_uid,
+
+            credential_id=credential_id,
+
             defaults={
-                'credential_id': base64.urlsafe_b64encode(verification.credential_id).decode('utf-8').rstrip("="),
-                'public_key': base64.urlsafe_b64encode(verification.credential_public_key).decode('utf-8').rstrip("="),
-                'sign_count': verification.sign_count,
+                "firebase_uid": firebase_uid,
+
+                "public_key": public_key,
+
+                "sign_count": (
+                    verification.sign_count
+                ),
             }
         )
 
-        request.session.pop('reg_challenge', None)
-        request.session.pop('reg_uid', None)
+        # ----------------------------------------------------
+        # Clear registration session
+        # ----------------------------------------------------
 
-        return JsonResponse({"success": True, "message": "Passkey registered successfully!"})
+        request.session.pop(
+            "passkey_registration_challenge",
+            None
+        )
+
+        request.session.pop(
+            "passkey_registration_uid",
+            None
+        )
+
+        request.session.pop(
+            "passkey_registration_rp_id",
+            None
+        )
+
+        request.session.pop(
+            "passkey_registration_origin",
+            None
+        )
+
+        request.session.modified = True
+
+        logger.info(
+            "Passkey registered successfully for %s",
+            firebase_uid
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+
+                "message": (
+                    "Passkey registered successfully."
+                ),
+
+                "credential_id": credential_id,
+            }
+        )
+
     except Exception as e:
-        logger.error(f"Passkey registration critical error: {str(e)}", exc_info=True)
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+        logger.error(
+            "PASSKEY REGISTRATION ERROR: %s",
+            str(e),
+            exc_info=True
+        )
+
+        return JsonResponse(
+            {
+                "success": False,
+                "error": str(e)
+            },
+            status=400
+        )
+
+
+# ============================================================
+# PASSKEY LOGIN - STEP C
+# ============================================================
+
+@csrf_exempt
+def passkey_challenge_view(request):
+
+    if request.method != "POST":
+
+        return JsonResponse(
+            {
+                "error": "Invalid request method."
+            },
+            status=405
+        )
+
+    try:
+
+        # ----------------------------------------------------
+        # WebAuthn configuration
+        # ----------------------------------------------------
+
+        rp_id, origin = get_webauthn_config(
+            request
+        )
+
+        # ----------------------------------------------------
+        # Get all registered passkeys
+        # ----------------------------------------------------
+
+        passkeys = UserPasskey.objects.all()
+
+        if not passkeys.exists():
+
+            return JsonResponse(
+                {
+                    "error": (
+                        "No passkeys are registered. "
+                        "Please sign in normally first "
+                        "and register a passkey."
+                    )
+                },
+                status=400
+            )
+
+        # ----------------------------------------------------
+        # Build allowed credentials
+        # ----------------------------------------------------
+
+        allow_credentials = []
+
+        for passkey in passkeys:
+
+            credential_id = base64url_decode(
+                passkey.credential_id
+            )
+
+            allow_credentials.append(
+                PublicKeyCredentialDescriptor(
+                    id=credential_id
+                )
+            )
+
+        # ----------------------------------------------------
+        # Generate authentication options
+        # ----------------------------------------------------
+
+        options = generate_authentication_options(
+
+            rp_id=rp_id,
+
+            allow_credentials=(
+                allow_credentials
+            ),
+
+            user_verification=(
+                UserVerificationRequirement.PREFERRED
+            ),
+        )
+
+        # ----------------------------------------------------
+        # Store challenge
+        # ----------------------------------------------------
+
+        request.session[
+            "passkey_authentication_challenge"
+        ] = options.challenge.hex()
+
+        request.session[
+            "passkey_authentication_rp_id"
+        ] = rp_id
+
+        request.session[
+            "passkey_authentication_origin"
+        ] = origin
+
+        request.session.modified = True
+
+        logger.info(
+            "Generated passkey authentication challenge"
+        )
+
+        return HttpResponse(
+            options_to_json(options),
+            content_type="application/json"
+        )
+
+    except Exception as e:
+
+        logger.error(
+            "Passkey challenge error: %s",
+            str(e),
+            exc_info=True
+        )
+
+        return JsonResponse(
+            {
+                "error": str(e)
+            },
+            status=400
+        )
+
+
+# ============================================================
+# PASSKEY LOGIN - STEP D
+# ============================================================
+
+@csrf_exempt
+def passkey_verify_view(request):
+
+    if request.method != "POST":
+
+        return JsonResponse(
+            {
+                "error": "Invalid request method."
+            },
+            status=405
+        )
+
+    try:
+
+        # ----------------------------------------------------
+        # Receive browser assertion
+        # ----------------------------------------------------
+
+        raw_body = request.body
+        data = json.loads(
+            raw_body.decode("utf-8")
+        )
+
+        logger.info(
+            "Received WebAuthn authentication response."
+        )
+
+        # ----------------------------------------------------
+        # Validate basic WebAuthn structure
+        # ----------------------------------------------------
+
+        required_fields = [
+            "id",
+            "rawId",
+            "type",
+            "response",
+        ]
+
+        missing_fields = [
+            field
+            for field in required_fields
+            if field not in data
+        ]
+
+        if missing_fields:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Invalid WebAuthn response. "
+                        "Missing fields: "
+                        + ", ".join(
+                            missing_fields
+                        )
+                    )
+                },
+                status=400
+            )
+
+        # ----------------------------------------------------
+        # Get challenge
+        # ----------------------------------------------------
+
+        expected_challenge = request.session.get(
+            "passkey_authentication_challenge"
+        )
+
+        rp_id = request.session.get(
+            "passkey_authentication_rp_id"
+        )
+
+        origin = request.session.get(
+            "passkey_authentication_origin"
+        )
+
+        if not expected_challenge:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Passkey challenge expired "
+                        "or missing. Please try again."
+                    )
+                },
+                status=400
+            )
+
+        if not rp_id or not origin:
+
+            rp_id, origin = (
+                get_webauthn_config(request)
+            )
+
+        # ----------------------------------------------------
+        # Browser credential ID
+        # ----------------------------------------------------
+
+        credential_id = data.get("id")
+
+        if not credential_id:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Credential ID is missing."
+                    )
+                },
+                status=400
+            )
+
+        # ----------------------------------------------------
+        # IMPORTANT:
+        #
+        # Make sure id == base64url(rawId)
+        #
+        # ----------------------------------------------------
+
+        raw_id = data.get("rawId")
+
+        if not raw_id:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "rawId is missing."
+                    )
+                },
+                status=400
+            )
+
+        if credential_id != raw_id:
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Credential ID does not match "
+                        "rawId."
+                    )
+                },
+                status=400
+            )
+
+        # ----------------------------------------------------
+        # Find passkey in database
+        # ----------------------------------------------------
+
+        passkey_record = (
+            UserPasskey.objects
+            .filter(
+                credential_id=credential_id
+            )
+            .first()
+        )
+
+        if not passkey_record:
+
+            logger.warning(
+                "Unknown passkey attempted: %s",
+                credential_id
+            )
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "This passkey is not registered "
+                        "with BimaDrive."
+                    )
+                },
+                status=404
+            )
+
+        # ----------------------------------------------------
+        # Decode stored public key
+        # ----------------------------------------------------
+
+        credential_public_key = (
+            base64url_decode(
+                passkey_record.public_key
+            )
+        )
+
+        # ----------------------------------------------------
+        # VERIFY WEBAUTHN
+        # ----------------------------------------------------
+
+        verification = (
+            verify_authentication_response(
+
+                credential=data,
+
+                expected_challenge=(
+                    bytes.fromhex(
+                        expected_challenge
+                    )
+                ),
+
+                expected_rp_id=rp_id,
+
+                expected_origin=origin,
+
+                credential_public_key=(
+                    credential_public_key
+                ),
+
+                credential_current_sign_count=(
+                    passkey_record.sign_count
+                ),
+
+                require_user_verification=True,
+            )
+        )
+
+        # ----------------------------------------------------
+        # Update authenticator counter
+        # ----------------------------------------------------
+
+        passkey_record.sign_count = (
+            verification.new_sign_count
+        )
+
+        passkey_record.save(
+            update_fields=[
+                "sign_count"
+            ]
+        )
+
+        # ----------------------------------------------------
+        # Clear challenge
+        # ----------------------------------------------------
+
+        request.session.pop(
+            "passkey_authentication_challenge",
+            None
+        )
+
+        request.session.pop(
+            "passkey_authentication_rp_id",
+            None
+        )
+
+        request.session.pop(
+            "passkey_authentication_origin",
+            None
+        )
+
+        request.session.modified = True
+
+        # ----------------------------------------------------
+        # Firebase custom authentication token
+        # ----------------------------------------------------
+
+        firebase_uid = (
+            passkey_record.firebase_uid
+        )
+
+        try:
+
+            firebase_token = (
+                firebase_auth.create_custom_token(
+                    firebase_uid
+                )
+            )
+
+            if isinstance(
+                firebase_token,
+                bytes
+            ):
+
+                firebase_token = (
+                    firebase_token.decode("utf-8")
+                )
+
+        except Exception as firebase_error:
+
+            logger.error(
+                "Firebase custom token error: %s",
+                str(firebase_error),
+                exc_info=True
+            )
+
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": (
+                        "Passkey verified, but "
+                        "Firebase authentication "
+                        "could not be completed."
+                    )
+                },
+                status=500
+            )
+
+        # ----------------------------------------------------
+        # SUCCESS
+        # ----------------------------------------------------
+
+        logger.info(
+            "Passkey authentication successful "
+            "for Firebase UID %s",
+            firebase_uid
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+
+                "message": (
+                    "Passkey verified successfully."
+                ),
+
+                "firebase_uid": firebase_uid,
+
+                "firebase_token": firebase_token,
+
+                "redirect_url": (
+                    "/client/dashboard/"
+                ),
+            }
+        )
+
+    except Exception as e:
+
+        logger.error(
+            "PASSKEY AUTHENTICATION ERROR: %s",
+            str(e),
+            exc_info=True
+        )
+
+        return JsonResponse(
+            {
+                "success": False,
+                "error": str(e)
+            },
+            status=400
+        )
