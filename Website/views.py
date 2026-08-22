@@ -2,46 +2,39 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-from django.core.cache import cache
-
+from django.http import JsonResponse
+from django_daraja.mpesa.core import MpesaClient
 import firebase_admin
 from firebase_admin import credentials, db
 import logging
 import os
-import json
-import requests
-import base64
-from datetime import datetime
-from requests.auth import HTTPBasicAuth
 
-from google.rpc.http_pb2 import HttpResponse as GoogleHttpResponse
+from google.rpc.http_pb2 import HttpResponse
 
-from django_daraja.mpesa.core import MpesaClient
+mpesa_api = MpesaClient()   # <-- FIX
 
-from webauthn import (
-    generate_registration_options,
-    verify_registration_response,
-    generate_authentication_options,
-    verify_authentication_response,
-    options_to_json,
-)
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
     AuthenticatorAttachment,
     ResidentKeyRequirement,
     UserVerificationRequirement,
-    PublicKeyCredentialRequestOptions,
 )
 
 from .models import UserPasskey
-from .forms import ClientRegisterForm, InsurerRegisterForm
 
-mpesa_api = MpesaClient()   # <-- FIX
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    AuthenticatorAttachment,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
+
+
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django_daraja.mpesa.core import MpesaClient
 logger = logging.getLogger(__name__)
-
 if not firebase_admin._apps:
     try:
         # Construct the path to the service account JSON file securely.
@@ -63,6 +56,16 @@ if not firebase_admin._apps:
             })
         except Exception as fallback_e:
             logger.error(f"Fallback initialization also failed: {fallback_e}")
+
+import json
+import requests
+import base64
+from datetime import datetime
+import os
+import firebase_admin
+from firebase_admin import credentials, db
+
+from .forms import ClientRegisterForm, InsurerRegisterForm
 
 logger = logging.getLogger(__name__)
 
@@ -121,9 +124,9 @@ def login_view(request):
                 return redirect(next_url)
 
             # Otherwise use role-based redirect
-            if getattr(user, 'role', None) == "insurer":
+            if user.role == "insurer":
                 return redirect("insurer_dashboard")
-            elif getattr(user, 'role', None) == "system_admin":
+            elif user.role == "system_admin":
                 return redirect("system_admin")
             else:
                 return redirect("client_dashboard")
@@ -237,6 +240,16 @@ def profile(request):
 def payment(request):
     return render(request, "payment/payment.html")
 
+
+import json
+import logging
+from datetime import datetime
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django_daraja.mpesa.core import MpesaClient  # Ensure django-daraja is installed
+import firebase_admin
+from firebase_admin import credentials, db
 
 logger = logging.getLogger(__name__)
 
@@ -504,6 +517,18 @@ def get_mpesa_access_token():
 
 
 
+import json
+import base64
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from webauthn import (
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json
+)
+from webauthn.helpers.structs import PublicKeyCredentialRequestOptions
+from .models import UserPasskey
+
 # Configure your Relying Party settings (update domain for production)
 RP_ID = "localhost"
 RP_ORIGIN = "http://localhost:8000"
@@ -522,7 +547,7 @@ def passkey_challenge_view(request):
         if not all_passkeys.exists():
             return JsonResponse({
                 "error": "No passkeys registered yet. Please log in with email and create one in your dashboard first."
-            }, 400)
+            }, status=400)
 
         allow_credentials = [
             {"id": base64.urlsafe_b64decode(pk.credential_id + "=="), "type": "public-key"}
@@ -589,6 +614,20 @@ def passkey_verify_view(request):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
+
+import json
+import base64
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+from webauthn.helpers.structs import UserVerificationRequirement
+from .models import UserPasskey
 
 @csrf_exempt
 def passkey_register_options_view(request):
