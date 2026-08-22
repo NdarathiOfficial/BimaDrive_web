@@ -816,9 +816,8 @@ def passkey_register_options_view(request):
 
 @csrf_exempt
 def passkey_register_verify_view(request):
-
+    """Step B: Verify and save the newly created passkey to Django."""
     if request.method != "POST":
-
         return JsonResponse(
             {
                 "error": "Invalid request method."
@@ -827,9 +826,7 @@ def passkey_register_verify_view(request):
         )
 
     try:
-
-        raw_body = request.body
-        data = json.loads(raw_body.decode("utf-8"))
+        data = json.loads(request.body.decode("utf-8"))
 
         # ----------------------------------------------------
         # Get challenge
@@ -852,60 +849,36 @@ def passkey_register_verify_view(request):
         )
 
         if not expected_challenge:
-
             return JsonResponse(
                 {
                     "success": False,
-                    "error": (
-                        "Registration challenge "
-                        "expired or missing."
-                    )
+                    "error": "Registration challenge expired or missing."
                 },
                 status=400
             )
 
         if not firebase_uid:
-
             return JsonResponse(
                 {
                     "success": False,
-                    "error": (
-                        "Firebase user identity "
-                        "is missing."
-                    )
+                    "error": "Firebase user identity is missing."
                 },
                 status=400
             )
 
         if not rp_id or not origin:
-
-            rp_id, origin = (
-                get_webauthn_config(request)
-            )
+            rp_id, origin = get_webauthn_config(request)
 
         # ----------------------------------------------------
-        # Verify registration (Safely parse using RegistrationCredential model)
+        # Verify registration passing the decoded dictionary directly
         # ----------------------------------------------------
 
-        parsed_credential = RegistrationCredential.parse_raw(raw_body)
-
-        verification = (
-            verify_registration_response(
-
-                credential=parsed_credential,
-
-                expected_challenge=(
-                    bytes.fromhex(
-                        expected_challenge
-                    )
-                ),
-
-                expected_rp_id=rp_id,
-
-                expected_origin=origin,
-
-                require_user_verification=False,
-            )
+        verification = verify_registration_response(
+            credential=data,
+            expected_challenge=bytes.fromhex(expected_challenge),
+            expected_rp_id=rp_id,
+            expected_origin=origin,
+            require_user_verification=False,
         )
 
         # ----------------------------------------------------
@@ -929,17 +902,11 @@ def passkey_register_verify_view(request):
         # ----------------------------------------------------
 
         UserPasskey.objects.update_or_create(
-
             credential_id=credential_id,
-
             defaults={
                 "firebase_uid": firebase_uid,
-
                 "public_key": public_key,
-
-                "sign_count": (
-                    verification.sign_count
-                ),
+                "sign_count": verification.sign_count,
             }
         )
 
@@ -947,47 +914,23 @@ def passkey_register_verify_view(request):
         # Clear registration session
         # ----------------------------------------------------
 
-        request.session.pop(
-            "passkey_registration_challenge",
-            None
-        )
-
-        request.session.pop(
-            "passkey_registration_uid",
-            None
-        )
-
-        request.session.pop(
-            "passkey_registration_rp_id",
-            None
-        )
-
-        request.session.pop(
-            "passkey_registration_origin",
-            None
-        )
-
+        request.session.pop("passkey_registration_challenge", None)
+        request.session.pop("passkey_registration_uid", None)
+        request.session.pop("passkey_registration_rp_id", None)
+        request.session.pop("passkey_registration_origin", None)
         request.session.modified = True
 
-        logger.info(
-            "Passkey registered successfully for %s",
-            firebase_uid
-        )
+        logger.info("Passkey registered successfully for %s", firebase_uid)
 
         return JsonResponse(
             {
                 "success": True,
-
-                "message": (
-                    "Passkey registered successfully."
-                ),
-
+                "message": "Passkey registered successfully.",
                 "credential_id": credential_id,
             }
         )
 
     except Exception as e:
-
         logger.error(
             "PASSKEY REGISTRATION ERROR: %s",
             str(e),
@@ -1002,9 +945,6 @@ def passkey_register_verify_view(request):
             status=400
         )
 
-
-# ============================================================
-# PASSKEY LOGIN - STEP C
 # ============================================================
 
 @csrf_exempt
