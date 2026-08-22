@@ -679,8 +679,12 @@ def passkey_register_verify_view(request):
             return JsonResponse({"error": "Registration session expired."}, status=400)
 
         raw_host = request.get_host().split(':')[0]
-        rp_id = raw_host if raw_host else "localhost"
+        rp_id = "localhost" if raw_host in ["127.0.0.1", "localhost", ""] else raw_host
         origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
+
+        # Ensure data is a clean dictionary
+        if not isinstance(data, dict):
+            return JsonResponse({"error": "Invalid credential payload format."}, status=400)
 
         verification = verify_registration_response(
             credential=data,
@@ -704,4 +708,5 @@ def passkey_register_verify_view(request):
 
         return JsonResponse({"success": True, "message": "Passkey registered successfully!"})
     except Exception as e:
+        logger.error(f"Passkey registration verification error: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=400)
