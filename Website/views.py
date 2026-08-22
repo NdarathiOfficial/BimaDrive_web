@@ -13,6 +13,23 @@ from google.rpc.http_pb2 import HttpResponse
 
 mpesa_api = MpesaClient()   # <-- FIX
 
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    AuthenticatorAttachment,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
+
+from .models import UserPasskey
+
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    AuthenticatorAttachment,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
+
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -519,36 +536,31 @@ RP_ORIGIN = "http://localhost:8000"
 
 @csrf_exempt
 def passkey_challenge_view(request):
-    """Step 1: Generate challenge options safely for WebAuthn."""
+    """Step C: Generate login challenge options for the login page."""
     if request.method != "POST":
-        return JsonResponse({"error": "Invalid request method"}, status=405)
-
+        return JsonResponse({"error": "Invalid method"}, status=405)
     try:
-        raw_host = request.get_host().split(':')[0]
-        rp_id = raw_host if raw_host else "localhost"
+        host_header = request.get_host().split(':')[0]
+        rp_id = "localhost" if host_header in ["127.0.0.1", "localhost", ""] else host_header
 
         all_passkeys = UserPasskey.objects.all()
-
-        # If no passkeys exist in the database yet, return a clean error message
-        # instructing the user to create one from their dashboard first.
         if not all_passkeys.exists():
             return JsonResponse({
-                "error": "No passkeys registered on this server yet. Please log in with your email/password, go to your dashboard, and click 'Create Passkey' first."
-            }, status.HTTP_400_BAD_REQUEST if 'status' in globals() else 400)
+                "error": "No passkeys registered yet. Please log in with email and create one in your dashboard first."
+            }, 400)
 
         allow_credentials = [
-            {"id": base64.b64decode(pk.credential_id), "type": "public-key"}
+            {"id": base64.urlsafe_b64decode(pk.credential_id + "=="), "type": "public-key"}
             for pk in all_passkeys
         ]
 
         options = generate_authentication_options(
             rp_id=rp_id,
             allow_credentials=allow_credentials,
-            user_verification="required",
+            user_verification=UserVerificationRequirement.PREFERRED,
         )
 
         request.session['passkey_challenge'] = options.challenge.hex()
-
         return HttpResponse(options_to_json(options), content_type="application/json")
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
@@ -599,5 +611,174 @@ def passkey_verify_view(request):
             "redirect_url": "/client/dashboard/"  # Adjust to your client dashboard url name/path
         })
 
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+import json
+import base64
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+from webauthn.helpers.structs import UserVerificationRequirement
+from .models import UserPasskey
+
+@csrf_exempt
+def passkey_register_options_view(request):
+    """Step A: Generate options for creating a new passkey from the dashboard."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+    try:
+        data = json.loads(request.body)
+        firebase_uid = data.get("uid")
+        email = data.get("email", "user@bimadrive.com")
+
+        # Normalize host: if testing locally on 127.0.0.1, treat it as localhost for WebAuthn compliance
+        host_header = request.get_host().split(':')[0]
+        rp_id = "localhost" if host_header in ["127.0.0.1", "localhost", ""] else host_header
+
+        authenticator_selection = AuthenticatorSelectionCriteria(
+            authenticator_attachment=AuthenticatorAttachment.PLATFORM,
+            resident_key=ResidentKeyRequirement.REQUIRED,
+            user_verification=UserVerificationRequirement.PREFERRED,
+        )
+
+        options = generate_registration_options(
+            rp_id=rp_id,
+            rp_name="BimaDrive Insurance",
+            user_id=firebase_uid.encode('utf-8')[:64],
+            user_name=email,
+            user_display_name=email.split('@')[0],
+            authenticator_selection=authenticator_selection,
+        )
+
+        request.session['reg_challenge'] = options.challenge.hex()
+        request.session['reg_uid'] = firebase_uid
+
+        return HttpResponse(options_to_json(options), content_type="application/json")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def passkey_register_verify_view(request):
+    """Step B: Verify and save the newly created passkey to Django."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+    try:
+        data = json.loads(request.body)
+        expected_challenge = request.session.get('reg_challenge')
+        firebase_uid = request.session.get('reg_uid')
+
+        if not expected_challenge or not firebase_uid:
+            return JsonResponse({"error": "Registration session expired."}, status=400)
+
+        raw_host = request.get_host().split(':')[0]
+        rp_id = raw_host if raw_host else "localhost"
+        origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
+
+        verification = verify_registration_response(
+            credential=data,
+            expected_challenge=bytes.fromhex(expected_challenge),
+            expected_rp_id=rp_id,
+            expected_origin=origin,
+            require_user_verification=False,
+        )
+
+        UserPasskey.objects.update_or_create(
+            firebase_uid=firebase_uid,
+            defaults={
+                'credential_id': base64.urlsafe_b64encode(verification.credential_id).decode('utf-8').rstrip("="),
+                'public_key': base64.urlsafe_b64encode(verification.credential_public_key).decode('utf-8').rstrip("="),
+                'sign_count': verification.sign_count,
+            }
+        )
+
+        del request.session['reg_challenge']
+        del request.session['reg_uid']
+
+        return JsonResponse({"success": True, "message": "Passkey registered successfully!"})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+@csrf_exempt
+def passkey_challenge_view(request):
+    """Step C: Generate login challenge options for the login page."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+    try:
+        raw_host = request.get_host().split(':')[0]
+        rp_id = raw_host if raw_host else "localhost"
+
+        all_passkeys = UserPasskey.objects.all()
+        if not all_passkeys.exists():
+            return JsonResponse({
+                "error": "No passkeys registered yet. Please log in with email and create one in your dashboard first."
+            }, 400)
+
+        allow_credentials = [
+            {"id": base64.urlsafe_b64decode(pk.credential_id + "=="), "type": "public-key"}
+            for pk in all_passkeys
+        ]
+
+        options = generate_authentication_options(
+            rp_id=rp_id,
+            allow_credentials=allow_credentials,
+            user_verification=UserVerificationRequirement.PREFERRED,
+        )
+
+        request.session['passkey_challenge'] = options.challenge.hex()
+        return HttpResponse(options_to_json(options), content_type="application/json")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def passkey_verify_view(request):
+    """Step D: Verify login assertion and log the user in."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+    try:
+        data = json.loads(request.body)
+        expected_challenge = request.session.get('passkey_challenge')
+
+        if not expected_challenge:
+            return JsonResponse({"error": "Challenge expired or missing."}, status=400)
+
+        raw_id_b64 = data.get("id")
+        passkey_record = UserPasskey.objects.filter(credential_id=raw_id_b64).first()
+
+        if not passkey_record:
+            return JsonResponse({"error": "Passkey not recognized."}, status=404)
+
+        raw_host = request.get_host().split(':')[0]
+        rp_id = raw_host if raw_host else "localhost"
+        origin = f"https://{request.get_host()}" if "onrender.com" in rp_id else f"http://{request.get_host()}"
+
+        verification = verify_authentication_response(
+            query=data,
+            expected_challenge=bytes.fromhex(expected_challenge),
+            expected_rp_id=rp_id,
+            expected_origin=origin,
+            credential_public_key=base64.urlsafe_b64decode(passkey_record.public_key + "=="),
+            credential_current_sign_count=passkey_record.sign_count,
+            require_user_verification=False,
+        )
+
+        passkey_record.sign_count = verification.new_sign_count
+        passkey_record.save()
+        del request.session['passkey_challenge']
+
+        return JsonResponse({
+            "success": True,
+            "message": "Authenticated!",
+            "firebase_uid": passkey_record.firebase_uid,
+            "redirect_url": "/client/dashboard/"
+        })
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)

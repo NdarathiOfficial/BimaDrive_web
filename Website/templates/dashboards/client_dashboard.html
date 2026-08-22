@@ -647,44 +647,59 @@
                 return;
             }
 
+            // Fallback check to ensure uid and email are always grabbed from Firebase instance if global scope isn't ready
+            let uid = window.currentUserId;
+            let email = window.currentUserEmail;
+
+            if (!uid && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+                uid = window.firebaseAuthInstance.currentUser.uid;
+                email = window.firebaseAuthInstance.currentUser.email;
+            }
+
+            if (!uid) {
+                alert("User session is still initializing. Please wait a second and try again.");
+                return;
+            }
+
             try {
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
+                // 1. Fetch registration options from Django backend
+                const res = await fetch('/api/passkey/register-options/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid: uid, email: email || "client@bimadrive.com" })
+                });
+                const options = await res.json();
+                if (!res.ok) throw new Error(options.error);
 
-                const userId = new Uint8Array(16);
-                window.crypto.getRandomValues(userId);
+                // Convert Base64URL challenge and user ID back to ArrayBuffers
+                options.challenge = Uint8Array.from(atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+                options.user.id = Uint8Array.from(atob(options.user.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
 
-                const publicKeyCredentialCreationOptions = {
-                    challenge: challenge,
-                    rp: {
-                        name: "BimaDrive Insurance",
-                        id: window.location.hostname
-                    },
-                    user: {
-                        id: userId,
-                        name: window.currentUserEmail || "client@bimadrive.com",
-                        displayName: document.getElementById('profileName').innerText || "Client User",
-                    },
-                    pubKeyCredParams: [
-                        { alg: -7, type: "public-key" },
-                        { alg: -257, type: "public-key" }
-                    ],
-                    authenticatorSelection: {
-                        authenticatorAttachment: "platform",
-                        residentKey: "required",
-                        requireResidentKey: true,
-                        userVerification: "required"
-                    },
-                    timeout: 60000,
-                    attestation: "none"
+                // 2. Trigger browser hardware biometric prompt
+                const credential = await navigator.credentials.create({ publicKey: options });
+
+                // 3. Package response to send back to Django backend
+                const credentialPayload = {
+                    id: credential.id,
+                    rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
+                    type: credential.type,
+                    response: {
+                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
+                        attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+                    }
                 };
 
-                const credential = await navigator.credentials.create({
-                    publicKey: publicKeyCredentialCreationOptions
+                const verifyRes = await fetch('/api/passkey/register-verify/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentialPayload)
                 });
+                const result = await verifyRes.json();
 
-                if (credential) {
-                    alert("Passkey created successfully! You can now use your biometric sensor to authenticate.");
+                if (verifyRes.ok && result.success) {
+                    alert("✅ Passkey registered successfully! You can now use your biometric sensor to log in.");
+                } else {
+                    throw new Error(result.error);
                 }
             } catch (err) {
                 console.error("Passkey creation error:", err);

@@ -57,5 +57,9 @@ urlpatterns = [
     path('mpesa_callback/', views.mpesa_callback, name='mpesa_callback'),
     path('api/passkey/challenge/', views.passkey_challenge_view, name='passkey_challenge'),
     path('api/passkey/verify/', views.passkey_verify_view, name='passkey_verify'),
+    path('api/passkey/register-options/', views.passkey_register_options_view, name='passkey_reg_options'),
+    path('api/passkey/register-verify/', views.passkey_register_verify_view, name='passkey_reg_verify'),
+    path('api/passkey/challenge/', views.passkey_challenge_view, name='passkey_challenge'),
+    path('api/passkey/verify/', views.passkey_verify_view, name='passkey_verify'),
 
 ]
