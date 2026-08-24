@@ -93,9 +93,14 @@ WSGI_APPLICATION = 'Bimadrive.wsgi.application'
 # ===============================
 # DATABASE
 # ===============================
+# Safely check if DATABASE_URL exists and isn't the literal string "None"
+database_url = os.environ.get('DATABASE_URL')
+if not database_url or database_url.lower() == 'none':
+    database_url = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')),
+        default=database_url,
         conn_max_age=600
     )
 }
