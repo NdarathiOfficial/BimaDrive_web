@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Report Incident | BimaDrive</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -19,95 +19,95 @@
         body {
             background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; justify-content: center; align-items: flex-start;
-            min-height: 100vh; padding: 30px 15px;
+            min-height: 100vh; padding: 16px;
             background-image:
                 radial-gradient(at 0% 0%, hsla(253,16%,7%,0.05) 0, transparent 50%),
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.05) 0, transparent 50%),
-                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
+                radial-gradient(at 100% 100%, hsla(225,39%,30%,0.05) 0, transparent 50%);
             background-size: cover; background-attachment: fixed;
-            overflow-x: hidden;
+            overflow-x: hidden; width: 100vw;
         }
 
         .container {
-            width: 1000px; max-width: 100%; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(24px);
-            border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+            width: 100%; max-width: 900px;
+            background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(24px);
+            border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.08);
             overflow: hidden; border: 1px solid rgba(255,255,255,0.6);
+            margin-bottom: 30px;
         }
 
         .header-strip {
-            background: var(--brand-gradient); padding: 40px 45px; color: white;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            background: var(--brand-gradient); padding: 30px 20px; color: white;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
         }
-        .header-strip h1 { font-size: 28px; font-weight: 800; margin: 0; }
-        .header-strip p { margin: 6px 0 0; opacity: 0.9; font-size: 14px; }
-        .icon-alert { font-size: 40px; opacity: 0.5; }
+        .header-strip h1 { font-size: 22px; font-weight: 800; margin: 0; line-height: 1.2; }
+        .header-strip p { margin: 4px 0 0; opacity: 0.9; font-size: 13px; }
+        .icon-alert { font-size: 32px; opacity: 0.6; flex-shrink: 0; }
 
-        .form-body { padding: 40px 45px; }
+        .form-body { padding: 24px 16px; }
 
         .section-label {
-            font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
-            color: #94a3b8; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+            color: #94a3b8; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;
         }
         .section-label::after { content: ''; height: 1px; flex: 1; background: #e2e8f0; }
 
         /* Vehicle Selector Styling */
         .vehicle-select-box {
-            background: #1a1a2e; padding: 18px 22px; border-radius: 16px; color: white;
-            display: flex; align-items: center; justify-content: space-between; margin-bottom: 35px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 12px;
+            background: #1a1a2e; padding: 14px 16px; border-radius: 14px; color: white;
+            display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
-        .vehicle-select-box label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: flex; align-items: center; gap: 8px; }
+        .vehicle-select-box label { font-size: 12px; font-weight: 600; color: #cbd5e1; display: flex; align-items: center; gap: 6px; }
         .vehicle-dropdown {
             background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-            color: white; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600;
+            color: white; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600;
             outline: none; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; width: 100%;
         }
         .vehicle-dropdown option { background: #1a1a2e; color: white; }
 
         /* Incident Selector Cards */
         .cause-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 15px; margin-bottom: 35px;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 10px; margin-bottom: 25px;
         }
         .cause-option {
-            border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px 12px;
-            text-align: center; cursor: pointer; transition: 0.3s; background: white;
+            border: 2px solid #e2e8f0; border-radius: 14px; padding: 16px 10px;
+            text-align: center; cursor: pointer; transition: 0.2s; background: white;
         }
-        .cause-option:hover { border-color: #4e37b5; background: #f8faff; transform: translateY(-2px); }
         .cause-option input { display: none; }
-        .cause-option.selected { border-color: #4e37b5; background: #eff6ff; box-shadow: 0 8px 20px rgba(78, 55, 181, 0.1); }
+        .cause-option.selected { border-color: #4e37b5; background: #eff6ff; box-shadow: 0 6px 15px rgba(78, 55, 181, 0.1); }
 
-        .c-icon { font-size: 26px; color: #64748b; margin-bottom: 8px; display: block; }
+        .c-icon { font-size: 24px; color: #64748b; margin-bottom: 6px; display: block; }
         .cause-option.selected .c-icon { color: #4e37b5; }
-        .c-text { font-size: 13px; font-weight: 600; color: #334155; }
+        .c-text { font-size: 12.5px; font-weight: 600; color: #334155; }
 
         /* Inputs */
         .input-row {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 25px; margin-bottom: 25px;
+            display: flex; flex-direction: column;
+            gap: 15px; margin-bottom: 15px;
         }
 
         .field-group label {
-            display: block; font-size: 12px; font-weight: 700;
-            color: #1e293b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+            display: block; font-size: 11.5px; font-weight: 700;
+            color: #1e293b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .field-group input, .field-group select {
-            width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 12px;
-            background: #f8fafc; font-size: 14px; transition: 0.3s; font-weight: 500; color: #334155;
+            width: 100%; padding: 14px 16px; border: 1px solid #cbd5e1; border-radius: 12px;
+            background: var(--bg-input); font-size: 15px; font-weight: 500; color: #334155;
+            -webkit-appearance: none; appearance: none;
         }
-        .field-group input:focus { background: white; border-color: #46bbf4; outline: none; box-shadow: 0 0 0 4px rgba(70, 187, 244, 0.1); }
+        .field-group input:focus { background: white; border-color: #46bbf4; outline: none; box-shadow: 0 0 0 3px rgba(70, 187, 244, 0.15); }
 
         /* Uploads */
         .upload-row {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 25px; margin-top: 10px;
+            display: flex; flex-direction: column;
+            gap: 15px;
         }
         .upload-box {
-            border: 2px dashed #cbd5e1; border-radius: 16px; padding: 25px; text-align: center;
-            cursor: pointer; transition: 0.3s; background: white; position: relative; overflow: hidden; height: 180px;
+            border: 2px dashed #cbd5e1; border-radius: 14px; padding: 20px; text-align: center;
+            cursor: pointer; transition: 0.2s; background: white; position: relative; overflow: hidden; height: 150px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .upload-box:hover { border-color: #4e37b5; background: #f8faff; transform: translateY(-2px); }
         .u-title { font-weight: 700; color: #334155; margin-bottom: 4px; display: block; font-size: 14px; }
         .u-desc { font-size: 11px; color: #94a3b8; }
 
@@ -115,88 +115,55 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover; display: none; z-index: 2;
         }
-        .content-layer { z-index: 1; transition: 0.3s; }
+        .content-layer { z-index: 1; }
 
         .btn-submit {
-            width: 100%; padding: 18px; background: #1e293b; color: white; border: none;
-            border-radius: 14px; font-weight: 700; font-size: 15px; margin-top: 35px;
-            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2);
+            width: 100%; padding: 16px; background: #1e293b; color: white; border: none;
+            border-radius: 14px; font-weight: 700; font-size: 15px; margin-top: 25px;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 8px 20px rgba(30, 41, 59, 0.2);
         }
-        .btn-submit:hover { background: #4e37b5; box-shadow: 0 12px 25px rgba(78, 55, 181, 0.3); transform: translateY(-2px); }
-        .btn-submit:disabled { opacity: 0.7; cursor: wait; transform: none; }
+        .btn-submit:active { transform: scale(0.98); }
 
         /* LEGAL FALSE INFO WARNING MODAL */
         #fraudModal {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
-            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px;
         }
-        .modal-card { background: white; width: 100%; max-width: 480px; border-radius: 24px; padding: 30px; text-align: center; }
-        .modal-icon { width: 60px; height: 60px; background: #fef2f2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 15px; }
-        .modal-card h2 { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
-        .modal-card p { font-size: 13px; color: #64748b; line-height: 1.6; text-align: left; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 420px; border-radius: 20px; padding: 24px 20px; text-align: center; }
+        .modal-icon { width: 50px; height: 50px; background: #fef2f2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px; }
+        .modal-card h2 { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .modal-card p { font-size: 12px; color: #64748b; line-height: 1.5; text-align: left; background: #f8fafc; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px; }
 
-        .modal-check { display: flex; align-items: flex-start; gap: 10px; text-align: left; margin-bottom: 25px; cursor: pointer; }
-        .modal-check input { width: 18px; height: 18px; accent-color: #4e37b5; margin-top: 2px; cursor: pointer; flex-shrink: 0; }
-        .modal-check span { font-size: 12.5px; color: #334155; font-weight: 500; user-select: none; }
+        .modal-check { display: flex; align-items: flex-start; gap: 10px; text-align: left; margin-bottom: 20px; cursor: pointer; }
+        .modal-check input { width: 18px; height: 18px; accent-color: #4e37b5; margin-top: 2px; flex-shrink: 0; }
+        .modal-check span { font-size: 11.5px; color: #334155; font-weight: 500; user-select: none; }
 
-        .modal-actions { display: flex; gap: 12px; }
-        .btn-modal-cancel { flex: 1; padding: 12px; background: #f1f5f9; color: #475569; border: none; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: 0.2s; }
-        .btn-modal-cancel:hover { background: #e2e8f0; }
-
-        .btn-modal-confirm { flex: 1; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
-        .btn-modal-confirm:hover { background: #dc2626; }
-        .btn-modal-confirm:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal-cancel { flex: 1; padding: 12px; background: #f1f5f9; color: #475569; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; }
+        .btn-modal-confirm { flex: 1; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
+        .btn-modal-confirm:disabled { opacity: 0.4; box-shadow: none; }
 
         /* --- INACTIVITY TIMEOUT MODAL --- */
         #inactivityModal {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
-            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px;
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px);
+            z-index: 99999; display: none; align-items: center; justify-content: center; padding: 16px;
         }
-        .inactivity-card { background: white; width: 100%; max-width: 420px; border-radius: 24px; padding: 35px 25px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
-        .inactivity-card i { font-size: 42px; color: #f59e0b; display: block; margin-bottom: 12px; }
-        .inactivity-card h2 { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
-        .inactivity-card p { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 15px; }
-        .inactivity-timer { font-size: 28px; font-weight: 800; color: #ef4444; margin-bottom: 20px; font-family: monospace; }
-        .btn-stay { width: 100%; padding: 14px; background: #4e37b5; color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .inactivity-card { background: white; width: 100%; max-width: 380px; border-radius: 20px; padding: 24px 20px; text-align: center; }
+        .btn-stay { width: 100%; padding: 14px; background: #4e37b5; color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; }
 
-        /* --- RESPONSIVE MEDIA QUERIES FOR PHONES --- */
-        @media (max-width: 900px) {
-            body { padding: 5px; }
-            .container { border-radius: 18px; }
-            .header-strip { padding: 25px 20px; }
-            .header-strip h1 { font-size: 22px; }
-            .header-strip p { font-size: 13px; }
-            .icon-alert { font-size: 32px; }
-            .form-body { padding: 25px 20px; }
-
-            .vehicle-select-box {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-                padding: 15px;
-                margin-bottom: 25px;
-            }
-            .vehicle-dropdown { width: 100%; }
-
-            .cause-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-                margin-bottom: 25px;
-            }
-            .cause-option { padding: 15px 8px; border-radius: 12px; }
-            .c-icon { font-size: 22px; margin-bottom: 6px; }
-            .c-text { font-size: 12px; }
-
-            .input-row, .upload-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                margin-bottom: 15px;
-            }
-            .field-group input { padding: 12px 14px; font-size: 14px; }
-            .upload-box { height: 150px; padding: 15px; }
-            .btn-submit { margin-top: 25px; padding: 16px; font-size: 15px; }
-            .modal-card { padding: 20px 15px; }
-            .modal-actions { flex-direction: column; gap: 8px; }
+        /* Desktop override styles */
+        @media (min-width: 768px) {
+            body { padding: 30px; }
+            .header-strip { padding: 40px 50px; }
+            .header-strip h1 { font-size: 28px; }
+            .form-body { padding: 40px 50px; }
+            .vehicle-select-box { flex-direction: row; align-items: center; padding: 18px 22px; }
+            .vehicle-dropdown { width: auto; min-width: 260px; }
+            .cause-grid { grid-template-columns: repeat(4, 1fr); gap: 15px; }
+            .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .upload-box { height: 180px; }
+            .modal-card { padding: 30px; }
         }
     </style>
 </head>
@@ -205,10 +172,10 @@
 <!-- INACTIVITY WARNING MODAL -->
 <div id="inactivityModal">
     <div class="inactivity-card">
-        <i class="bi bi-clock-history"></i>
-        <h2>Inactivity Warning</h2>
-        <p>You have been inactive for a while. For your security, your session will automatically expire in:</p>
-        <div class="inactivity-timer" id="inactivityCountdown">30</div>
+        <i class="bi bi-clock-history" style="font-size: 38px; color: #f59e0b; display: block; margin-bottom: 10px;"></i>
+        <h2 style="font-size: 18px; margin-bottom: 6px;">Inactivity Warning</h2>
+        <p style="font-size: 12.5px; color: #64748b; margin-bottom: 15px;">Your session is about to expire due to inactivity.</p>
+        <div class="inactivity-timer" id="inactivityCountdown" style="font-size: 26px; font-weight: 800; color: #ef4444; margin-bottom: 15px; font-family: monospace;">30</div>
         <button type="button" class="btn-stay" onclick="resetInactivityTimer()">Stay Logged In</button>
     </div>
 </div>
@@ -218,17 +185,13 @@
     <div class="modal-card">
         <div class="modal-icon"><i class="bi bi-shield-exclamation"></i></div>
         <h2>Legal Anti-Fraud Warning</h2>
-        <p>
-            <strong>Critical Notice:</strong> Submitting falsified accident details, fabricated police abstracts, or altered incident photographs constitutes <strong>insurance fraud</strong> and a criminal felony under statute law.
-            <br><br>
-            All claims are rigorously investigated. Falsification will result in <strong>immediate policy termination, permanent blacklisting, and criminal prosecution</strong>.
-        </p>
+        <p>Submitting falsified accident details, fabricated police abstracts, or altered incident photographs constitutes <strong>insurance fraud</strong> under statute law, resulting in immediate termination and prosecution.</p>
         <label class="modal-check">
             <input type="checkbox" id="fraudCheckbox" onchange="document.getElementById('modalConfirmBtn').disabled = !this.checked">
-            <span>I fully understand the severe legal consequences and certify that all incident details and photo proofs are 100% genuine.</span>
+            <span>I certify that all incident details and photo proofs provided are 100% genuine.</span>
         </label>
         <div class="modal-actions">
-            <button type="button" class="btn-modal-cancel" onclick="document.getElementById('fraudModal').style.display='none'">Review Details</button>
+            <button type="button" class="btn-modal-cancel" onclick="document.getElementById('fraudModal').style.display='none'">Review</button>
             <button type="button" class="btn-modal-confirm" id="modalConfirmBtn" onclick="executeClaimSubmission()" disabled>Confirm & Submit</button>
         </div>
     </div>
@@ -239,7 +202,7 @@
         <div class="header-strip">
             <div>
                 <h1>Incident Report</h1>
-                <p>Submit details for immediate claims processing.</p>
+                <p>Submit details for claims processing.</p>
             </div>
             <i class="bi bi-exclamation-triangle-fill icon-alert"></i>
         </div>
@@ -247,7 +210,7 @@
         <div class="form-body">
             <!-- Vehicle Selector -->
             <div class="vehicle-select-box" id="garageSelectorBox" style="display: none;">
-                <label><i class="bi bi-car-front-fill" style="color: #46bbf4; font-size: 16px;"></i> Select Involved Vehicle</label>
+                <label><i class="bi bi-car-front-fill" style="color: #46bbf4;"></i> Select Involved Vehicle</label>
                 <select id="claimVehicleDropdown" class="vehicle-dropdown"></select>
             </div>
 
@@ -301,18 +264,18 @@
             <div class="upload-row">
                 <div class="upload-box" onclick="document.getElementById('myCar').click()">
                     <div class="content-layer">
-                        <i class="bi bi-camera-fill" style="font-size: 28px; color: #cbd5e1; margin-bottom: 8px; display:block;"></i>
+                        <i class="bi bi-camera-fill" style="font-size: 26px; color: #cbd5e1; margin-bottom: 6px; display:block;"></i>
                         <span class="u-title">Your Vehicle</span>
-                        <span class="u-desc">Upload visible damage</span>
+                        <span class="u-desc">Upload damage view</span>
                     </div>
                     <img id="prevMyCar" class="preview-layer">
                     <input type="file" id="myCar" name="my_car_img" accept="image/*" style="display: none;" required onchange="preview(this, 'prevMyCar')">
                 </div>
                 <div class="upload-box" onclick="document.getElementById('otherCar').click()">
                     <div class="content-layer">
-                        <i class="bi bi-image" style="font-size: 28px; color: #cbd5e1; margin-bottom: 8px; display:block;"></i>
+                        <i class="bi bi-image" style="font-size: 26px; color: #cbd5e1; margin-bottom: 6px; display:block;"></i>
                         <span class="u-title">Third Party</span>
-                        <span class="u-desc">Other vehicle or scene</span>
+                        <span class="u-desc">Other vehicle/scene</span>
                     </div>
                     <img id="prevOtherCar" class="preview-layer">
                     <input type="file" id="otherCar" name="other_car_img" accept="image/*" style="display: none;" required onchange="preview(this, 'prevOtherCar')">
@@ -325,11 +288,10 @@
 </form>
 
 <script>
-    // --- INACTIVITY TIMER LOGIC ---
     let inactivityTimer = null;
     let warningTimer = null;
     let secondsLeft = 30;
-    const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+    const INACTIVITY_LIMIT = 5 * 60 * 1000;
 
     function startInactivityTimer() {
         clearTimeout(inactivityTimer);
