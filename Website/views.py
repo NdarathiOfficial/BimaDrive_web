@@ -692,7 +692,7 @@ def passkey_register_options_view(request):
         )[:64]
 
         # ----------------------------------------------------
-        # Authenticator requirements
+        # Authenticator requirements (Forcing Discoverable/Resident Passkeys)
         # ----------------------------------------------------
 
         authenticator_selection = (
@@ -785,7 +785,7 @@ def passkey_register_options_view(request):
         request.session.modified = True
 
         logger.info(
-            "Generated passkey registration challenge for %s",
+            "Generated discoverable passkey registration challenge for %s",
             firebase_uid
         )
 
@@ -970,7 +970,7 @@ def passkey_challenge_view(request):
         )
 
         # ----------------------------------------------------
-        # Get all registered passkeys
+        # Verify that at least one passkey exists in the system
         # ----------------------------------------------------
 
         passkeys = UserPasskey.objects.all()
@@ -989,34 +989,13 @@ def passkey_challenge_view(request):
             )
 
         # ----------------------------------------------------
-        # Build allowed credentials
-        # ----------------------------------------------------
-
-        allow_credentials = []
-
-        for passkey in passkeys:
-
-            credential_id = base64url_decode(
-                passkey.credential_id
-            )
-
-            allow_credentials.append(
-                PublicKeyCredentialDescriptor(
-                    id=credential_id
-                )
-            )
-
-        # ----------------------------------------------------
-        # Generate authentication options
+        # Generate authentication options (omitting allow_credentials
+        # to enable discoverable resident passkeys across sessions)
         # ----------------------------------------------------
 
         options = generate_authentication_options(
 
             rp_id=rp_id,
-
-            allow_credentials=(
-                allow_credentials
-            ),
 
             user_verification=(
                 UserVerificationRequirement.PREFERRED
@@ -1064,7 +1043,6 @@ def passkey_challenge_view(request):
             },
             status=400
         )
-
 
 # ============================================================
 # PASSKEY LOGIN - STEP D
