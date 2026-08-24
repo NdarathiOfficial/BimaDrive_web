@@ -1,0 +1,449 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Payment | BimaDrive</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4e37b5 0%, #46bbf4 100%);
+            --sidebar-bg: #1a1a2e;
+            --bg-body: #f3f5f9;
+            --card-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            --mpesa-green: #05cd99;
+            --mpesa-dark: #04b889;
+            --danger-red: #ff6b6b;
+            --text-main: #1a1a2e;
+            --text-sub: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: var(--bg-body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Top Decorative Hero Bar */
+        .hero-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 220px;
+            background: var(--primary-gradient);
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            z-index: 1;
+        }
+
+        .brand-badge {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        /* Processing Card Container */
+        .processing-card {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 28px;
+            padding: 45px 35px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.03);
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            margin-top: 40px;
+        }
+
+        /* Animated Loading Pulse Ring */
+        .pulse-container {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 4px solid #e6fdf3;
+            border-top: 4px solid var(--mpesa-green);
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+
+        .pulse-icon {
+            font-size: 36px;
+            color: var(--mpesa-green);
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* Typography */
+        .title-text {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .sub-text {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.6;
+            max-width: 340px;
+            margin: 0 auto 25px;
+        }
+
+        .poll-status-tag {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-mpesa {
+            background: var(--mpesa-green);
+            color: white;
+            box-shadow: 0 10px 25px rgba(5, 205, 153, 0.3);
+            margin-bottom: 12px;
+        }
+        .btn-mpesa:hover {
+            background: var(--mpesa-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(5, 205, 153, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--text-sub);
+            border: 2px solid #e2e8f0;
+        }
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: var(--text-main);
+        }
+
+        /* View States Switching */
+        #loading-state, #success-state, #error-state {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        #loading-state.active, #success-state.active, #error-state.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Icon State Styles */
+        .status-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 42px;
+        }
+        .icon-success-bg { background: #e6fdf3; color: var(--mpesa-green); }
+        .icon-error-bg { background: #ffebeb; color: var(--danger-red); }
+
+        @media (max-width: 576px) {
+            .brand-badge { top: 20px; left: 20px; font-size: 20px; }
+            .processing-card { padding: 35px 20px; }
+            .title-text { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-banner">
+        <a href="{% url 'client_dashboard' %}" class="brand-badge">
+            <i class="bi bi-shield-check-fill"></i> BimaDrive
+        </a>
+    </div>
+
+    <div class="processing-card">
+
+        <div id="loading-state" class="active">
+            <div class="pulse-container">
+                <div class="pulse-ring"></div>
+                <i class="bi bi-phone-vibrate pulse-icon"></i>
+            </div>
+            <h2 class="title-text">Awaiting M-Pesa PIN</h2>
+            <p class="sub-text">We've dispatched an STK prompt to your mobile phone. Please enter your M-Pesa PIN to complete payment.</p>
+            <div class="poll-status-tag" id="pollTimerText">Connecting to M-Pesa Gateway...</div>
+        </div>
+
+        <div id="success-state">
+            <div class="status-icon-wrapper icon-success-bg">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h2 class="title-text">Payment Confirmed!</h2>
+            <p class="sub-text">Your transaction has been verified. Your vehicle insurance policy is now fully active.</p>
+
+            <button class="btn-action btn-mpesa" onclick="generateReceipt()">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Download Official Receipt
+            </button>
+
+            <a href="{% url 'client_dashboard' %}" class="btn-action btn-outline">
+                <i class="bi bi-grid-fill"></i> Return to Dashboard
+            </a>
+        </div>
+
+        <div id="error-state">
+            <div class="status-icon-wrapper icon-error-bg">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <h2 class="title-text" style="color: var(--danger-red);">Transaction Failed</h2>
+            <p class="sub-text" id="errorMsgText">The payment request timed out or was cancelled on your device.</p>
+
+            <a href="{% url 'payment' %}" class="btn-action btn-outline" style="border-color: #fca5a5; color: var(--danger-red);">
+                <i class="bi bi-arrow-clockwise"></i> Try Again
+            </a>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, push, set, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
+            authDomain: "bimadrive-46fd0.firebaseapp.com",
+            databaseURL: "https://bimadrive-46fd0-default-rtdb.firebaseio.com",
+            projectId: "bimadrive-46fd0",
+            storageBucket: "bimadrive-46fd0.firebasestorage.app",
+            messagingSenderId: "672547346096",
+            appId: "1:672547346096:android:116a85b7da6254b5b88d75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        const checkoutId = localStorage.getItem('checkoutRequestId');
+        let pollAttempts = 0;
+        const MAX_POLL_ATTEMPTS = 18; // Window of polling ~72 seconds
+        let isFinalized = false;
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.processing-card > div').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        async function pollPaymentStatus() {
+            if (isFinalized) return;
+            if (!checkoutId) { showError("Transaction ID missing. Please initiate payment again."); return; }
+            if (pollAttempts >= MAX_POLL_ATTEMPTS) { showError("Timeout: Payment confirmation took longer than expected."); return; }
+
+            pollAttempts++;
+            document.getElementById('pollTimerText').innerText = `Verifying status... (Check ${pollAttempts}/${MAX_POLL_ATTEMPTS})`;
+
+            try {
+                const response = await fetch("/query_payment_status/", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ checkout_id: checkoutId })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'Completed' && !isFinalized) {
+                    await finalizeSuccess(data.mpesaCode || "CONFIRMED-DARAJA");
+                } else if (data.status === 'Failed' && !isFinalized) {
+                    showError(data.result_desc || "Transaction Cancelled or Failed.");
+                } else if (!isFinalized) {
+                    setTimeout(pollPaymentStatus, 4000); // Poll every 4 seconds
+                }
+            } catch (error) {
+                console.error("Polling Error:", error);
+                if (!isFinalized) setTimeout(pollPaymentStatus, 4000);
+            }
+        }
+
+        async function finalizeSuccess(transactionCode) {
+            isFinalized = true;
+            const user = auth.currentUser;
+
+            if (user) {
+                try {
+                    const amount = localStorage.getItem('paymentAmount');
+                    const plan = localStorage.getItem('paymentPlan');
+                    const phone = localStorage.getItem('paymentPhone');
+                    const payerName = localStorage.getItem('payerName') || 'Client';
+                    const vehicleId = localStorage.getItem('currentVehicleId');
+
+                    // 1. Record Ledger Entry in Firebase
+                    await set(push(ref(db, 'Payments')), {
+                        userId: user.uid,
+                        userName: payerName,
+                        vehicleId: vehicleId,
+                        amount: amount,
+                        phoneNumber: phone,
+                        mpesaCode: transactionCode,
+                        status: "Completed",
+                        plan: plan,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    // 2. Activate Vehicle Policy in Firebase
+                    if (vehicleId) {
+                        const expiryDate = new Date();
+                        expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                        await update(ref(db, `Vehicles/${vehicleId}`), {
+                            insuranceStatus: "Active",
+                            activePlan: plan,
+                            policyExpiry: expiryDate.toISOString()
+                        });
+                    }
+                } catch (e) {
+                    console.error("Firebase update error:", e);
+                }
+            }
+
+            window.globalTransCode = transactionCode;
+            switchView('success-state');
+        }
+
+        function showError(message) {
+            isFinalized = true;
+            document.getElementById('errorMsgText').innerText = message;
+            switchView('error-state');
+        }
+
+        window.generateReceipt = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const code = window.globalTransCode || "CONFIRMED";
+
+            // Header Banner
+            doc.setFillColor(78, 55, 181);
+            doc.rect(0, 0, 210, 42, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("BimaDrive Premium Receipt", 105, 26, null, null, "center");
+
+            // Meta Info
+            doc.setTextColor(30, 41, 59);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Transaction Reference: ${code}`, 20, 58);
+            doc.text(`Issue Date: ${new Date().toLocaleString()}`, 20, 66);
+            doc.text(`Policyholder: ${localStorage.getItem('payerName') || 'Client'}`, 20, 74);
+            doc.text(`Phone Number: +${localStorage.getItem('paymentPhone')}`, 20, 82);
+
+            // Divider Line
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.6);
+            doc.line(20, 90, 190, 90);
+
+            // Coverage Details
+            doc.setFontSize(13);
+            doc.setFont("helvetica", "bold");
+            doc.text("Insurance Policy Details", 20, 104);
+
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Vehicle Registration: ${localStorage.getItem('paymentRegPlate') || 'N/A'}`, 20, 116);
+            doc.text(`Cover Type: ${localStorage.getItem('paymentPlan')} Protection`, 20, 126);
+            doc.text(`Total Premium Paid: KES ${Number(localStorage.getItem('paymentAmount')).toLocaleString()}`, 20, 136);
+
+            // Footer
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text("Thank you for securing your drive with BimaDrive.", 105, 170, null, null, "center");
+
+            doc.save(`BimaDrive_Receipt_${code}.pdf`);
+        };
+
+        window.onload = () => {
+            setTimeout(pollPaymentStatus, 2000);
+        };
+    </script>
+</body>
+</html>
