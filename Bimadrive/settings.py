@@ -5,7 +5,6 @@ Django settings for Bimadrive project.
 from pathlib import Path
 import os
 
-import dj_database_url
 # ===============================
 # BASE DIRECTORY
 # ===============================
@@ -19,8 +18,6 @@ SECRET_KEY = 'django-insecure-2!tsk1f4##n&w0av38)qumhb*)&2@ls_*(z*x_wu1*we&8_)in
 DEBUG = True
 
 ALLOWED_HOSTS = ['bimadrive-web.onrender.com', 'localhost', '127.0.0.1']
-
-# Add production hostnames here
 
 
 # ===============================
@@ -55,9 +52,6 @@ MIDDLEWARE = [
 ]
 
 
-
-
-
 # ===============================
 # URL CONFIGURATION
 # ===============================
@@ -70,7 +64,7 @@ ROOT_URLCONF = 'Bimadrive.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],  # Global templates folder
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -91,19 +85,15 @@ WSGI_APPLICATION = 'Bimadrive.wsgi.application'
 
 
 # ===============================
-# DATABASE
+# DATABASE (SQLite fallback since app uses Firebase)
 # ===============================
-# Safely check if DATABASE_URL exists and isn't the literal string "None"
-database_url = os.environ.get('DATABASE_URL')
-if not database_url or database_url.lower() == 'none':
-    database_url = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 
 # ===============================
 # PASSWORD VALIDATION
@@ -131,17 +121,15 @@ USE_TZ = True
 # ===============================
 STATIC_URL = '/static/'
 
-# Serve static files during development
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# Where static files will be collected in production
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # ===============================
-# MEDIA FILES (optional)
+# MEDIA FILES
 # ===============================
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -156,38 +144,32 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ===============================
 # CUSTOM USER MODEL
 # ===============================
-AUTH_USER_MODEL = 'Website.User'  # Your custom user model
+AUTH_USER_MODEL = 'Website.User'
 
 
 # ===============================
-# LOGIN SETTINGS
+# DARAJA MPESA CONFIG
 # ===============================
-
-
-
-
-
-MPESA_ENVIRONMENT='sandbox'
+MPESA_ENVIRONMENT = 'sandbox'
 MPESA_CONSUMER_KEY = 'dyTusM791Kz6ATVyQaFlBlk6c2aQpBapNPPVV7unePSMeoAH'
 MPESA_CONSUMER_SECRET = 'cd0FXES2ZugdDk5zVqlUtqSDdccUzVBsR05ES5v4KurC7P5BQMX2vYanuylWaW13'
-MPESA_SHORTCODE='174379'
-MPESA_EXPRESS_SHORTCODE='174379'
-MPESA_SHORTCODE_TYPE='paybill'
-MPESA_PASSKEY='bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
-MPESA_INITIATOR_USERNAME='testapi'
-MPESA_INITIATOR_SECURITY_CREDENTIALS='Safaricom123!!'
+MPESA_SHORTCODE = '174379'
+MPESA_EXPRESS_SHORTCODE = '174379'
+MPESA_SHORTCODE_TYPE = 'paybill'
+MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+MPESA_INITIATOR_USERNAME = 'testapi'
+MPESA_INITIATOR_SECURITY_CREDENTIALS = 'Safaricom123!!'
 
 
-
-import os
-
-# ---------------- SENDGRID CONFIG ---------------- #
+# ===============================
+# SENDGRID CONFIG
+# ===============================
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 SENDGRID_SENDER = os.environ.get("SENDGRID_SENDER")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_HOST_USER = "apikey"        # This is the literal string "apikey"
+EMAIL_HOST_USER = "apikey"
 EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -196,6 +178,7 @@ DEFAULT_FROM_EMAIL = SENDGRID_SENDER
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
+
 # ===============================
 # FIREBASE ADMIN INITIALIZATION
 # ===============================
@@ -203,19 +186,32 @@ import json
 from firebase_admin import credentials, initialize_app, _apps
 
 if not _apps:
-    firebase_cred_string = os.environ.get('FIREBASE_CREDENTIALS')
+    firebase_cred_string = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON')
+
     if firebase_cred_string:
         try:
-            # Parse the JSON string from Render's environment variable
             cred_dict = json.loads(firebase_cred_string)
             cred = credentials.Certificate(cred_dict)
-            initialize_app(cred)
+            initialize_app(
+                cred,
+                {
+                    'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+                }
+            )
+            print("Firebase Admin initialized successfully on Render.")
         except Exception as e:
             print(f"Error initializing Firebase Admin: {e}")
     else:
-        # Local fallback if you have the file locally
         try:
-            cred = credentials.Certificate(BASE_DIR / 'firebase_service_account.json')
-            initialize_app(cred)
-        except Exception:
-            pass
+            cred = credentials.Certificate(
+                BASE_DIR / 'firebase_service_account.json'
+            )
+            initialize_app(
+                cred,
+                {
+                    'databaseURL': 'https://bimadrive-46fd0-default-rtdb.firebaseio.com/'
+                }
+            )
+            print("Firebase Admin initialized successfully locally.")
+        except Exception as e:
+            print(f"Local Firebase initialization failed: {e}")

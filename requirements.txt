@@ -6,4 +6,3 @@ django-anymail[sendgrid]
 django_daraja
 firebase-admin
 webauthn
-dj-database-url
