@@ -52,6 +52,11 @@
         }
         .btn-nav-signup:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(70, 187, 244, 0.4); }
 
+        /* Mobile Menu Toggle Button */
+        .mobile-menu-btn {
+            display: none; background: transparent; border: none; color: white; font-size: 26px; cursor: pointer;
+        }
+
         /* --- Hero Section --- */
         .hero {
             min-height: 100vh; display: flex; align-items: center; padding: 140px 6% 80px;
@@ -71,8 +76,8 @@
         h1 span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         p.lead { font-size: 17px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 40px; font-weight: 300; }
 
-        .hero-btns { display: flex; gap: 15px; }
-        .btn-lg { padding: 16px 36px; border-radius: 14px; font-weight: 600; text-decoration: none; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; font-size: 15px; }
+        .hero-btns { display: flex; gap: 15px; flex-wrap: wrap; }
+        .btn-lg { padding: 16px 36px; border-radius: 14px; font-weight: 600; text-decoration: none; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; }
         .btn-primary { background: var(--primary-gradient); color: white; box-shadow: 0 10px 25px rgba(78, 55, 181, 0.4); }
         .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(70, 187, 244, 0.5); }
         .btn-outline { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.25); }
@@ -92,7 +97,7 @@
         .c1 { top: 80px; right: 0; z-index: 2; }
         .c2 { bottom: 80px; left: 0; z-index: 1; animation-delay: -3s; }
 
-        .f-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .f-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
         .bg-blue { background: #e0f2fe; color: #0284c7; }
         .bg-purple { background: #f3e8ff; color: #4e37b5; }
         .f-text h4 { font-size: 14px; font-weight: 700; margin: 0; }
@@ -101,15 +106,15 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
         /* --- Features Section --- */
-        .features { padding: 120px 6%; text-align: center; background: var(--bg-body); }
-        .sec-header { max-width: 600px; margin: 0 auto 60px; }
+        .features { padding: 100px 6%; text-align: center; background: var(--bg-body); }
+        .sec-header { max-width: 600px; margin: 0 auto 50px; }
         .sec-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--primary); background: #e0e7ff; padding: 6px 14px; border-radius: 20px; letter-spacing: 1px; display: inline-block; margin-bottom: 12px; }
         .sec-title { font-size: 34px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
 
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; text-align: left; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; text-align: left; }
 
         .feature-card {
-            background: white; padding: 40px; border-radius: 24px;
+            background: white; padding: 35px 30px; border-radius: 24px;
             border: 1px solid rgba(0,0,0,0.03); transition: 0.3s; box-shadow: var(--card-shadow);
         }
         .feature-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(78,55,181,0.12); }
@@ -121,19 +126,41 @@
         .feature-card h3 { font-size: 20px; margin-bottom: 12px; color: var(--text-main); font-weight: 700; }
         .feature-card p { color: var(--text-sub); line-height: 1.6; font-size: 14px; }
 
-        /* --- Responsive --- */
+        /* --- Mobile Navigation Drawer --- */
+        .mobile-drawer {
+            position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
+            background: #1a1a2e; z-index: 2000; padding: 80px 30px 40px;
+            display: flex; flex-direction: column; gap: 25px; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-left: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-drawer.active { right: 0; }
+        .mobile-drawer a { color: white; text-decoration: none; font-size: 16px; font-weight: 600; }
+        .close-drawer { position: absolute; top: 25px; right: 25px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+
+        .mobile-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 1500; display: none;
+        }
+        .mobile-overlay.active { display: block; }
+
+        /* --- Responsive Adjustments --- */
         @media (max-width: 992px) {
-            h1 { font-size: 42px; }
+            h1 { font-size: 40px; }
             .hero-visual { display: none; }
-            .hero { text-align: center; justify-content: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
+            .hero { text-align: center; justify-content: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; padding-top: 130px; }
             .hero-content { margin: 0 auto; }
             .hero-btns { justify-content: center; }
         }
 
         @media (max-width: 768px) {
             .nav-links, .auth-actions { display: none; }
-            h1 { font-size: 36px; }
-            .grid-3 { grid-template-columns: 1fr; }
+            .mobile-menu-btn { display: block; }
+            nav { padding: 15px 20px; }
+            h1 { font-size: 32px; }
+            p.lead { font-size: 15px; }
+            .features { padding: 70px 20px; }
+            .sec-title { font-size: 28px; }
+            .btn-lg { width: 100%; padding: 14px 20px; font-size: 14px; }
         }
     </style>
 </head>
@@ -150,7 +177,20 @@
             <a href="{% url 'login' %}" class="btn-nav-signin">Sign In</a>
             <a href="{% url 'register_client' %}" class="btn-nav-signup">Sign Up</a>
         </div>
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="bi bi-list"></i></button>
     </nav>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+    <div class="mobile-drawer" id="mobileDrawer">
+        <button class="close-drawer" onclick="toggleMobileMenu()"><i class="bi bi-x-lg"></i></button>
+        <a href="{% url 'home' %}"><i class="bi bi-house-door"></i> Home</a>
+        <a href="{% url 'about' %}"><i class="bi bi-info-circle"></i> About Us</a>
+        <a href="{% url 'contact' %}"><i class="bi bi-envelope"></i> Contact</a>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
+        <a href="{% url 'login' %}" style="color: #46bbf4;"><i class="bi bi-box-arrow-in-right"></i> Sign In</a>
+        <a href="{% url 'register_client' %}" style="color: #05cd99;"><i class="bi bi-person-plus"></i> Create Client Account</a>
+    </div>
 
     <header class="hero">
         <div class="hero-content">
@@ -205,5 +245,13 @@
         </div>
     </section>
 
+    <script>
+        function toggleMobileMenu() {
+            const drawer = document.getElementById('mobileDrawer');
+            const overlay = document.getElementById('mobileOverlay');
+            drawer.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+    </script>
 </body>
 </html>

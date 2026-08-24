@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BimaDrive | User Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -17,10 +18,10 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: var(--bg-body); display: flex; min-height: 100vh; }
+        body { background: var(--bg-body); display: flex; min-height: 100vh; overflow-x: hidden; }
 
         /* Main Content Layout */
-        .main-wrapper { flex: 1; display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; min-height: 100vh; position: relative; width: 100%; }
 
         /* Hero Banner matching Dashboard */
         .dashboard-hero {
@@ -51,6 +52,7 @@
             margin-top: -90px;
             position: relative; z-index: 10;
             display: flex; justify-content: center;
+            width: 100%;
         }
 
         .profile-card {
@@ -85,7 +87,7 @@
             display: inline-block; padding: 5px 14px; background: #e0f2fe; color: #0284c7;
             border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .sys-id { font-size: 12px; color: var(--text-sub); margin-top: 15px; font-family: monospace; font-weight: 600; }
+        .sys-id { font-size: 12px; color: var(--text-sub); margin-top: 15px; font-family: monospace; font-weight: 600; word-break: break-all; }
 
         /* Setup Banner Alert */
         .setup-alert {
@@ -94,11 +96,11 @@
             border: 1px solid #fde68a; display: flex; align-items: center; gap: 10px;
             display: none; /* Hidden by default */
         }
-        .setup-alert i { font-size: 18px; }
+        .setup-alert i { font-size: 18px; flex-shrink: 0; }
 
         /* Form Area */
-        .content-area { padding: 45px; background: white; overflow-y: auto; max-height: 80vh; }
-        .form-header { margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
+        .content-area { padding: 45px; background: white; overflow-y: auto; max-height: 85vh; }
+        .form-header { margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
         .form-header h3 { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
         .form-header p { font-size: 13px; color: var(--text-sub); }
 
@@ -119,7 +121,7 @@
         .btn-primary {
             padding: 16px 35px; background: #1a1a2e; color: white; border: none;
             border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 10px 25px rgba(26, 26, 46, 0.2);
+            box-shadow: 0 10px 25px rgba(26, 26, 46, 0.2); width: auto;
         }
         .btn-primary:hover { background: #4e37b5; transform: translateY(-2px); box-shadow: 0 15px 30px rgba(78, 55, 181, 0.3); }
         .btn-primary:disabled { opacity: 0.7; cursor: wait; transform: none; }
@@ -137,13 +139,72 @@
         .btn-stay { width: 100%; padding: 16px; background: #4e37b5; color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
         .btn-stay:hover { background: #3c2a91; }
 
-        @media (max-width: 850px) {
-            .profile-card { grid-template-columns: 1fr; max-width: 500px; }
-            .identity-sidebar { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 35px; }
-            .content-area { padding: 30px; }
-            .grid-2 { grid-template-columns: 1fr; gap: 15px; }
-            .back-nav { right: 20px; }
-            .dashboard-hero { padding: 30px 20px; }
+        /* --- RESPONSIVE MEDIA QUERIES FOR PHONES --- */
+        @media (max-width: 768px) {
+            .dashboard-hero {
+                height: auto;
+                padding: 25px 20px 45px;
+                border-radius: 0 0 25px 25px;
+            }
+            .hero-title h1 { font-size: 22px; }
+            .hero-title p { font-size: 12.5px; }
+
+            .back-nav {
+                position: static;
+                margin-top: 15px;
+                display: inline-flex;
+                padding: 6px 15px;
+                font-size: 12px;
+            }
+
+            .container-area {
+                padding: 0 15px 30px;
+                margin-top: -20px;
+            }
+
+            .profile-card {
+                grid-template-columns: 1fr;
+                border-radius: 20px;
+            }
+
+            .identity-sidebar {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+                padding: 25px 20px;
+            }
+
+            .avatar-container {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 15px;
+            }
+
+            .content-area {
+                padding: 25px 20px;
+                max-height: none;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+
+            .input-field {
+                padding: 12px 15px;
+                font-size: 13.5px;
+            }
+
+            .action-footer {
+                margin-top: 25px;
+                padding-top: 15px;
+            }
+
+            .btn-primary {
+                width: 100%;
+                padding: 14px;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -221,7 +282,7 @@
                             </div>
                         </div>
 
-                        <div class="input-wrapper" style="margin-bottom: 25px;">
+                        <div class="input-wrapper" style="margin-bottom: 20px;">
                             <label class="input-label">KRA PIN</label>
                             <input type="text" id="kraPin" class="input-field" placeholder="A00XXXXXXXXX" style="text-transform: uppercase;">
                         </div>
@@ -391,8 +452,8 @@
 
             document.getElementById('fullName').value = data.name || '';
             document.getElementById('email').value = data.email || '';
-            document.getElementById('phone').value = data.phoneNumber || data.phone || ''; // Fallback for old schema
-            document.getElementById('nationalId').value = data.idNumber || data.nationalId || ''; // Fallback for old schema
+            document.getElementById('phone').value = data.phoneNumber || data.phone || '';
+            document.getElementById('nationalId').value = data.idNumber || data.nationalId || '';
             document.getElementById('kraPin').value = data.kraPin || '';
 
             if(data.address) {
@@ -438,7 +499,6 @@
             e.preventDefault();
             if(!dbPath) { alert("Database path not initialized."); return; }
 
-            // Validate mandatory fields
             const phoneVal = document.getElementById('phone').value.trim();
             const idVal = document.getElementById('nationalId').value.trim();
 
@@ -475,7 +535,6 @@
                     }
                 };
 
-                // Unlock the dashboard if they are a client
                 if (isClient) {
                     updates.profileComplete = true;
                 }
@@ -483,7 +542,6 @@
                 await update(ref(db, dbPath), updates);
                 alert("Profile page updated successfully!");
 
-                // Route them to dashboard after setup
                 window.location.href = redirectUrl;
 
             } catch (error) {

@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Track Claims | BimaDrive</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -21,11 +22,12 @@
             background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
                               radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
                               radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-            background-size: cover; padding: 30px;
+            background-size: cover; padding: 20px;
+            overflow-x: hidden;
         }
 
         .main-container {
-            width: 1200px;
+            width: 1200px; max-width: 100%;
             background: rgba(255, 255, 255, 0.94);
             backdrop-filter: blur(24px);
             border-radius: 30px;
@@ -90,7 +92,7 @@
 
         .incident-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box small { font-size: 10px; color: #64748b; display: block; text-transform: uppercase; }
-        .stat-box strong { font-size: 12.5px; color: #334155; }
+        .stat-box strong { font-size: 12.5px; color: #334155; word-break: break-all; }
 
         .evidence-preview { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
         .evidence-img { aspect-ratio: 16/10; background: #e2e8f0; border-radius: 8px; object-fit: cover; width: 100%; cursor: pointer; transition: 0.2s; }
@@ -100,7 +102,7 @@
         .back-btn:hover { color: var(--primary); }
 
         /* Empty State */
-        .empty-state { position: absolute; inset: 0; background: white; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .empty-state { position: absolute; inset: 0; background: white; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
 
         /* --- INACTIVITY TIMEOUT MODAL --- */
         #inactivityModal {
@@ -115,9 +117,19 @@
         .btn-stay { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(78,55,181,0.3); }
         .btn-stay:hover { background: #3c2a91; }
 
+        /* --- RESPONSIVE MEDIA QUERIES FOR PHONES --- */
         @media (max-width: 1100px) {
-            .main-container { grid-template-columns: 1fr; width: 100%; height: auto; }
-            .history-panel { max-height: none; }
+            body { padding: 10px; }
+            .main-container {
+                grid-template-columns: 1fr;
+                width: 100%;
+                height: auto;
+                border-radius: 20px;
+            }
+            .history-panel { padding: 25px 20px; max-height: 350px; }
+            .timeline-panel { padding: 25px 20px; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.05); }
+            .details-panel { padding: 25px 20px; max-height: none; }
+            h1 { font-size: 20px; }
         }
     </style>
 </head>
@@ -138,7 +150,7 @@
 
         <!-- COLUMN 1: GARAGE FILTER & CLAIMS HISTORY -->
         <div class="history-panel">
-            <a href="{% url 'client_dashboard' %}" class="back-btn" style="color: #cbd5e1; margin-bottom: 25px;"><i class="bi bi-arrow-left"></i> Dashboard</a>
+            <a href="{% url 'client_dashboard' %}" class="back-btn" style="color: #cbd5e1; margin-bottom: 20px;"><i class="bi bi-arrow-left"></i> Dashboard</a>
 
             <div class="garage-filter">
                 <label><i class="bi bi-car-front-fill" style="color: #46bbf4;"></i> Filter by Vehicle</label>
@@ -152,7 +164,7 @@
                 <div style="font-size: 12px; color: #94a3b8; text-align: center; padding: 20px;">Loading claims...</div>
             </div>
 
-            <div style="margin-top: 25px;">
+            <div style="margin-top: 20px;">
                 <a href="{% url 'report_accident' %}" style="display: block; text-align: center; padding: 12px; background: var(--secondary); color: #0f172a; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px;">File New Claim</a>
             </div>
         </div>
@@ -195,7 +207,7 @@
                 </div>
             </div>
 
-            <div style="font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <div style="font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px;">
                 BimaDrive Secure Claims Audit Trail © 2026
             </div>
         </div>
@@ -318,7 +330,6 @@
                         get(ref(db, 'Vehicles'))
                     ]);
 
-                    // 1. Load Client Vehicles for Garage Filter
                     if (vehSnap.exists()) {
                         const rawVehicles = vehSnap.val();
                         const garageSelect = document.getElementById('garageFilterSelect');
@@ -334,7 +345,6 @@
                         }
                     }
 
-                    // 2. Load Claims
                     if (claimsSnap.exists()) {
                         const rawClaims = claimsSnap.val();
                         allClientClaims = [];
@@ -429,7 +439,6 @@
             document.getElementById('cLoc').innerText = claim.location || "---";
             document.getElementById('cOB').innerText = claim.obNumber || "---";
 
-            // Vehicle Details
             if (claim.vehicleId && clientVehicles[claim.vehicleId]) {
                 const v = clientVehicles[claim.vehicleId];
                 document.getElementById('vModel').innerText = v.model || "Unknown Model";
@@ -439,7 +448,6 @@
                 document.getElementById('vPlate').innerText = claim.regPlate || "---";
             }
 
-            // Evidence Photos
             const proofCard = document.getElementById('proofCard');
             const evidenceGrid = document.getElementById('evidenceGrid');
             evidenceGrid.innerHTML = '';
@@ -458,7 +466,6 @@
 
             proofCard.style.display = hasPhotos ? 'block' : 'none';
 
-            // Status Badge & Timeline Color Code
             const status = claim.status || 'Pending';
             const badge = document.getElementById('statusBadge');
             const track = document.getElementById('trackFill');
