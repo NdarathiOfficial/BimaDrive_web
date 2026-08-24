@@ -330,6 +330,8 @@
                         get(ref(db, 'Vehicles'))
                     ]);
 
+                    let hasVehicles = false;
+
                     if (vehSnap.exists()) {
                         const rawVehicles = vehSnap.val();
                         const garageSelect = document.getElementById('garageFilterSelect');
@@ -337,12 +339,18 @@
                         for (const key in rawVehicles) {
                             if (rawVehicles[key].ownerId === user.uid) {
                                 clientVehicles[key] = rawVehicles[key];
+                                hasVehicles = true;
                                 const opt = document.createElement('option');
                                 opt.value = key;
                                 opt.textContent = `${rawVehicles[key].regPlate || 'Vehicle'} (${rawVehicles[key].model || 'N/A'})`;
                                 garageSelect.appendChild(opt);
                             }
                         }
+                    }
+
+                    if (!hasVehicles) {
+                        showEmptyState();
+                        return;
                     }
 
                     if (claimsSnap.exists()) {
@@ -367,6 +375,7 @@
                     }
                 } catch (error) {
                     console.error("Initialization Error:", error);
+                    showEmptyState();
                 }
             } else {
                 window.location.href = "{% url 'login' %}";
@@ -516,6 +525,5 @@
             document.getElementById('time3').innerText = "Resolved";
         }
     </script>
-
 </body>
 </html>
