@@ -312,7 +312,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, signOut, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, signOut, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -368,11 +368,18 @@
                         createdAt: new Date().toISOString(),
                         suspended: false
                     });
-                } else if (snapshot.val().suspended) {
-                    await signOut(auth);
-                    alert("Your account has been suspended. Contact Administrator.");
-                    window.location.reload();
-                    return;
+                } else {
+                    const clientData = snapshot.val();
+                    if (clientData.suspended) {
+                        await signOut(auth);
+                        alert("Your account has been suspended. Contact Administrator.");
+                        window.location.reload();
+                        return;
+                    }
+
+                    if (!clientData.role) {
+                        await set(ref(db, `Client/${user.uid}/role`), 'client');
+                    }
                 }
 
                 updateUIState('Redirecting to Dashboard...', true);
@@ -386,15 +393,6 @@
             }
         }
 
-        getRedirectResult(auth).then((result) => {
-            if (result && result.user) {
-                updateUIState('Google Auth Success. Routing...', true);
-                routeUserByRole(result.user);
-            }
-        }).catch((err) => {
-            displayError("Google Sign-In failed: " + err.message);
-        });
-
         onAuthStateChanged(auth, async (user) => {
             if (user && !isRouting) {
                 updateUIState('Restoring session...', true);
@@ -404,11 +402,17 @@
 
         document.getElementById('googleLoginBtn').addEventListener('click', () => {
             document.getElementById('errorMsg').style.display = 'none';
-            updateUIState('Redirecting to Google...', true);
+            updateUIState('Opening Google Sign-In...', true);
 
-            signInWithRedirect(auth, googleProvider).catch((err) => {
-                displayError("Failed to initiate Google login: " + err.message);
-            });
+            signInWithPopup(auth, googleProvider)
+                .then((result) => {
+                    routeUserByRole(result.user);
+                })
+                .catch((err) => {
+                    console.error("Google popup error:", err);
+                    displayError("Google Sign-In failed: " + err.message);
+                    isRouting = false;
+                });
         });
 
         document.getElementById('passkeyLoginBtn').addEventListener('click', async () => {
@@ -459,7 +463,6 @@
                 if (verifyRes.ok && result.success) {
                     updateUIState('Passkey Verified! Authenticating session...', true);
 
-                    // Securely establish Firebase session using the token provided by Django
                     await signInWithCustomToken(auth, result.firebase_token);
 
                     window.location.href = result.redirect_url || "{% url 'client_dashboard' %}";
