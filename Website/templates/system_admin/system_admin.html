@@ -39,7 +39,7 @@
 
         .menu-item {
             display: flex; align-items: center; gap: 14px; padding: 12px 18px; color: #94a3b8; border-radius: 14px; margin-bottom: 4px;
-            transition: 0.3s; font-weight: 600; cursor: pointer; font-size: 13.5px; text-decoration: none; width: 100%; border: none; background: transparent; text-align: left;
+            transition: 0.3s; font-weight: 600; cursor: pointer; font-size: 13.5px;
         }
 
         .menu-item:hover { background: rgba(255,255,255,0.05); color: white; }
@@ -302,12 +302,8 @@
         </div>
 
         <div style="margin-top: 30px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
-            <a href="{% url 'profile' %}" class="menu-item">
+            <div class="menu-item" onclick="switchView('profile', this)">
                 <i class="bi bi-person-circle"></i> My Profile
-            </a>
-
-            <div class="menu-item" onclick="switchView('security_passkeys', this)">
-                <i class="bi bi-fingerprint"></i> Security & Passkeys
             </div>
 
             <div class="menu-item" style="color:#fca5a5;" id="logoutBtn">
@@ -702,7 +698,7 @@
             </div>
         </div>
 
-        <!-- 7. SYSTEM CONFIGURATION (FULLY FUNCTIONAL BACKEND SYNC) -->
+        <!-- 7. SYSTEM CONFIGURATION -->
         <div id="system_config" class="view-section">
             <div class="glass-panel">
                 <h3>
@@ -842,34 +838,43 @@
             </div>
         </div>
 
-        <!-- 9. SECURITY & PASSKEYS SECTION -->
-        <div id="security_passkeys" class="view-section">
+        <!-- 9. ADMIN PROFILE (UPDATED WITH PROFILE DATA & PASSKEY SECTION) -->
+        <div id="profile" class="view-section">
             <div class="glass-panel" style="max-width: 700px;">
-                <h3><i class="bi bi-fingerprint"></i> Security & Passkeys</h3>
+                <h3><i class="bi bi-person-lines-fill"></i> My Profile Information</h3>
+                <form id="profileUpdateForm">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Display Name</label>
+                            <input type="text" id="myDisplayName" required>
+                        </div>
+                        <div class="input-group">
+                            <label>System Email</label>
+                            <input type="email" id="mySystemEmail" readonly>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="updateProfileBtn">Update Profile Info</button>
+                </form>
+            </div>
 
+            <div class="glass-panel" style="max-width: 700px;">
+                <h3><i class="bi bi-shield-lock"></i> Security & Passkeys</h3>
+
+                <!-- Passkey Registration Box -->
                 <div class="passkey-box">
                     <div>
-                        <strong style="font-size: 13px; color: #0369a1; display:block; margin-bottom:2px;">Biometric Passkeys</strong>
+                        <strong style="font-size: 14px; color: #0369a1; display:block; margin-bottom:2px;">Biometric Passkeys</strong>
                         <p>Log in securely using TouchID, FaceID, or Windows Hello without typing a password.</p>
                     </div>
                     <button type="button" class="btn-passkey" onclick="createPasskey()">Create Passkey</button>
                 </div>
 
-                <form id="passwordForm">
-                    <div style="font-size: 12px; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                        <strong>Strong Password Requirements:</strong>
-                        <ul style="padding-left: 15px; margin: 4px 0 0 0;">
-                            <li>At least 8 characters long</li>
-                            <li>Must include uppercase & lowercase letters & numbers</li>
-                            <li>Must include at least one symbol (@$!%*?&)</li>
-                        </ul>
-                    </div>
-
+                <form id="adminPasswordForm">
                     <div class="input-group">
                         <label>Current Password</label>
                         <div class="input-with-eye">
-                            <input type="password" id="currentPassword" required placeholder="Enter current password">
-                            <i class="bi bi-eye-slash toggle-eye" id="eyeCurrent" onclick="togglePasswordVisibility('currentPassword', 'eyeCurrent')"></i>
+                            <input type="password" id="myCurrentPwd" required placeholder="Verify identity">
+                            <i class="bi bi-eye-slash toggle-eye" id="eyeCurrent" onclick="togglePasswordVisibility('myCurrentPwd', 'eyeCurrent')"></i>
                         </div>
                     </div>
 
@@ -877,40 +882,23 @@
                         <div class="input-group">
                             <label>New Password</label>
                             <div class="input-with-eye">
-                                <input type="password" id="newPassword" required minlength="8" placeholder="New password" oninput="validatePasswordInputs()">
-                                <i class="bi bi-eye-slash toggle-eye" id="eyeNew" onclick="togglePasswordVisibility('newPassword', 'eyeNew')"></i>
+                                <input type="password" id="myNewPwd" required minlength="8" placeholder="New password" oninput="validatePasswordInputs()">
+                                <i class="bi bi-eye-slash toggle-eye" id="eyeNew" onclick="togglePasswordVisibility('myNewPwd', 'eyeNew')"></i>
                             </div>
-                            <div class="error-hint" id="strengthHint">Password must be strong (8+ chars, upper, lower, number, symbol).</div>
+                            <div class="error-hint" id="strengthHint">Must be 8+ chars with uppercase, lowercase, number & symbol.</div>
                         </div>
 
                         <div class="input-group">
                             <label>Confirm New Password</label>
                             <div class="input-with-eye">
-                                <input type="password" id="confirmPassword" required placeholder="Confirm password" oninput="validatePasswordInputs()">
-                                <i class="bi bi-eye-slash toggle-eye" id="eyeConfirm" onclick="togglePasswordVisibility('confirmPassword', 'eyeConfirm')"></i>
+                                <input type="password" id="myConfirmPwd" required placeholder="Confirm password" oninput="validatePasswordInputs()">
+                                <i class="bi bi-eye-slash toggle-eye" id="eyeConfirm" onclick="togglePasswordVisibility('myConfirmPwd', 'eyeConfirm')"></i>
                             </div>
                             <div class="error-hint" id="matchHint">Passwords do not match.</div>
                         </div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label>Security Question (for recovery)</label>
-                            <select id="securityQuestion" required>
-                                <option value="" disabled selected>Select a security question</option>
-                                <option value="pet">What was the name of your first pet?</option>
-                                <option value="school">What primary school did you attend?</option>
-                                <option value="city">In what city were you born?</option>
-                                <option value="car">What was your first car model?</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Security Answer</label>
-                            <input type="text" id="securityAnswer" placeholder="Enter your answer" required oninput="validatePasswordInputs()">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-danger" id="btnSubmitPass" disabled style="opacity: 0.5; cursor: not-allowed; margin-top: 10px;">Update Security Credentials</button>
+                    <button type="submit" class="btn-danger" id="updatePwdBtn" disabled style="opacity: 0.5; cursor: not-allowed;">Update Master Password</button>
                 </form>
             </div>
         </div>
@@ -1107,6 +1095,22 @@
                 startIdleTracker(auth);
 
                 init(user);
+
+                // Fetch accurate profile data from Staff or Auth
+                try {
+                    const snap = await get(child(ref(db), `Staff/${user.uid}`));
+                    if (snap.exists()) {
+                        const staffData = snap.val();
+                        document.getElementById('myDisplayName').value = staffData.name || user.displayName || '';
+                        document.getElementById('mySystemEmail').value = staffData.email || user.email || '';
+                    } else {
+                        document.getElementById('myDisplayName').value = user.displayName || '';
+                        document.getElementById('mySystemEmail').value = user.email || '';
+                    }
+                } catch (err) {
+                    document.getElementById('myDisplayName').value = user.displayName || '';
+                    document.getElementById('mySystemEmail').value = user.email || '';
+                }
             }
         });
 
@@ -1199,23 +1203,20 @@
         };
 
         window.validatePasswordInputs = () => {
-            const currentPass = document.getElementById('currentPassword').value;
-            const newPass = document.getElementById('newPassword').value;
-            const confirmPass = document.getElementById('confirmPassword').value;
-            const secQuestion = document.getElementById('securityQuestion').value;
-            const secAnswer = document.getElementById('securityAnswer').value.trim();
+            const currentPass = document.getElementById('myCurrentPwd').value;
+            const newPass = document.getElementById('myNewPwd').value;
+            const confirmPass = document.getElementById('myConfirmPwd').value;
 
             const strengthHint = document.getElementById('strengthHint');
             const matchHint = document.getElementById('matchHint');
-            const newPassInput = document.getElementById('newPassword');
-            const confirmInput = document.getElementById('confirmPassword');
-            const submitBtn = document.getElementById('btnSubmitPass');
+            const newPassInput = document.getElementById('myNewPwd');
+            const confirmInput = document.getElementById('myConfirmPwd');
+            const submitBtn = document.getElementById('updatePwdBtn');
 
             const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
             let isStrong = strongRegex.test(newPass);
             let isMatch = (newPass === confirmPass && confirmPass.length > 0);
-            let hasSecurityQA = (secQuestion !== "" && secAnswer.length > 0);
             let hasCurrent = currentPass.length > 0;
 
             if (newPass.length > 0 && !isStrong) {
@@ -1234,7 +1235,7 @@
                 matchHint.style.display = 'none';
             }
 
-            if (hasCurrent && isStrong && isMatch && hasSecurityQA) {
+            if (hasCurrent && isStrong && isMatch) {
                 submitBtn.disabled = false;
                 submitBtn.style.opacity = '1';
                 submitBtn.style.cursor = 'pointer';
@@ -1244,48 +1245,6 @@
                 submitBtn.style.cursor = 'not-allowed';
             }
         };
-
-
-        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const currentPass = document.getElementById('currentPassword').value;
-            const newPass = document.getElementById('newPassword').value;
-            const secQuestion = document.getElementById('securityQuestion').value;
-            const secAnswer = document.getElementById('securityAnswer').value.trim().toLowerCase();
-
-            if (!confirm("Update security credentials?")) return;
-
-            const user = auth.currentUser;
-            if (!user) {
-                alert("Session expired.");
-                window.location.href = "{% url 'login' %}";
-                return;
-            }
-
-            const btn = document.getElementById('btnSubmitPass');
-            btn.innerText = "Verifying...";
-            btn.disabled = true;
-
-            try {
-                const credential = EmailAuthProvider.credential(user.email, currentPass);
-                await reauthenticateWithCredential(user, credential);
-                await updatePassword(user, newPass);
-
-                await update(ref(db, `Staff/${user.uid}`), {
-                    securityQuestion: secQuestion,
-                    securityAnswerHash: btoa(secAnswer)
-                });
-
-                alert("Security credentials updated successfully! Please sign in again.");
-                await signOut(auth);
-                window.location.href = "{% url 'login' %}";
-            } catch (error) {
-                console.error("Security update error:", error);
-                alert("Error updating credentials: " + error.message);
-                btn.innerText = "Update Security Credentials";
-                btn.disabled = false;
-            }
-        });
 
 
         function setupPresence(uid) {
@@ -1533,7 +1492,7 @@
         function init(user) {
 
             // ========================================================
-            // SYSTEM CONFIG (SYNCING TOGGLES IN REAL-TIME)
+            // SYSTEM CONFIG
             // ========================================================
 
             onValue(
@@ -1547,13 +1506,20 @@
                         cfg;
 
 
-                    const maintenanceToggle = document.getElementById('toggleMaintenance');
-                    const registrationToggle = document.getElementById('toggleRegistration');
-                    const twofaToggle = document.getElementById('toggle2FA');
+                    document
+                        .getElementById('toggleMaintenance')
+                        .checked =
+                        !!cfg.maintenanceMode;
 
-                    if (maintenanceToggle) maintenanceToggle.checked = !!cfg.maintenanceMode;
-                    if (registrationToggle) registrationToggle.checked = cfg.publicRegistration !== false;
-                    if (twofaToggle) twofaToggle.checked = !!cfg.enforce2FA;
+                    document
+                        .getElementById('toggleRegistration')
+                        .checked =
+                        cfg.publicRegistration !== false;
+
+                    document
+                        .getElementById('toggle2FA')
+                        .checked =
+                        !!cfg.enforce2FA;
 
 
                     renderActiveBroadcast(
@@ -1736,7 +1702,7 @@
 
 
         // ============================================================
-        // SYSTEM CONFIG CONTROLS (FULLY FUNCTIONAL BACKEND SYNC)
+        // SYSTEM CONFIG CONTROLS
         // ============================================================
 
         window.updateSysConfig = async (key, val) => {
@@ -1746,25 +1712,25 @@
                 await update(
                     ref(db, 'SystemConfig'),
                     {
-                        [key]: val,
-                        updatedAt: serverTimestamp(),
-                        updatedBy: auth.currentUser ? auth.currentUser.uid : null
+                        [key]: val
                     }
                 );
 
                 alert(
-                    `System setting '${key}' updated globally to ${val}.`
+                    "System Setting Updated Globally."
                 );
 
             } catch(err) {
-                console.error("Failed to update config:", err);
-                alert("Failed to update configuration setting: " + err.message);
+
+                alert(
+                    "Failed to update config."
+                );
             }
         };
 
 
         // ============================================================
-        // FIXED ANNOUNCEMENT CONTROLS
+        // FIXED ANNOUNCEMENT CONTROLS (USING UPDATE ON PARENT PATH)
         // ============================================================
 
         document
@@ -1831,6 +1797,8 @@
                         };
 
 
+                        // Using update() on the parent path 'SystemConfig' prevents PERMISSION_DENIED
+                        // errors caused by trying to set child properties on uninitialized nodes directly.
                         await update(
                             ref(
                                 db,
@@ -1943,6 +1911,168 @@
                     '<i class="bi bi-trash3-fill"></i> Remove Active Broadcast';
             }
         };
+
+
+        // ============================================================
+        // PROFILE & PASSWORD CONTROLS
+        // ============================================================
+
+        document
+            .getElementById('profileUpdateForm')
+            .addEventListener(
+                'submit',
+                async (e) => {
+
+                    e.preventDefault();
+
+                    const btn =
+                        document.getElementById(
+                            'updateProfileBtn'
+                        );
+
+                    btn.disabled = true;
+                    btn.innerText = "Saving...";
+
+                    const newName =
+                        document
+                            .getElementById(
+                                'myDisplayName'
+                            )
+                            .value;
+
+                    try {
+
+                        await updateProfile(
+                            auth.currentUser,
+                            {
+                                displayName: newName
+                            }
+                        );
+
+                        await update(
+                            ref(
+                                db,
+                                `Staff/${auth.currentUser.uid}`
+                            ),
+                            {
+                                name: newName
+                            }
+                        );
+
+                        alert(
+                            "Profile info successfully updated."
+                        );
+
+                    } catch(error) {
+
+                        alert(
+                            "Error updating profile: " +
+                            error.message
+                        );
+
+                    } finally {
+
+                        btn.disabled = false;
+                        btn.innerText =
+                            "Update Profile Info";
+                    }
+                }
+            );
+
+
+        document
+            .getElementById('adminPasswordForm')
+            .addEventListener(
+                'submit',
+                async (e) => {
+
+                    e.preventDefault();
+
+                    const currentPwd =
+                        document.getElementById(
+                            'myCurrentPwd'
+                        ).value;
+
+                    const newPwd =
+                        document.getElementById(
+                            'myNewPwd'
+                        ).value;
+
+                    const confirmPwd =
+                        document.getElementById(
+                            'myConfirmPwd'
+                        ).value;
+
+                    const btn =
+                        document.getElementById(
+                            'updatePwdBtn'
+                        );
+
+
+                    if(newPwd !== confirmPwd) {
+
+                        alert(
+                            "New passwords do not match!"
+                        );
+
+                        return;
+                    }
+
+
+                    btn.disabled = true;
+                    btn.innerText =
+                        "Authenticating & Updating...";
+
+
+                    try {
+
+                        const credential =
+                            EmailAuthProvider.credential(
+                                auth.currentUser.email,
+                                currentPwd
+                            );
+
+
+                        await reauthenticateWithCredential(
+                            auth.currentUser,
+                            credential
+                        );
+
+
+                        await updatePassword(
+                            auth.currentUser,
+                            newPwd
+                        );
+
+
+                        alert(
+                            "Master Password successfully changed."
+                        );
+
+                        e.target.reset();
+                        validatePasswordInputs();
+
+
+                    } catch(error) {
+
+                        alert(
+                            "Password update failed: " +
+                            (
+                                error.code === 'auth/invalid-credential'
+                                ? "Incorrect current password"
+                                : error.message
+                            )
+                        );
+
+                    } finally {
+
+                        btn.disabled = false;
+
+                        btn.innerText =
+                            "Update Master Password";
+                    }
+                }
+            );
 
 
         // ============================================================

@@ -673,6 +673,7 @@
             }
 
             try {
+                // 1. Fetch registration options from Django backend
                 const res = await fetch('/api/passkey/register-options/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -681,9 +682,11 @@
                 const options = await res.json();
                 if (!res.ok) throw new Error(options.error);
 
+                // Convert Base64URL challenge and user ID back to ArrayBuffers
                 options.challenge = Uint8Array.from(atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
                 options.user.id = Uint8Array.from(atob(options.user.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
 
+                // --- CRITICAL FIX FOR EXCLUDE CREDENTIALS ---
                 if (options.excludeCredentials && Array.isArray(options.excludeCredentials)) {
                     options.excludeCredentials = options.excludeCredentials.map(cred => ({
                         ...cred,
@@ -693,8 +696,10 @@
                     delete options.excludeCredentials;
                 }
 
+                // 2. Trigger browser hardware biometric prompt
                 const credential = await navigator.credentials.create({ publicKey: options });
 
+                // 3. Package response to send back to Django backend
                 const credentialPayload = {
                     id: credential.id,
                     rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
@@ -775,11 +780,16 @@
 
         startInactivityTimer();
 
-        // --- STRICT SESSION-ONLY ANNOUNCEMENT DISMISS LOGIC ---
-        window.dismissAnnouncement = () => {
-            sessionStorage.setItem('bima_announcement_dismissed_session', 'true');
+        // --- ANNOUNCEMENT DISMISS LOGIC (ONCE PER LOGIN SESSION) ---
+        let currentAnnouncementTs = null;
+        function dismissAnnouncement() {
+            if (currentAnnouncementTs) {
+                sessionStorage.setItem('dismissed_announcement_ts', currentAnnouncementTs);
+                window.hasDismissedThisLogin = true;
+            }
             document.getElementById('announcementModal').style.display = 'none';
-        };
+        }
+        window.dismissAnnouncement = dismissAnnouncement;
 
         // --- PASSWORD MODAL & VALIDATION ---
         function openPasswordModal() {
@@ -900,16 +910,18 @@
                         document.getElementById('profileInitials').innerText = name.charAt(0).toUpperCase();
                     }
 
-                    // Strict session-based listener: Pops up ONLY ONCE per active browser login session
+                    // Listen for System-Wide Announcements (Only pop up once per login session)
                     onValue(ref(db, 'SystemConfig/activeBroadcast'), (annSnap) => {
                         const broadcast = annSnap.val();
                         if (broadcast && broadcast.active) {
                             const audience = broadcast.audience || 'all';
                             let isTarget = (audience === 'all' || audience === 'clients');
 
-                            const isDismissedThisSession = sessionStorage.getItem('bima_announcement_dismissed_session') === 'true';
+                            const sessionDismissedTs = sessionStorage.getItem('dismissed_announcement_ts');
+                            if (window.hasDismissedThisLogin) return;
 
-                            if (isTarget && !isDismissedThisSession) {
+                            if (isTarget && (!sessionDismissedTs || Number(sessionDismissedTs) < broadcast.timestamp)) {
+                                window.currentAnnouncementTs = broadcast.timestamp;
                                 document.getElementById('announcementTitleModal').innerText = broadcast.title || 'System Notice';
                                 document.getElementById('announcementMessageModal').innerText = broadcast.message || '';
                                 document.getElementById('announcementModal').style.display = 'flex';
@@ -1124,10 +1136,7 @@
 
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
-            signOut(auth).then(() => {
-                sessionStorage.clear();
-                window.location.href = "{% url 'login' %}";
-            });
+            signOut(auth).then(() => window.location.href = "{% url 'login' %}");
         });
     </script>
 
