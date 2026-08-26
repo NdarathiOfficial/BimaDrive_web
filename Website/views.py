@@ -182,6 +182,90 @@ def login_view(request):
     })
 
 
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user_model
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.conf import settings
+from .forms import BimaDrivePasswordResetForm, BimaDriveSetPasswordForm
+
+User = get_user_model()
+
+
+# def password_reset_request(request):
+#     if request.method == "POST":
+#         form = BimaDrivePasswordResetForm(request.POST)
+#         if form.is_valid():
+#             email = form.cleaned_data['email']
+#             associated_users = User.objects.filter(email=email)
+#             if associated_users.exists():
+#                 for user in associated_users:
+#                     subject = "Password Reset Requested - BimaDrive"
+#                     uid = urlsafe_base64_encode(force_bytes(user.pk))
+#                     token = default_token_generator.make_token(user)
+#
+#                     reset_url = request.build_absolute_uri(f"/reset/{uid}/{token}/")
+#
+#                     # Context for HTML Email template
+#                     context = {
+#                         'user': user,
+#                         'reset_url': reset_url,
+#                         'site_name': 'BimaDrive Insurance'
+#                     }
+#
+#                     html_content = render_to_string('accounts/password_reset_email.html', context)
+#                     text_content = f"Hi {user.email},\n\nClick the link below to reset your password:\n{reset_url}\n\nIf you didn't request this, please ignore."
+#
+#                     # Send from BimaDrive Support to avoid generic names
+#                     sender_email = f"BimaDrive Support <{settings.DEFAULT_FROM_EMAIL}>"
+#
+#                     msg = EmailMultiAlternatives(subject, text_content, sender_email, [user.email])
+#                     msg.attach_alternative(html_content, "text/html")
+#
+#                     try:
+#                         msg.send()
+#                     except Exception as e:
+#                         print(f"Email delivery error: {e}")
+#
+#             return redirect('password_reset_done')
+#     else:
+#         form = BimaDrivePasswordResetForm()
+#     return render(request, "accounts/password_reset.html", {"form": form})
+#
+#
+# def password_reset_confirm(request, uidb64=None, token=None):
+#     User = get_user_model()
+#     try:
+#         uid = force_str(urlsafe_base64_decode(uidb64))
+#         user = User.objects.get(pk=uid)
+#     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+#         user = None
+#
+#     if user is not None and default_token_generator.check_token(user, token):
+#         if request.method == 'POST':
+#             form = BimaDriveSetPasswordForm(user, request.POST)
+#             if form.is_valid():
+#                 form.save()
+#                 return redirect('password_reset_complete')
+#         else:
+#             form = BimaDriveSetPasswordForm(user)
+#         return render(request, 'accounts/password_reset_confirm.html', {'form': form, 'validlink': True})
+#     else:
+#         return render(request, 'accounts/password_reset_confirm.html', {'validlink': False})
+#
+#
+# def password_reset_done(request):
+#     return render(request, "accounts/password_reset_done.html")
+#
+#
+# def password_reset_complete(request):
+#     return render(request, "accounts/password_reset_complete.html")
+
+
 
 def payment_processing(request):
     return render(request, "payment/payment_processing.html")
@@ -1365,3 +1449,202 @@ def passkey_verify_view(request):
             },
             status=400
         )
+
+
+import random
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from .forms import BimaDriveSetPasswordForm
+
+User = get_user_model()
+
+
+def password_reset_request(request):
+    """Step 1: User enters email. Generates OTP, stores in session, and emails it."""
+    if request.method == "POST":
+        email = request.POST.get('email', '').strip()
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            # Generate a random 6-digit OTP
+            otp = str(random.randint(100000, 999999))
+
+            # Store OTP and user email in session for verification step
+            request.session['reset_email'] = email
+            request.session['reset_otp'] = otp
+
+            # Send OTP email via SendGrid
+            subject = "Your BimaDrive Password Reset OTP"
+            context = {'user': user, 'otp': otp}
+            html_content = render_to_string('accounts/password_reset_otp_email.html', context)
+            text_content = f"Your BimaDrive password reset OTP is: {otp}. It is valid for 10 minutes."
+
+            sender_email = f"BimaDrive Support <{settings.DEFAULT_FROM_EMAIL}>"
+            msg = EmailMultiAlternatives(subject, text_content, sender_email, [email])
+            msg.attach_alternative(html_content, "text/html")
+
+            try:
+                msg.send()
+            except Exception as e:
+                print(f"OTP Email Error: {e}")
+
+        # Always redirect to OTP verify page to prevent email enumeration attacks
+        return redirect('password_reset_verify_otp')
+
+    return render(request, "accounts/password_reset.html")
+
+
+def password_reset_verify_otp(request):
+    """Step 2: User enters the 6-digit code received in their email."""
+    if 'reset_email' not in request.session:
+        return redirect('password_reset')
+
+    if request.method == "POST":
+        entered_otp = request.POST.get('otp', '').strip()
+        stored_otp = request.session.get('reset_otp')
+
+        if entered_otp == stored_otp:
+            # OTP is correct, mark session as verified and go to new password screen
+            request.session['otp_verified'] = True
+            return redirect('password_reset_new_password')
+        else:
+            messages.error(request, "Invalid or incorrect OTP. Please try again.")
+
+    return render(request, "accounts/password_reset_verify_otp.html")
+
+
+def password_reset_new_password(request):
+    """Step 3: User enters strong password and confirms it."""
+    if not request.session.get('otp_verified') or 'reset_email' not in request.session:
+        return redirect('password_reset')
+
+    email = request.session['reset_email']
+    user = User.objects.filter(email=email).first()
+
+    if not user:
+        return redirect('password_reset')
+
+    if request.method == 'POST':
+        form = BimaDriveSetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            # Clear recovery session variables
+            request.session.pop('reset_email', None)
+            request.session.pop('reset_otp', None)
+            request.session.pop('otp_verified', None)
+            return redirect('password_reset_complete')
+    else:
+        form = BimaDriveSetPasswordForm(user)
+
+    return render(request, 'accounts/password_reset_new_password.html', {'form': form})
+
+
+def password_reset_complete(request):
+    return render(request, "accounts/password_reset_complete.html")
+
+
+import random
+import re
+from django.shortcuts import render, redirect
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.contrib import messages
+import firebase_admin
+from firebase_admin import auth as firebase_auth
+
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        print(f"--- STARTING OTP PROCESS FOR: {email} ---")
+
+        try:
+            print("1. Contacting Firebase Admin to verify user...")
+            user_record = firebase_auth.get_user_by_email(email)
+            uid = user_record.uid
+            print(f"   -> User found. UID: {uid}")
+
+            otp = str(random.randint(100000, 999999))
+
+            request.session['reset_email'] = email
+            request.session['reset_uid'] = uid
+            request.session['reset_otp'] = otp
+
+            print("2. Preparing to send email via SendGrid...")
+            subject = "Your BimaDrive Password Recovery Code"
+            html_content = render_to_string('accounts/email_otp.html', {'otp': otp})
+            text_content = f"Your BimaDrive OTP is: {otp}"
+
+            sender_email = f"BimaDrive Support <{settings.DEFAULT_FROM_EMAIL}>"
+            msg = EmailMultiAlternatives(subject, text_content, sender_email, [email])
+            msg.attach_alternative(html_content, "text/html")
+
+            msg.send(fail_silently=False)  # fail_silently=False forces errors to show up
+            print("3. Email sent successfully!")
+
+        except Exception as e:
+            print(f"!!! ERROR OCCURRED: {e} !!!")
+            # If we get an error, let's redirect back with a message so it doesn't just hang
+            messages.error(request, f"System error: {e}")
+            return redirect('forgot_password')
+
+        print("--- REDIRECTING TO OTP VERIFY PAGE ---")
+        return redirect('verify_reset_otp')
+
+    return render(request, 'accounts/forgot_password.html')
+
+def verify_reset_otp(request):
+    """Step 2: Enter OTP to verify identity."""
+    if 'reset_email' not in request.session:
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '').strip()
+        stored_otp = request.session.get('reset_otp')
+
+        if entered_otp == stored_otp:
+            request.session['otp_verified'] = True
+            return redirect('set_new_password')
+        else:
+            messages.error(request, "Invalid or expired OTP code. Please try again.")
+
+    return render(request, 'accounts/verify_reset_otp.html')
+
+
+def set_new_password(request):
+    """Step 3: Enter strong password and update Firebase."""
+    if not request.session.get('otp_verified'):
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        pass1 = request.POST.get('new_password1')
+        pass2 = request.POST.get('new_password2')
+
+        # Validation
+        if pass1 != pass2:
+            messages.error(request, "Passwords do not match.")
+        elif len(pass1) < 8 or not re.search(r'[A-Z]', pass1) or not re.search(r'[0-9]', pass1) or not re.search(
+                r'[!@#$%^&*(),.?":{}|<>]', pass1):
+            messages.error(request, "Password does not meet the security requirements.")
+        else:
+            try:
+                # Securely update the password in Firebase Auth using the Admin SDK
+                uid = request.session.get('reset_uid')
+                firebase_auth.update_user(uid, password=pass1)
+
+                # Clear session variables
+                request.session.flush()
+
+                messages.success(request, "Password successfully updated! Please sign in with your new credentials.")
+                return redirect('login')
+
+            except Exception as e:
+                messages.error(request, f"System error updating password. Please contact support.")
+                print(f"Firebase Update Error: {e}")
+
+    return render(request, 'accounts/set_new_password.html')

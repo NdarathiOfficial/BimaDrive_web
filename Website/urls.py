@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.views.generic import TemplateView
+
 from . import views
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -61,5 +64,14 @@ urlpatterns = [
     path('api/passkey/register-verify/', views.passkey_register_verify_view, name='passkey_reg_verify'),
     path('api/passkey/challenge/', views.passkey_challenge_view, name='passkey_challenge'),
     path('api/passkey/verify/', views.passkey_verify_view, name='passkey_verify'),
+    path('password_reset/', TemplateView.as_view(template_name='accounts/password_reset.html'), name='password_reset'),    path('password_reset/verify/', views.password_reset_verify_otp, name='password_reset_verify_otp'),
+    path('password_reset/new/', views.password_reset_new_password, name='password_reset_new_password'),
+    path('password_reset/complete/', views.password_reset_complete, name='password_reset_complete'),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('forgot-password/verify/', views.verify_reset_otp, name='verify_reset_otp'),
+    path('forgot-password/new-password/', views.set_new_password, name='set_new_password'),
 
 ]
+
+
+

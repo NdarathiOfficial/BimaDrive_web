@@ -110,9 +110,33 @@
 
         .empty-state { text-align: center; padding: 40px; color: #94a3b8; font-size: 15px; }
 
+        /* --- ANNOUNCEMENT POPUP MODAL STYLES --- */
+        #announcementModal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-card { background: white; width: 100%; max-width: 520px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+        .modal-header { text-align: center; margin-bottom: 15px; }
+        .modal-header i { font-size: 38px; color: #0ea5e9; display: block; margin-bottom: 10px; }
+        .modal-header h2 { font-size: 20px; font-weight: 800; color: #1e293b; }
+        .btn-modal-submit { width: 100%; padding: 14px; background: #4e37b5; color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(78,55,181,0.3); }
+        .btn-modal-submit:hover { background: #3c2a91; }
+
     </style>
 </head>
 <body>
+
+    <!-- ANNOUNCEMENT POPUP MODAL -->
+    <div id="announcementModal">
+        <div class="modal-card" style="text-align: center;">
+            <div class="modal-header">
+                <i class="bi bi-megaphone-fill"></i>
+                <h2 id="announcementTitleModal">System Notice</h2>
+            </div>
+            <p id="announcementMessageModal" style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 25px; text-align: left; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;"></p>
+            <button type="button" class="btn-modal-submit" onclick="dismissAnnouncement()">I Understand</button>
+        </div>
+    </div>
 
     <div id="auth-guard">
         <div class="spinner"></div>
@@ -209,6 +233,12 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
+        // Strict session-only dismissal guard
+        window.dismissAnnouncement = () => {
+            sessionStorage.setItem('bima_insurer_announcement_dismissed_session', 'true');
+            document.getElementById('announcementModal').style.display = 'none';
+        };
+
         // --- AUTH GUARD & INIT ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -219,9 +249,30 @@
                         document.getElementById('auth-guard').style.display = 'none';
                         document.getElementById('app-content').style.display = 'flex';
                         fetchDashboardData();
+
+                        // Listen for System-Wide Announcements (Only pop up once per login session)
+                        onValue(ref(db, 'SystemConfig/activeBroadcast'), (annSnap) => {
+                            const broadcast = annSnap.val();
+                            if (broadcast && broadcast.active) {
+                                const audience = broadcast.audience || 'all';
+                                let isTarget = (audience === 'all' || audience === 'staff');
+
+                                const isDismissedThisSession = sessionStorage.getItem('bima_insurer_announcement_dismissed_session') === 'true';
+
+                                if (isTarget && !isDismissedThisSession) {
+                                    document.getElementById('announcementTitleModal').innerText = broadcast.title || 'System Notice';
+                                    document.getElementById('announcementMessageModal').innerText = broadcast.message || '';
+                                    document.getElementById('announcementModal').style.display = 'flex';
+                                }
+                            }
+                        });
+
                     } else {
                         alert("Access Denied: Insurer privileges required.");
-                        signOut(auth).then(() => window.location.href = "{% url 'login' %}");
+                        signOut(auth).then(() => {
+                            sessionStorage.clear();
+                            window.location.href = "{% url 'login' %}";
+                        });
                     }
                 } catch(e) { console.error(e); }
             } else {
@@ -231,7 +282,10 @@
 
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
-            signOut(auth).then(() => window.location.href = "{% url 'login' %}");
+            signOut(auth).then(() => {
+                sessionStorage.clear();
+                window.location.href = "{% url 'login' %}";
+            });
         });
 
         // --- UI LOGIC ---
@@ -257,7 +311,6 @@
                     dataEntries.sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
 
                     dataEntries.forEach(([key, val]) => {
-                        // Enforce logic: If no status or 'Pending', it is 'Pending Review'
                         let displayStatus = val.status || 'Pending Review';
                         if(displayStatus === 'Pending') displayStatus = 'Pending Review';
 
@@ -297,7 +350,6 @@
                     dataEntries.sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
 
                     dataEntries.forEach(([key, claim]) => {
-                        // Enforce logic: If no status or 'Pending', it is 'Pending Review'
                         let displayStatus = claim.status || 'Pending Review';
                         if(displayStatus === 'Pending') displayStatus = 'Pending Review';
 
@@ -329,12 +381,12 @@
         // --- NAVIGATION WORKFLOWS ---
         window.reviewValuation = (id) => {
             localStorage.setItem('currentValId', id);
-            window.location.href = "{% url 'insurer_valuation' %}"; // Ensure this matches your urls.py
+            window.location.href = "{% url 'insurer_valuation' %}";
         };
 
         window.reviewClaim = (id) => {
             localStorage.setItem('currentClaimId', id);
-            window.location.href = "{% url 'insurer_claims' %}"; // Ensure this matches your urls.py
+            window.location.href = "{% url 'insurer_claims' %}";
         };
 
     </script>

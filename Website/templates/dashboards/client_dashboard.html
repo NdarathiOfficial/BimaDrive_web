@@ -211,8 +211,8 @@
             box-shadow: var(--card-shadow); display: none; margin-bottom: 35px; color: #64748b;
         }
 
-        /* --- MODALS (Password & Inactivity) --- */
-        #passwordModal, #inactivityModal {
+        /* --- MODALS (Password, Inactivity & Announcements) --- */
+        #passwordModal, #inactivityModal, #announcementModal {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
             z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
         }
@@ -330,6 +330,18 @@
     </style>
 </head>
 <body>
+
+    <!-- ANNOUNCEMENT POPUP MODAL -->
+    <div id="announcementModal">
+        <div class="modal-card" style="text-align: center;">
+            <div class="modal-header" style="margin-bottom: 15px;">
+                <i class="bi bi-megaphone-fill" style="color: #0ea5e9;"></i>
+                <h2 id="announcementTitleModal">System Notice</h2>
+            </div>
+            <p id="announcementMessageModal" style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 25px; text-align: left; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;"></p>
+            <button type="button" class="btn-modal-submit" onclick="dismissAnnouncement()" style="width: 100%;">I Understand</button>
+        </div>
+    </div>
 
     <!-- INACTIVITY WARNING MODAL -->
     <div id="inactivityModal">
@@ -661,7 +673,6 @@
             }
 
             try {
-                // 1. Fetch registration options from Django backend
                 const res = await fetch('/api/passkey/register-options/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -670,11 +681,9 @@
                 const options = await res.json();
                 if (!res.ok) throw new Error(options.error);
 
-                // Convert Base64URL challenge and user ID back to ArrayBuffers
                 options.challenge = Uint8Array.from(atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
                 options.user.id = Uint8Array.from(atob(options.user.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
 
-                // --- CRITICAL FIX FOR EXCLUDE CREDENTIALS ---
                 if (options.excludeCredentials && Array.isArray(options.excludeCredentials)) {
                     options.excludeCredentials = options.excludeCredentials.map(cred => ({
                         ...cred,
@@ -684,10 +693,8 @@
                     delete options.excludeCredentials;
                 }
 
-                // 2. Trigger browser hardware biometric prompt
                 const credential = await navigator.credentials.create({ publicKey: options });
 
-                // 3. Package response to send back to Django backend
                 const credentialPayload = {
                     id: credential.id,
                     rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
@@ -768,6 +775,12 @@
 
         startInactivityTimer();
 
+        // --- STRICT SESSION-ONLY ANNOUNCEMENT DISMISS LOGIC ---
+        window.dismissAnnouncement = () => {
+            sessionStorage.setItem('bima_announcement_dismissed_session', 'true');
+            document.getElementById('announcementModal').style.display = 'none';
+        };
+
         // --- PASSWORD MODAL & VALIDATION ---
         function openPasswordModal() {
             document.getElementById('passwordModal').style.display = 'flex';
@@ -834,14 +847,14 @@
         }
 
         document.getElementById('securityQuestion').addEventListener('change', validatePasswordInputs);
-        document.getElementById('securityAnswer').addEventListener('input', validatePasswordInputs);
+        document.getElementById('securityAnswer').value && document.getElementById('securityAnswer').addEventListener('input', validatePasswordInputs);
         document.getElementById('currentPassword').addEventListener('input', validatePasswordInputs);
     </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, get, child, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCfZ4L9Qf--qXVt6fSTovL6NufC-UEUHv8",
@@ -886,6 +899,23 @@
                         document.getElementById('profileName').innerText = name;
                         document.getElementById('profileInitials').innerText = name.charAt(0).toUpperCase();
                     }
+
+                    // Strict session-based listener: Pops up ONLY ONCE per active browser login session
+                    onValue(ref(db, 'SystemConfig/activeBroadcast'), (annSnap) => {
+                        const broadcast = annSnap.val();
+                        if (broadcast && broadcast.active) {
+                            const audience = broadcast.audience || 'all';
+                            let isTarget = (audience === 'all' || audience === 'clients');
+
+                            const isDismissedThisSession = sessionStorage.getItem('bima_announcement_dismissed_session') === 'true';
+
+                            if (isTarget && !isDismissedThisSession) {
+                                document.getElementById('announcementTitleModal').innerText = broadcast.title || 'System Notice';
+                                document.getElementById('announcementMessageModal').innerText = broadcast.message || '';
+                                document.getElementById('announcementModal').style.display = 'flex';
+                            }
+                        }
+                    });
 
                     const vSnap = await get(ref(db, 'Vehicles'));
                     if (vSnap.exists()) {
@@ -1041,12 +1071,9 @@
             doc.setFont("helvetica", "bold");
             doc.text("Period of Insurance:", 20, 150);
 
-            const startDate = new Date().toLocaleDateString('en-GB');
-            const endDate = new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString('en-GB');
-
             doc.setFontSize(11);
             doc.setFont("helvetica", "normal");
-            doc.text(`From: ${startDate}    To: ${endDate} (Midnight)`, 20, 160);
+            doc.text(`From: ${new Date().toLocaleDateString('en-GB')}    To: ${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString('en-GB')} (Midnight)`, 20, 160);
 
             doc.setDrawColor(78, 55, 181);
             doc.setLineWidth(1);
@@ -1097,7 +1124,10 @@
 
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
-            signOut(auth).then(() => window.location.href = "{% url 'login' %}");
+            signOut(auth).then(() => {
+                sessionStorage.clear();
+                window.location.href = "{% url 'login' %}";
+            });
         });
     </script>
 

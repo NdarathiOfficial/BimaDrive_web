@@ -167,13 +167,29 @@ MPESA_INITIATOR_SECURITY_CREDENTIALS = 'Safaricom123!!'
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 SENDGRID_SENDER = os.environ.get("SENDGRID_SENDER")
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = SENDGRID_SENDER
+# If DEBUG is True (local development), print emails to the terminal
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'support@bimadrive.com'
+
+# If DEBUG is False (on Render), use SendGrid to actually send them
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.sendgrid.net'
+    EMAIL_PORT = 587  # Crucial for Render
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'apikey'
+    EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')  # Keep this hidden in Render's env vars
+    DEFAULT_FROM_EMAIL = 'your-verified-sendgrid-email@domain.com'
+
+
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = "smtp.sendgrid.net"
+# EMAIL_HOST_USER = "apikey"
+# EMAIL_HOST_PASSWORD = SENDGRID_API_KEYg
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# DEFAULT_FROM_EMAIL = SENDGRID_SENDER
 
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
@@ -215,3 +231,19 @@ if not _apps:
             print("Firebase Admin initialized successfully locally.")
         except Exception as e:
             print(f"Local Firebase initialization failed: {e}")
+
+import os
+import firebase_admin
+from firebase_admin import credentials
+
+# Only initialize if it hasn't been initialized yet
+if not firebase_admin._apps:
+    # Use BASE_DIR to point directly to the file in your project folder
+    firebase_cred_path = BASE_DIR / 'firebase_service_account.json'
+
+    try:
+        cred = credentials.Certificate(firebase_cred_path)
+        firebase_admin.initialize_app(cred)
+        print("Firebase Admin initialized successfully!")
+    except Exception as e:
+        print(f"Firebase Admin SDK initialization failed: {e}")
